@@ -1,0 +1,287 @@
+/* Board canvas. Colours come from the tokens in globals.css; the few extras (status colours, shadows) are
+   defined here with light and dark values. Every class is prefixed bd-. */
+.bd-screen, .bd-panel-screen {
+  --bd-ok: #1f9d63;
+  --bd-warn: #8a5d00; /* 5.8:1 on --panel, 4.5:1 needed for the 12px badge text */
+  --bd-bad: #d64545;
+  --bd-shadow: 0 1px 2px rgba(15, 20, 30, 0.08), 0 8px 24px rgba(15, 20, 30, 0.1);
+  --bd-item-shadow: 0 1px 2px rgba(15, 20, 30, 0.14), 0 8px 16px rgba(15, 20, 30, 0.08);
+  --bd-dot: color-mix(in srgb, var(--muted) 38%, transparent);
+  --bd-hover: color-mix(in srgb, var(--ink) 8%, transparent);
+  --bd-tint: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  .bd-screen, .bd-panel-screen {
+    --bd-ok: #3dd68c;
+    --bd-warn: #f0b429;
+    --bd-bad: #ff7b7b;
+    --bd-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
+    --bd-item-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* ---------- shell ---------- */
+.bd-screen { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); }
+.bd-top {
+  flex: none; height: 52px; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px;
+  background: var(--panel); border-bottom: 1px solid var(--line); z-index: 20;
+}
+.bd-title { margin: 0; font-size: 15px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-skeleton { display: inline-block; width: 120px; height: 14px; border-radius: 4px; background: var(--line); vertical-align: middle; }
+.bd-grow { flex: 1; }
+.bd-badge {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; color: var(--bd-warn); border: 1px solid currentColor;
+}
+.bd-status {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 4px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line);
+}
+.bd-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.bd-vh {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.bd-status.is-live i { background: var(--bd-ok); }
+.bd-status.is-polling i { background: var(--bd-warn); }
+.bd-status.is-offline i { background: var(--bd-bad); }
+
+.bd-iconbtn, .bd-zbtn, .bd-tool, .bd-chip {
+  display: inline-grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--ink);
+  cursor: pointer; padding: 0; text-decoration: none; font: inherit;
+}
+.bd-iconbtn { width: 36px; height: 36px; flex: none; }
+.bd-iconbtn:hover:not(:disabled), .bd-zbtn:hover, .bd-tool:hover:not(:disabled), .bd-chip:hover { background: var(--bd-hover); }
+.bd-iconbtn:disabled, .bd-tool:disabled { opacity: 0.35; cursor: default; }
+.bd-iconbtn:focus-visible, .bd-zbtn:focus-visible, .bd-zval:focus-visible, .bd-tool:focus-visible, .bd-chip:focus-visible,
+.bd-swatch:focus-visible, .bd-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+.bd-board { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+.bd-loading { display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+
+/* ---------- canvas ---------- */
+.bd-canvas {
+  position: absolute; inset: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, var(--bd-dot) 1px, transparent 1.6px);
+  background-size: var(--bd-grid) var(--bd-grid);
+  background-position: var(--bd-gx) var(--bd-gy);
+  outline: none;
+}
+.bd-canvas.is-space, .bd-canvas.is-space .bd-item { cursor: grab; }
+.bd-canvas.is-panning, .bd-canvas.is-panning .bd-item { cursor: grabbing; }
+.bd-tool-note, .bd-tool-text, .bd-tool-shape, .bd-tool-frame, .bd-tool-connector { cursor: crosshair; }
+.bd-world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; }
+.bd-links { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+
+.bd-connector { cursor: pointer; }
+.bd-connector-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; }
+.bd-connector-line { fill: none; stroke: color-mix(in srgb, var(--ink) 55%, transparent); stroke-width: 2.25; pointer-events: none; stroke-linecap: round; }
+.bd-connector.is-selected .bd-connector-line { stroke: var(--accent); stroke-width: 3; }
+.bd-arrow { fill: color-mix(in srgb, var(--ink) 55%, transparent); }
+.bd-arrow.is-selected { fill: var(--accent); }
+
+.bd-empty, .bd-hint {
+  position: absolute; left: 50%; margin: 0; transform: translateX(-50%); text-align: center; color: var(--muted);
+  font-size: 14px; pointer-events: none; max-width: calc(100% - 32px);
+}
+.bd-empty { top: 42%; font-size: 15px; }
+.bd-hint { top: 14px; padding: 6px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--bd-shadow); color: var(--ink); }
+.bd-empty kbd {
+  font: inherit; font-size: 12px; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--ink);
+}
+
+/* ---------- items ---------- */
+.bd-item { position: absolute; left: 0; top: 0; touch-action: none; }
+.bd-tool-select .bd-item:not(.is-locked) { cursor: grab; }
+.bd-item.is-selected::after {
+  content: ''; position: absolute; inset: calc(-3px * var(--bd-inv, 1)); pointer-events: none;
+  border: calc(2px * var(--bd-inv, 1)) solid var(--accent); border-radius: 4px;
+}
+.bd-item:focus, .bd-connector:focus { outline: none; }
+.bd-item:focus-visible::before {
+  content: ''; position: absolute; inset: calc(-7px * var(--bd-inv, 1)); pointer-events: none;
+  border: calc(2px * var(--bd-inv, 1)) dashed var(--ink); border-radius: 6px;
+}
+.bd-connector:focus-visible .bd-connector-line { stroke: var(--accent); stroke-width: 3.5; stroke-dasharray: 6 4; }
+.bd-item.is-linking::after {
+  content: ''; position: absolute; inset: calc(-4px * var(--bd-inv, 1)); pointer-events: none;
+  border: calc(2px * var(--bd-inv, 1)) dashed var(--accent); border-radius: 6px;
+}
+
+.bd-body-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 18px; line-height: 1.35; }
+.bd-placeholder { margin: 0; color: var(--muted); font-size: 14px; opacity: 0.85; }
+
+.bd-note {
+  width: 100%; height: 100%; padding: 14px; overflow: hidden; border-radius: 4px;
+  box-shadow: var(--bd-item-shadow);
+}
+.bd-textbox { width: 100%; height: 100%; padding: 4px 6px; overflow: hidden; }
+.bd-textbox .bd-body-text { font-size: 22px; font-weight: 500; }
+.bd-shape { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+.bd-shape svg { position: absolute; inset: 0; width: 100%; height: 100%; stroke: color-mix(in srgb, var(--ink) 60%, transparent); stroke-width: 1.5; }
+.bd-shape svg * { vector-effect: non-scaling-stroke; }
+.bd-shape-text { position: relative; padding: 8px 14%; text-align: center; font-size: 16px; max-height: 100%; overflow: hidden; }
+.bd-img { display: block; width: 100%; height: 100%; object-fit: fill; border-radius: 4px; pointer-events: none; box-shadow: var(--bd-item-shadow); }
+
+/* A frame's body is click-through so marquee and drops work inside it; the title bar is its grip. */
+.bd-k-frame { pointer-events: none; }
+.bd-frame-box {
+  width: 100%; height: 100%; border-radius: 8px; border: 1.5px solid color-mix(in srgb, var(--muted) 50%, transparent);
+  background: color-mix(in srgb, var(--panel) 50%, transparent);
+}
+.bd-frame-title {
+  pointer-events: auto; height: 34px; padding: 0 12px; display: flex; align-items: center; font-size: 14px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 8px 8px 0 0; color: var(--ink);
+}
+.bd-k-frame .bd-handle, .bd-k-frame .bd-editor { pointer-events: auto; }
+.bd-k-frame.is-locked .bd-frame-title { cursor: default; }
+
+.bd-editor {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; resize: none; border: 0; border-radius: 4px; background: transparent;
+  color: var(--ink); font: inherit; outline: calc(2px * var(--bd-inv, 1)) solid var(--accent); user-select: text; -webkit-user-select: text;
+  cursor: text; touch-action: auto;
+}
+.bd-editor-note { padding: 14px; font-size: 18px; line-height: 1.35; }
+.bd-editor-text { padding: 4px 6px; font-size: 22px; font-weight: 500; line-height: 1.35; background: var(--panel); }
+.bd-editor-shape {
+  inset: auto; left: 8%; top: 50%; width: 84%; height: auto; min-height: 2.2em; max-height: 90%; transform: translateY(-50%);
+  padding: 6px 8px; font-size: 16px; line-height: 1.35; text-align: center; field-sizing: content;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.bd-editor-frame { height: 34px; padding: 0 12px; font-size: 14px; font-weight: 600; background: var(--panel); border-radius: 8px 8px 0 0; }
+
+.bd-handle {
+  position: absolute; width: calc(10px * var(--bd-inv, 1)); height: calc(10px * var(--bd-inv, 1)); z-index: 2;
+  background: var(--panel); border: calc(2px * var(--bd-inv, 1)) solid var(--accent); border-radius: calc(2px * var(--bd-inv, 1));
+  transform: translate(-50%, -50%); touch-action: none;
+}
+.bd-handle::before { content: ''; position: absolute; inset: calc(-8px * var(--bd-inv, 1)); }
+.bd-h-nw { left: 0; top: 0; cursor: nwse-resize; }
+.bd-h-n { left: 50%; top: 0; cursor: ns-resize; }
+.bd-h-ne { left: 100%; top: 0; cursor: nesw-resize; }
+.bd-h-e { left: 100%; top: 50%; cursor: ew-resize; }
+.bd-h-se { left: 100%; top: 100%; cursor: nwse-resize; }
+.bd-h-s { left: 50%; top: 100%; cursor: ns-resize; }
+.bd-h-sw { left: 0; top: 100%; cursor: nesw-resize; }
+.bd-h-w { left: 0; top: 50%; cursor: ew-resize; }
+
+.bd-draft, .bd-marquee {
+  position: absolute; pointer-events: none; border: calc(1.5px * var(--bd-inv, 1)) dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 2px;
+}
+.bd-marquee { border-style: solid; border-width: calc(1px * var(--bd-inv, 1)); }
+
+/* ---------- floating controls ---------- */
+.bd-rail, .bd-zoom, .bd-context, .bd-minimap {
+  position: absolute; z-index: 10; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--bd-shadow);
+}
+.bd-rail { left: 12px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 2px; padding: 6px; border-radius: 12px; }
+.bd-tool { width: 40px; height: 40px; }
+.bd-tool.is-active { background: var(--bd-tint); color: var(--accent); }
+
+.bd-zoom { right: 12px; bottom: 12px; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 12px; }
+.bd-zbtn { width: 34px; height: 34px; }
+.bd-zval { min-width: 54px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
+.bd-zval:hover { background: var(--bd-hover); }
+
+.bd-context { top: 12px; left: 8px; right: 8px; margin-inline: auto; width: fit-content; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px; padding: 4px 6px; border-radius: 12px; max-width: calc(100% - 16px); }
+.bd-context-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
+.bd-chip { width: 32px; height: 32px; }
+.bd-chip.is-active { background: var(--bd-tint); color: var(--accent); }
+.bd-swatch { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.bd-swatch-dot { width: 24px; height: 24px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.bd-swatch.is-active .bd-swatch-dot { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.bd-minimap { left: 12px; bottom: 12px; width: 168px; height: 112px; border-radius: 10px; overflow: hidden; cursor: pointer; touch-action: none; }
+.bd-minimap svg { display: block; }
+.bd-mm-item { fill: var(--muted); opacity: 0.6; }
+.bd-mm-frame { fill: none; stroke: var(--muted); vector-effect: non-scaling-stroke; stroke-width: 1; opacity: 0.8; }
+.bd-mm-image { fill: var(--accent); opacity: 0.4; }
+.bd-mm-view { fill: color-mix(in srgb, var(--accent) 12%, transparent); stroke: var(--accent); vector-effect: non-scaling-stroke; stroke-width: 1.5; }
+
+.bd-toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px);
+  padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 14px; font-weight: 500;
+  box-shadow: var(--bd-shadow); animation: bd-rise 160ms ease-out;
+}
+@keyframes bd-rise { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* ---------- not found / error panel ---------- */
+.bd-panel-screen { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--bg); color: var(--ink); }
+.bd-panel { width: 100%; max-width: 420px; padding: 32px 28px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--bd-shadow); text-align: center; }
+.bd-panel h1 { margin: 0 0 8px; font-size: 22px; }
+.bd-panel p { margin: 0 0 22px; color: var(--muted); line-height: 1.5; }
+.bd-btn {
+  display: inline-block; padding: 10px 18px; border: 0; border-radius: 10px; background: var(--accent); color: var(--bg);
+  font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+
+/* ---------- touch and small screens ---------- */
+@media (pointer: coarse) {
+  .bd-tool { width: 44px; height: 44px; }
+  .bd-iconbtn { width: 44px; height: 44px; }
+  .bd-zbtn, .bd-zval { height: 44px; }
+  .bd-zbtn { width: 44px; }
+  .bd-chip { width: 44px; height: 44px; }
+  .bd-swatch { width: 44px; height: 44px; }
+  .bd-handle { width: calc(16px * var(--bd-inv, 1)); height: calc(16px * var(--bd-inv, 1)); }
+  .bd-handle::before { inset: calc(-14px * var(--bd-inv, 1)); } /* 16 + 2 x 14 = a 44px hit area */
+}
+@media (max-width: 640px) {
+  .bd-rail {
+    left: 8px; right: 8px; top: auto; bottom: calc(8px + env(safe-area-inset-bottom)); transform: none;
+    flex-direction: row; justify-content: space-around; padding: 4px;
+  }
+  .bd-tool { width: 44px; height: 44px; }
+  .bd-zoom { bottom: calc(72px + env(safe-area-inset-bottom)); right: 8px; }
+  .bd-minimap { display: none; }
+  .bd-status-label, .bd-badge-label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .bd-status { padding: 4px 8px; }
+  .bd-toast { bottom: calc(132px + env(safe-area-inset-bottom)); }
+  .bd-context { top: 8px; }
+  .bd-context-sep { display: none; }
+}
+/* A phone: the bar can hold more controls than 375px has room for (the owner's gear used to be pushed off-screen), so it
+   wraps onto a second row instead of overflowing. The title takes whatever the first row has left, and every control
+   keeps its 44px target. The bar is in the column flow, so the stage header below simply moves down. */
+@media (max-width: 480px) {
+  .bd-screen .bd-top { height: auto; min-height: 52px; flex-wrap: wrap; justify-content: space-between; row-gap: 0; }
+  .bd-screen .bd-top .bd-title { flex: 1 1 64px; min-width: 0; }
+  .bd-screen .bd-top .bd-grow { display: none; }
+  .bd-screen .bd-top .bd-iconbtn, .bd-screen .bd-top .bd-iconbtn.bd-export-btn { min-width: 44px; min-height: 44px; width: 44px; height: 44px; }
+}
+@media (max-height: 620px) and (min-width: 641px) {
+  .bd-minimap { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bd-toast { animation: none; }
+}
+
+/* ---------- passcode gate ---------- */
+.bd-field { margin: 0 0 14px; text-align: left; }
+.bd-field label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 600; }
+.bd-input {
+  width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; /* 16px stops iOS zooming on focus */
+}
+.bd-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bd-input[aria-invalid='true'] { border-color: var(--bd-bad); }
+.bd-panel .bd-field-error { min-height: 1.5em; margin: 0 0 12px; color: color-mix(in srgb, var(--bd-bad) 75%, var(--ink)); font-size: 14px; text-align: left; }
+.bd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.bd-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- way out of a dead-end panel ---------- */
+.bd-panel .bd-panel-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 16px; margin: 20px 0 0; }
+.bd-panel .bd-panel-links:first-child { margin-top: 0; }
+.bd-panel-links .bd-btn { display: inline-flex; align-items: center; min-height: 44px; }
+.bd-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; color: var(--accent); font-size: 14px; font-weight: 600; text-underline-offset: 3px; }
+.bd-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* Anonymous notes */
+.bd-anon { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line, #ccc); background: var(--panel, #fff); font: inherit; font-size: 12px; cursor: pointer }
+.bd-anon.is-on { background: var(--ink, #222); color: var(--panel, #fff) }
+.bd-anon-locked { margin: 0; cursor: default; max-width: 280px }
+.bd-anon-badge { position: absolute; left: 8px; bottom: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; background: rgba(0, 0, 0, .55); color: #fff; pointer-events: none }

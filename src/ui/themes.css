@@ -1,0 +1,33 @@
+/* Theme cards on the canvas and the Themes panel (owner). Colours come from the same tokens as the rest of the board. */
+.bd-theme {
+  display: flex; flex-direction: column; gap: 6px; width: 100%; height: 100%; box-sizing: border-box; padding: 10px 12px; overflow: hidden;
+  border: 2px solid var(--accent); border-radius: 12px; background: color-mix(in srgb, var(--accent) 9%, var(--panel, var(--bg)));
+  color: var(--ink);
+}
+.bd-theme-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.bd-theme-title { font-weight: 700; font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.bd-theme-count { flex: none; min-width: 24px; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: var(--bg); font-size: 12px; font-weight: 700; text-align: center; }
+.bd-theme-notes { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.35; color: var(--muted); overflow: hidden; }
+.bd-theme-notes li { overflow-wrap: anywhere; }
+.bd-theme-more { list-style: none; margin-left: -16px; font-weight: 600; }
+/* the notes a theme links to, while the card is hovered or focused: outline only */
+.bd-item.is-theme-linked { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.bd-themesbtn { position: relative; display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bd-themesbtn:hover { background: var(--bd-hover); }
+.bd-themesbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .bd-themesbtn { width: 44px; padding: 0; justify-content: center; } .bd-themesbtn-label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+
+.bd-themes { width: min(560px, 100vw); }
+.bd-th-list { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 10px; }
+.bd-th-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.bd-th-item.is-picked { border-color: var(--accent); }
+.bd-th-top { display: flex; align-items: center; gap: 8px; }
+.bd-th-top h3 { flex: 1; margin: 0; font-size: 15px; overflow-wrap: anywhere; }
+.bd-th-notes { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.bd-th-notes label { display: flex; gap: 8px; align-items: flex-start; }
+.bd-th-notes .is-gone { color: var(--muted); text-decoration: line-through; }
+.bd-th-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.bd-th-rename { display: flex; gap: 6px; margin-top: 6px; }
+.bd-th-rename input { flex: 1; min-width: 0; }
+.bd-th-ungrouped { margin: 0 0 8px; color: var(--muted); font-size: 13px; }

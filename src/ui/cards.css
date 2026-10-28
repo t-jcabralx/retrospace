@@ -1,0 +1,95 @@
+/* Celebration cards: the card on the canvas, the "Add a card" button, the composer dialog and the GIF picker. Colours come
+   from the tokens in globals.css and the --bd-* set in board.css (both flip for dark mode); shared controls (.bd-sbtn,
+   .bd-sinput, .bd-set-*) are in settings.css. Every class is prefixed bd-. */
+
+/* ---------- the card on the canvas ---------- */
+.bd-card {
+  display: flex; flex-direction: column; width: 100%; height: 100%; padding: 16px; overflow: hidden; border-radius: 12px; box-shadow: var(--bd-item-shadow);
+}
+.bd-card-msg { margin: 0; font-size: 17px; line-height: 24px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bd-card-sig {
+  flex: none; margin: 10px 0 0; font-size: 14px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+.bd-card-media {
+  display: block; flex: none; width: 100%; height: auto; margin-top: 12px; border-radius: 8px; object-fit: cover; pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.bd-editor-card { padding: 16px; font-size: 17px; line-height: 24px; border-radius: 12px; background: var(--bd-card-bg, var(--panel)); }
+
+/* ---------- the add button ---------- */
+.bd-addcard {
+  position: absolute; left: 50%; bottom: 16px; z-index: 12; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px;
+  min-height: 48px; padding: 0 22px 0 18px; border: 0; border-radius: 999px; background: var(--accent); color: var(--bg); font: inherit; font-size: 15px;
+  font-weight: 700; cursor: pointer; box-shadow: var(--bd-shadow); white-space: nowrap;
+}
+.bd-addcard:hover { filter: brightness(1.08); }
+.bd-addcard:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.bd-screen.has-tray .bd-addcard { bottom: 84px; }
+.bd-screen:has(.bd-addcard) .bd-toast { bottom: 84px; } /* clear of the Add button, which sits where the toast would */
+.bd-screen.has-tray:has(.bd-addcard) .bd-toast { bottom: 148px; }
+
+/* ---------- the composer ---------- */
+.bd-cc {
+  --rs-r: 12px; --rs-r-sm: 8px;
+  position: fixed; z-index: 60; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(820px, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
+  overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; padding: 20px 24px 24px; border: 1px solid var(--line); border-radius: 16px;
+  background: var(--panel); color: var(--ink); box-shadow: var(--bd-shadow); animation: bd-cc-in 160ms ease-out;
+}
+.bd-cc:focus { outline: none; }
+@keyframes bd-cc-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); } to { opacity: 1; transform: translate(-50%, -50%); } }
+.bd-cc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
+.bd-cc-title { margin: 0; font-size: 20px; line-height: 1.2; }
+.bd-cc-grid { display: grid; grid-template-columns: minmax(0, 1fr) 332px; gap: 24px; align-items: start; }
+.bd-cc-text { min-height: 112px; padding: 10px 12px; line-height: 1.45; resize: vertical; }
+.bd-cc-meta { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.bd-cc-meta .bd-set-error { flex: 1; }
+.bd-cc-count { flex: none; margin-top: 4px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.bd-cc-count.is-low { color: color-mix(in srgb, var(--bd-bad) 75%, var(--ink)); font-weight: 650; }
+.bd-cc-swatches { display: flex; flex-wrap: wrap; gap: 4px; }
+.bd-cc-swatch { display: inline-grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.bd-cc-swatch span { width: 34px; height: 34px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.bd-cc-swatch.is-on span { outline: 3px solid var(--accent); outline-offset: 2px; }
+.bd-cc-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+.bd-cc-previewcol { position: sticky; top: 0; }
+.bd-cc-stage {
+  display: grid; place-items: start center; padding: 16px; border-radius: 12px; overflow: hidden;
+  background-color: var(--bg); background-image: radial-gradient(circle, var(--bd-dot) 1px, transparent 1.6px); background-size: 24px 24px;
+}
+.bd-cc-card { flex: none; max-width: 100%; }
+.bd-cc-actions { justify-content: flex-end; margin-top: 12px; }
+
+/* ---------- the GIF picker ---------- */
+.bd-gp .bd-cc-head { justify-content: flex-start; }
+.bd-gp-search { margin: 0 0 14px; }
+.bd-gp-status { margin: 0 0 8px; min-height: 1.4em; color: var(--muted); font-size: 13px; font-weight: 600; }
+.bd-gp-scroll { height: min(46dvh, 420px); overflow-y: auto; overscroll-behavior: contain; padding: 4px; border-radius: 12px; background: var(--bg); }
+.bd-gp-grid { min-height: 60px; }
+.bd-gp-grid .giphy-gif { cursor: pointer; }
+.bd-gp-grid .giphy-gif:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.bd-gp-error { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px; color: color-mix(in srgb, var(--bd-bad) 75%, var(--ink)); font-size: 14px; font-weight: 600; }
+.bd-gp-paste { margin: 0 0 12px; }
+.bd-gp-pasterow { display: flex; gap: 8px; }
+.bd-gp-pasterow .bd-sinput { flex: 1; min-width: 0; }
+.bd-gp-credit { margin: 0; }
+.bd-gp-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 6px; background: #121212; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+@media (max-width: 760px) {
+  .bd-cc { top: auto; bottom: 0; left: 0; transform: none; width: 100%; max-height: 92dvh; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); border-radius: 16px 16px 0 0; animation: none; }
+  .bd-cc-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .bd-cc-previewcol { position: static; order: 2; }
+  .bd-cc-stage { padding: 12px 0; }
+}
+/* On a phone Celebrate floats bottom left above the tool bar (collab.css), so the Add button stacks above it. */
+@media (max-width: 640px) {
+  .bd-addcard { left: 8px; bottom: calc(124px + env(safe-area-inset-bottom)); transform: none; }
+  .bd-screen.has-tray .bd-addcard { bottom: calc(180px + env(safe-area-inset-bottom)); }
+  .bd-screen:has(.bd-addcard) .bd-toast { bottom: calc(184px + env(safe-area-inset-bottom)); }
+  .bd-screen.has-tray:has(.bd-addcard) .bd-toast { bottom: calc(240px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bd-cc { animation: none; }
+}

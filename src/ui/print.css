@@ -1,0 +1,47 @@
+/* The print view. The document is drawn on white "paper" in every colour scheme, so the printout never depends on dark mode.
+   No page size is forced (the browser's paper, A4 or Letter, applies); margins and page breaks are set here. */
+.pv-page { min-height: 100vh; padding: 16px; background: #eceef3; color: #111; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.pv-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; max-width: 794px; margin: 0 auto 16px; }
+.pv-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid #b9bfcc; border-radius: 999px; background: #fff; color: #111; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.pv-btn.is-primary { border-color: #1f5fd1; background: #1f5fd1; color: #fff; }
+.pv-btn:focus-visible, .pv-check input:focus-visible { outline: 3px solid #1f5fd1; outline-offset: 2px; }
+.pv-check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; }
+.pv-check input { width: 20px; height: 20px; }
+.pv-notice { max-width: 794px; margin: 0 auto; padding: 16px; border-radius: 10px; background: #fff; }
+.pv-notice h1 { margin: 0 0 6px; font-size: 20px; }
+
+.pv-doc { box-sizing: border-box; max-width: 794px; margin: 0 auto; padding: 40px 44px; background: #fff; color: #111; box-shadow: 0 2px 14px rgba(0, 0, 0, 0.15); }
+.pv-cover { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #111; }
+.pv-cover h1 { margin: 0 0 8px; font-size: 32px; line-height: 1.15; overflow-wrap: anywhere; }
+.pv-meta { margin: 2px 0; color: #4a5060; font-size: 14px; }
+.pv-section { margin: 0 0 24px; }
+.pv-section h2 { margin: 0 0 10px; padding-bottom: 4px; border-bottom: 1px solid #c7ccd8; font-size: 20px; break-after: avoid; }
+.pv-summary { white-space: pre-wrap; overflow-wrap: anywhere; }
+.pv-list, .pv-cards, .pv-sub { margin: 0; padding: 0; list-style: none; }
+.pv-item { margin: 0 0 8px; padding: 8px 12px; border-left: 4px solid #c7ccd8; break-inside: avoid; }
+.pv-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pv-votes { display: inline-block; margin-top: 2px; padding: 0 8px; border: 1px solid #111; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pv-author { margin: 2px 0 0; color: #4a5060; font-size: 13px; font-style: italic; }
+.pv-theme .pv-sub { margin-top: 6px; padding-left: 14px; list-style: disc; font-size: 14px; color: #333; }
+.pv-theme .pv-sub li { overflow-wrap: anywhere; }
+.pv-cards .pv-card { margin: 0 0 14px; padding: 16px 18px; border: 1px solid #c7ccd8; border-radius: 10px; break-inside: avoid; page-break-inside: avoid; }
+.pv-cards .pv-text { font-size: 18px; }
+.pv-sig { margin: 8px 0 0; font-weight: 600; }
+.pv-media { display: block; max-width: 100%; max-height: 220px; margin-top: 10px; object-fit: contain; }
+
+@media (max-width: 640px) { .pv-doc { padding: 20px 16px; } .pv-cover h1 { font-size: 26px; } }
+
+@media print {
+  @page { margin: 16mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .pv-page { min-height: 0; padding: 0; background: #fff; font-size: 11pt; }
+  .pv-bar, .pv-notice:not([role='alert']), noscript { display: none !important; }
+  .pv-doc { max-width: none; margin: 0; padding: 0; box-shadow: none; }
+  .pv-cover { break-after: page; padding-top: 30mm; }
+  .pv-cover h1 { font-size: 28pt; }
+  .pv-section { break-inside: auto; }
+  .pv-item, .pv-card, .pv-theme { break-inside: avoid; page-break-inside: avoid; }
+  .pv-section h2 { break-after: avoid; page-break-after: avoid; }
+  .pv-media { max-height: 60mm; }
+  a { color: inherit; text-decoration: none; }
+}

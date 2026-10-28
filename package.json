@@ -1,0 +1,29 @@
+{
+  "name": "retrospace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "sim:api": "node scripts/sim-api.mjs",
+    "sim:persona": "node scripts/sim-persona.mjs",
+    "sim:live": "node scripts/sim-live.mjs"
+  },
+  "dependencies": {
+    "@giphy/js-fetch-api": "5.8.0",
+    "@giphy/react-components": "10.1.2",
+    "@upstash/redis": "^1.39.0",
+    "html-to-image": "^1.11.13",
+    "mongodb": "^7.7.0",
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "styled-components": "6.6.0"
+  }
+}

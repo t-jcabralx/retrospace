@@ -1,0 +1,117 @@
+/* Collaboration layer: presence, cursors, peer selections, celebrate and the effects canvas. Colours come only from the
+   tokens in globals.css (--bg --panel --ink --muted --accent --line), board.css (--bd-*) and persona.css (--pa-*); a
+   person's colour is --bd-pc, set per element from their avatar. Every class is prefixed bd-. */
+
+/* ---------- effects canvas ---------- */
+.bd-fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 30; pointer-events: none; }
+.bd-fx-pop { position: fixed; right: 20px; bottom: 20px; z-index: 30; font-size: 44px; line-height: 1; pointer-events: none; }
+
+/* ---------- presence (top bar) ---------- */
+.bd-presence { position: relative; flex: none; display: inline-flex; }
+.bd-presence-btn {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 6px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--ink); font: inherit; cursor: pointer;
+}
+.bd-presence-btn:hover { background: var(--bd-hover); }
+.bd-presence-btn:focus-visible, .bd-celebrate-main:focus-visible, .bd-celebrate-more:focus-visible, .bd-celebrate-item:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.bd-presence-stack { display: inline-flex; align-items: center; }
+.bd-presence-av { display: inline-grid; border-radius: 50%; box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--bd-pc); }
+.bd-presence-av + .bd-presence-av, .bd-presence-av + .bd-presence-more { margin-left: -8px; }
+.bd-presence-more {
+  display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; box-sizing: border-box; border-radius: 999px;
+  background: var(--line); color: var(--ink); font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--panel);
+}
+.bd-presence-count { display: none; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bd-presence-pop, .bd-celebrate-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 35; box-sizing: border-box; padding: 6px; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line); box-shadow: var(--bd-shadow);
+}
+.bd-presence-pop { min-width: 220px; max-width: min(320px, calc(100vw - 24px)); max-height: 60vh; overflow-y: auto; }
+.bd-presence-pop ul { margin: 0; padding: 0; list-style: none; }
+.bd-presence-pop li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: 8px; font-size: 14px; }
+.bd-presence-pop li.is-me { background: var(--bd-tint); }
+.bd-presence-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-presence-sub { color: var(--muted); }
+
+/* ---------- celebrate (top bar) ---------- */
+.bd-celebrate { position: relative; flex: none; display: inline-flex; align-items: stretch; }
+.bd-celebrate-main, .bd-celebrate-more {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.bd-celebrate-main { padding: 0 12px; border-radius: 999px 0 0 999px; }
+.bd-celebrate-more { min-width: 32px; padding: 0; border-left: 0; border-radius: 0 999px 999px 0; }
+.bd-celebrate-main:hover, .bd-celebrate-more:hover { background: var(--bd-hover); }
+.bd-celebrate-main.is-cooling { opacity: 0.5; cursor: default; }
+.bd-celebrate-main.is-cooling:hover { background: transparent; }
+.bd-celebrate-menu { min-width: 180px; display: grid; gap: 2px; }
+.bd-celebrate-item {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.bd-celebrate-item:hover { background: var(--bd-hover); }
+.bd-celebrate-item[aria-checked='true'] { background: var(--bd-tint); font-weight: 650; }
+
+/* ---------- other people's cursors and selections (inside the zoomed world layer) ---------- */
+.bd-cursor { position: absolute; left: 0; top: 0; pointer-events: none; transition: transform 90ms linear; } /* no will-change: idle cursors should not each hold a compositor layer */
+.bd-cursor-in { transform: scale(var(--bd-inv, 1)); transform-origin: 0 0; }
+.bd-cursor-arrow {
+  display: block; fill: var(--bd-pc); stroke: var(--pa-ink); stroke-width: 1.5; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--pa-ink) 40%, transparent));
+}
+.bd-cursor-name {
+  position: absolute; left: 14px; top: 18px; max-width: 160px; box-sizing: border-box; padding: 1px 8px; border-radius: 999px;
+  background: var(--bd-pc); color: var(--pa-ink); font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px color-mix(in srgb, var(--pa-ink) 35%, transparent);
+}
+.bd-peersel { position: absolute; left: 0; top: 0; pointer-events: none; }
+.bd-peersel::before {
+  content: ''; position: absolute; inset: calc(-4px * var(--bd-inv, 1)); border-radius: 6px;
+  border: calc(2px * var(--bd-inv, 1)) solid var(--bd-pc); box-shadow: 0 0 0 calc(1px * var(--bd-inv, 1)) color-mix(in srgb, var(--pa-ink) 45%, transparent);
+}
+.bd-peersel-tag {
+  position: absolute; left: 0; bottom: 100%; max-width: 140px; padding: 0 6px; border-radius: 6px; background: var(--bd-pc); color: var(--pa-ink);
+  font-size: 11px; font-weight: 600; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform-origin: 0 100%;
+  transform: translate(calc(-4px * var(--bd-inv, 1)), calc((-6px - var(--bd-slot, 0) * 18px) * var(--bd-inv, 1))) scale(var(--bd-inv, 1));
+}
+
+@media (max-width: 640px) {
+  .bd-presence-av:nth-child(n + 2), .bd-presence-more { display: none; }
+  .bd-presence-av + .bd-presence-av { margin-left: 0; }
+  .bd-presence-count { display: inline; }
+  .bd-presence-btn { padding: 0 4px; gap: 4px; }
+  /* The top bar has no room for Celebrate on a phone: it floats bottom left, level with the zoom control, and opens upward. */
+  .bd-celebrate {
+    position: fixed; left: 8px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 12; border-radius: 999px;
+    background: var(--panel); box-shadow: var(--bd-shadow);
+  }
+  .bd-celebrate-main { padding: 0 8px 0 12px; }
+  .bd-celebrate-more { min-width: 36px; }
+  .bd-celebrate-menu { top: auto; bottom: calc(100% + 6px); left: 0; right: auto; }
+  .bd-presence-pop { position: fixed; top: 56px; right: 8px; }
+}
+/* After the phone block, so a touch screen keeps the 44px target. */
+@media (pointer: coarse) {
+  .bd-celebrate-more { min-width: 44px; }
+}
+/* The status pill is as wide for "Live" as for "Offline" / "Syncing", so a reconnect blip does not shift the buttons beside it. */
+@media (min-width: 641px) {
+  .bd-status { min-width: 84px; justify-content: center; box-sizing: border-box; }
+}
+/* A 375px phone: give the board title room (it was down to about 45px). The avatar buttons keep their accessible names. */
+@media (max-width: 420px) {
+  .bd-screen .bd-top { gap: 2px; padding: 0 2px; }
+  .bd-presence-count { display: none; }
+  .bd-presence-btn { min-width: 40px; padding: 0 2px; }
+  .bd-screen .bd-status { padding: 4px; border-color: transparent; }
+}
+/* Narrower than 380px the floating Celebrate pill would touch the zoom control: it keeps only its icon (the name stays for assistive tech). */
+@media (max-width: 380px) {
+  .bd-celebrate-label { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .bd-celebrate-main { padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bd-cursor { transition: none; }
+}

@@ -1,0 +1,118 @@
+/* Participant personas: the avatar creature, its picker, the chooser card and the top-bar control. Colours come from
+   the tokens in globals.css (--bg --panel --ink --muted --accent --line) and board.css (--bd-*); the avatar palette
+   below is art, defined once as --pa-* tokens so light and dark are set in one place. Every class is prefixed pa-. */
+:root {
+  --pa-ink: #2a2540;      /* eyes, mouths and outlines: 6.3:1 to 10.1:1 on the body colours below */
+  --pa-tongue: #ff8fa3;
+  --pa-cheek: #ff8fa3;
+  --pa-hat: #ff8f6b;
+  --pa-bg-mix: 100%;      /* dark mode turns this down so the discs sit quietly on a dark panel */
+  --pa-bg-0: #ffd5c9; --pa-bg-1: #ffe8a3; --pa-bg-2: #d3f0c8; --pa-bg-3: #c7e6fb; --pa-bg-4: #ddd3fb; --pa-bg-5: #ffcfe4;
+  --pa-bg-6: #c9efe8; --pa-bg-7: #f2dfc2; --pa-bg-8: #e4efb4; --pa-bg-9: #b9c9f5; --pa-bg-10: #f6c9f0; --pa-bg-11: #cfd6de;
+  --pa-body-0: #ff9f89; --pa-body-1: #ffd166; --pa-body-2: #8fd694; --pa-body-3: #7cc4f5;
+  --pa-body-4: #b79df2; --pa-body-5: #ff8fbf; --pa-body-6: #6ed3c4; --pa-body-7: #f4b66e;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --pa-bg-mix: 78%; }
+}
+.pa-avatar { display: block; flex: none; }
+
+/* ---------- picker ---------- */
+.pa-picker { text-align: left; }
+.pa-picker-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.pa-picker-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pa-parts { display: grid; gap: 14px; margin-top: 14px; }
+.pa-parts:empty { display: none; }
+.pa-part-label { display: block; margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.pa-part-options { display: flex; flex-wrap: wrap; gap: 4px; }
+.pa-swatch {
+  display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid transparent; border-radius: 12px;
+  background: transparent; cursor: pointer;
+}
+.pa-swatch:hover { background: var(--bd-hover); }
+.pa-swatch.is-on { border-color: var(--accent); background: var(--bd-tint); }
+.pa-swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- buttons shared by the chooser ---------- */
+.pa-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.pa-btn:hover:not(:disabled) { background: var(--bd-hover); }
+.pa-btn:focus-visible, .pa-me:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pa-btn svg { width: 18px; height: 18px; }
+.pa-btn-quiet { border-color: transparent; background: transparent; color: var(--accent); padding: 0 4px; }
+.pa-primary { border-color: transparent; background: var(--accent); color: var(--bg); }
+.pa-primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+.pa-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- chooser card ---------- */
+.pa-card {
+  width: 100%; max-width: 480px; padding: 28px 24px 24px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+  box-shadow: var(--bd-shadow); color: var(--ink);
+}
+.pa-card h1 { margin: 0 0 6px; font-size: 22px; line-height: 1.25; text-align: center; outline: none; }
+.pa-lede { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.5; text-align: center; overflow-wrap: anywhere; }
+.pa-lede strong { color: var(--ink); font-weight: 600; }
+.pa-options { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.pa-option { border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); transition: border-color 120ms, background 120ms; }
+.pa-option.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--panel)); }
+.pa-option-head { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 14px; cursor: pointer; border-radius: 14px; }
+.pa-option-head input {
+  appearance: none; -webkit-appearance: none; flex: none; width: 22px; height: 22px; margin: 0; border-radius: 50%;
+  border: 2px solid var(--muted); background: transparent; display: grid; place-content: center; cursor: pointer;
+}
+.pa-option-head input::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform 120ms; }
+.pa-option-head input:checked { border-color: var(--accent); }
+.pa-option-head input:checked::before { transform: scale(1); }
+.pa-option-head:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pa-option-text { display: grid; gap: 1px; min-width: 0; }
+.pa-option-title { font-size: 15px; font-weight: 650; }
+.pa-option-sub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.pa-option-body { padding: 4px 14px 16px; display: grid; gap: 14px; }
+.pa-option-body .bd-field { margin: 0; }
+
+.pa-who { display: flex; align-items: center; gap: 16px; }
+.pa-who-text { display: grid; gap: 8px; justify-items: start; min-width: 0; }
+.pa-who-name { font-size: 20px; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+
+.pa-hint { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.pa-error { margin: 4px 0 0; min-height: 1.4em; font-size: 13px; line-height: 1.4; color: color-mix(in srgb, var(--bd-bad) 75%, var(--ink)); }
+.pa-error-submit { margin: 12px 0 0; text-align: center; }
+.pa-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.pa-actions .pa-primary { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; line-height: 1.25; padding-block: 8px; }
+.pa-card .bd-input { min-height: 44px; }
+
+/* ---------- dialog (changing a persona from the top bar) ---------- */
+.pa-overlay {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; overflow-y: auto;
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.pa-dialog { width: 100%; max-width: 480px; margin: auto; }
+.pa-dialog .pa-card { max-height: calc(100dvh - 32px); overflow-y: auto; }
+
+/* ---------- top bar: "You appear as <avatar> <name> - Change" ---------- */
+.pa-me {
+  display: inline-flex; align-items: center; gap: 10px; flex: 0 1 auto; min-width: 0; min-height: 44px; padding: 0 12px 0 8px;
+  border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--ink); font: inherit; cursor: pointer;
+}
+.pa-me:hover { background: var(--bd-hover); }
+.pa-me[aria-disabled='true'] { cursor: not-allowed; opacity: 0.8; }
+.pa-me[aria-disabled='true']:hover { background: transparent; }
+.pa-me[aria-disabled='true'] .pa-me-change { display: none; }
+.pa-me-text { display: grid; min-width: 0; text-align: left; line-height: 1.15; }
+.pa-me-pre { font-size: 11px; color: var(--muted); }
+.pa-me-name { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 14ch; }
+.pa-me-change { font-size: 13px; font-weight: 600; color: var(--accent); padding-left: 8px; border-left: 1px solid var(--line); }
+
+@media (max-width: 640px) {
+  .pa-card { padding: 22px 16px 18px; }
+  .pa-me { padding: 0 6px; gap: 0; border-color: transparent; min-width: 44px; justify-content: center; }
+  .pa-me-text, .pa-me-change { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .pa-who { gap: 12px; }
+  .pa-who-name { font-size: 18px; }
+  .pa-actions .pa-btn { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pa-option, .pa-option-head input::before { transition: none; }
+}

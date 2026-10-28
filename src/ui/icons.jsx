@@ -1,0 +1,27 @@
+// 20px stroke icons, currentColor. Kept in one file so the rail and the bars share them.
+const base = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
+const I = (children) => function Icon(props) { return <svg {...base} {...props}>{children}</svg> }
+
+export const SelectIcon = I(<path d="M5 3l14 7-6 2-2 6z" />)
+export const NoteIcon = I(<><path d="M5 4h14v10l-6 6H5z" /><path d="M13 20v-6h6" /></>)
+export const TextIcon = I(<><path d="M5 6V4h14v2" /><path d="M12 4v16" /><path d="M9 20h6" /></>)
+export const ShapeIcon = I(<><rect x="3" y="11" width="9" height="9" rx="1.5" /><circle cx="15.5" cy="8.5" r="5" /></>)
+export const ConnectorIcon = I(<><circle cx="5" cy="18" r="2.2" /><circle cx="19" cy="6" r="2.2" /><path d="M7 17c6 0 4-10 10-10" /></>)
+export const FrameIcon = I(<><path d="M7 3v18M17 3v18M3 7h18M3 17h18" /></>)
+export const ImageIcon = I(<><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="M21 16l-5-5-8 9" /></>)
+export const UndoIcon = I(<><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 010 12h-3" /></>)
+export const RedoIcon = I(<><path d="M15 14l5-5-5-5" /><path d="M20 9H10a6 6 0 000 12h3" /></>)
+export const MinusIcon = I(<path d="M5 12h14" />)
+export const PlusIcon = I(<path d="M12 5v14M5 12h14" />)
+export const FitIcon = I(<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />)
+export const LockIcon = I(<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></>)
+export const HomeIcon = I(<path d="M15 5l-7 7 7 7" />)
+export const ShuffleIcon = I(<><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></>)
+export const CloseIcon = I(<path d="M6 6l12 12M18 6L6 18" />)
+export const GearIcon = I(<><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5h0a1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></>)
+export const TimerIcon = I(<><circle cx="12" cy="13.5" r="7.5" /><path d="M12 9.5v4l2.6 1.6M9.5 3h5" /></>)
+export const AlarmIcon = I(<><path d="M12 3.5l9.5 16.5h-19z" /><path d="M12 10v5M12 17.8v.01" /></>)
+export const VoteIcon = I(<path d="M7 11V20M7 11l4-7a2 2 0 012 2v3h5.5a1.8 1.8 0 011.8 2.1l-1.2 7a1.8 1.8 0 01-1.8 1.5H7M3.5 11H7v9H3.5z" />)
+export const CheckIcon = I(<path d="M5 12.5l4.5 4.5L19 7.5" />)
+export const TrophyIcon = I(<><path d="M8 4h8v5a4 4 0 01-8 0zM8 6H4.5a3 3 0 003.5 4M16 6h3.5a3 3 0 01-3.5 4M12 13v4M8.5 20h7M10 17h4" /></>)
+export const SummaryIcon = I(<><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4M9 12h7M9 16h7M9 8h3" /></>)
