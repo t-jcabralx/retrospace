@@ -26,7 +26,7 @@
 .ev-tabs button { min-height: 40px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .ev-tabs button.is-on { background: var(--accent); color: var(--rs-on-accent, #fff); }
 .ev-tabs button:focus-visible, .ev-btn:focus-visible, .ev-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.ev-share { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.ev-share { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 12px; color: var(--muted); font-size: 14px; }
 .ev-share strong { color: var(--ink); letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
 .ev-panel { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 18px; }
 
@@ -62,7 +62,7 @@
 @keyframes ev-pop { from { transform: scale(0.8); opacity: 0; } }
 
 .ev-fs { margin: 0 0 18px; padding: 0; border: 0; min-width: 0; }
-.ev-fs h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; font-size: 16px; }
+.ev-fs h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0 0 8px; font-size: 16px; }
 .ev-count { color: var(--muted); font-size: 13px; font-weight: 500; }
 .ev-label { display: block; margin-bottom: 4px; font-size: 13px; color: var(--muted); }
 .ev-input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); font: inherit; font-size: 15px; }
@@ -129,7 +129,10 @@ textarea.ev-input { margin-bottom: 8px; resize: vertical; }
 .ev-fxgrid input { position: absolute; opacity: 0; pointer-events: none; }
 .ev-fxgrid label:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .ev-fxgrid label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.ev-gifrow { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.ev-gifrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin: 10px 0; }
+.ev-gifrow .ev-grow { flex: 1 1 150px; min-width: 150px; }
+.ev-gifrow .ev-grow p { margin: 2px 0 0; }
+.ev-gifrow .ev-btn { flex: 0 0 auto; min-height: 40px; }
 .ev-gifthumb { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
 .ev-more { margin: 4px 0 2px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; display: grid; gap: 8px; }
 .ev-more select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
@@ -137,3 +140,6 @@ textarea.ev-input { margin-bottom: 8px; resize: vertical; }
 .ev-list li .ev-more { flex: 1 1 100%; margin-bottom: 6px; }
 
 @media (max-width: 480px) { .ev-tabs { flex: 1 1 100%; } .ev-tabs button { flex: 1; padding: 0 6px; } .ev-bar .ev-btn--quiet { flex: 1; } }
+
+.ev.is-present .ev-qr { margin-top: 10px; }
+.ev-file { position: relative; cursor: pointer; overflow: hidden; } .ev-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; } .ev-file:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }

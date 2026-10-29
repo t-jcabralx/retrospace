@@ -232,3 +232,33 @@ test('celebrations: effects and GIF links are validated, kept per prize, and the
   assert.equal(celebrationFor({ ...w, rules: { ...w.rules, gif: 'https://a.example/w.gif' } }, { gif: 'https://a.example/p.gif' }).gif, 'https://a.example/p.gif')
   assert.deepEqual(celebrationFor({ ...defaultWheel(), rules: { removeWinners: true } }, null), { gif: null, effect: 'confetti' }) // an older wheel without the new fields
 })
+
+test('a plain name pick: no prize, straight to the winner; accept records it; skip and back return to the start', () => {
+  const people = setup(['A', 'B', 'C'], [])
+  let w = ok(run(people, 'spin-name', { pick: () => 1 }))
+  assert.equal(w.round.state, 'winnerChosen')
+  assert.equal(w.round.prizeId, null)
+  assert.equal(w.round.winnerId, people.participants[1].id)
+  assert.equal(w.round.spin.step, 'winner')
+  const done = NOW + SPIN.leadMs + SPIN.winnerMs + 1
+  const skipped = ok(run(w, 'skip', { now: done }))
+  assert.equal(skipped.round.state, 'idle')
+  assert.deepEqual(ringPeople(skipped).map((p) => p.name), ['A', 'C'])
+  assert.equal(ok(run(w, 'back', { now: done })).round.state, 'idle')
+  assert.deepEqual(ringPeople(ok(run(w, 'back', { now: done }))).map((p) => p.name), ['A', 'B', 'C']) // back puts everyone in again
+  const accepted = ok(run(w, 'accept', { now: done }))
+  assert.deepEqual(accepted.history[0].prize, { id: null, name: '', emoji: '' })
+  assert.equal(accepted.history[0].winner.name, 'B')
+  assert.equal(accepted.participants[1].won, true)
+  assert.equal(historyRows(accepted)[1][2], '')
+  const undone = ok(run(accepted, 'undo', { now: done }))
+  assert.equal(undone.history.length, 0)
+  assert.equal(undone.participants[1].won, undefined)
+})
+
+test('a plain name pick needs someone on the wheel and an idle round', () => {
+  assert.match(run(setup([], []), 'spin-name').error, /participant/)
+  const chosen = ok(run(setup(['A', 'B'], [['Mug', 1]]), 'spin-prize'))
+  assert.match(run(chosen, 'spin-name', { now: NOW + 99999 }).error, /current round/)
+  assert.ok(run(setup(['A'], [['Mug', 1]]), 'spin-name').wheel) // allowed even when prizes exist
+})

@@ -8,7 +8,8 @@ const require = createRequire(import.meta.url)
 let bindings
 
 export async function resolve(specifier, context, next) {
-  if (specifier === 'next/link') return { url: pathToFileURL(fileURLToPath(new URL('./link-stub.mjs', import.meta.url))).href, shortCircuit: true }
+  const stubs = { 'next/link': './link-stub.mjs', 'next/navigation': './navigation-stub.mjs', 'next/image': './image-stub.mjs' }
+  if (stubs[specifier]) return { url: pathToFileURL(fileURLToPath(new URL(stubs[specifier], import.meta.url))).href, shortCircuit: true }
   return next(specifier, context)
 }
 

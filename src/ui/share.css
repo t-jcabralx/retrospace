@@ -1,0 +1,19 @@
+/* The invite dialog (QR code, link and code). Colours come from the board tokens. */
+.bd-share { position: fixed; z-index: 60; top: 50%; left: 50%; width: min(420px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; transform: translate(-50%, -50%); padding: 18px 20px 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); color: var(--ink); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45); }
+.bd-share:focus { outline: none; }
+.bd-share-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.bd-share-head h2 { margin: 0; font-size: 20px; }
+.bd-share-lede, .bd-share-hint { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.bd-share .ev-qr { border: 0; padding: 4px 0 12px; background: none; margin: 0; }
+.bd-share-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px 10px 8px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.bd-share-val { display: grid; min-width: 0; flex: 1; }
+.bd-share-lab { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.bd-share-val code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.bd-share-hint { margin: 12px 0 0; font-size: 13px; }
+
+/* the QR code card, shared by the invite dialog and the Event screen */
+.ev-qr { display: grid; justify-items: center; gap: 8px; margin: 0 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); text-align: center; }
+.ev-qr img { border-radius: 10px; max-width: 100%; height: auto; background: #fff; }
+.ev-qr figcaption { max-width: 34ch; color: var(--muted); font-size: 14px; line-height: 1.5; } .ev-qr figcaption strong { color: var(--ink); }
+.ev-code { letter-spacing: 0.14em; font-variant-numeric: tabular-nums; }
+.ev-qr-wait { width: 200px; height: 200px; display: grid; place-items: center; color: var(--muted); font-size: 14px; }

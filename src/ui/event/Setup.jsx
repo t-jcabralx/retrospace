@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { LIMITS } from '../../lib/wheel.js'
 import GifPicker from '../GifPicker.jsx'
 import { EFFECT_INFO } from './Celebration.jsx'
+import { namesFromCsv } from './names.js'
 
 let tmp = 0
 const tmpId = () => `t${Date.now().toString(36)}${(tmp++).toString(36)}`
@@ -64,6 +65,15 @@ export default function Setup({ api, onPreview }) {
     setState({ phase: 'idle', error: '' })
     setPeople([...people, ...fresh].slice(0, LIMITS.participants))
   }
+  async function importFile(e) { // a .csv or .txt of names, read here in the browser and never uploaded
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 512 * 1024) return setState({ phase: 'idle', error: 'That file is too big. Names only, please (up to 500 KB).' })
+    const names = namesFromCsv(await file.text())
+    if (!names.length) return setState({ phase: 'idle', error: 'No names found in that file.' })
+    addNames(names.join('\n'))
+  }
   function addJoined() {
     const have = new Set(people.map((p) => p.uid).filter(Boolean))
     const names = new Set(people.map((p) => p.name.toLowerCase()))
@@ -98,6 +108,7 @@ export default function Setup({ api, onPreview }) {
         <textarea id="ev-paste" className="ev-input" rows={3} value={paste} onChange={(e) => setPaste(e.target.value)} placeholder={'Maria\nJohn, Priya'} />
         <div className="ev-row">
           <button type="button" className="ev-btn" onClick={() => { addNames(paste); setPaste('') }}>Add to the wheel</button>
+          <label className="ev-btn ev-btn--quiet ev-file">Import a CSV or text file<input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={importFile} /></label>
           {canJoin.length > 0 && <button type="button" className="ev-btn ev-btn--quiet" onClick={addJoined}>Add everyone who joined ({canJoin.length})</button>}
         </div>
         {people.length > 0 && (

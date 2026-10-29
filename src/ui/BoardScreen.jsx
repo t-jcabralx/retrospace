@@ -17,7 +17,10 @@ import { showSummaryButton } from './summaryApi.js'
 import { EffectsProvider } from './Effects.jsx'
 import { usePresence } from './usePresence.js'
 import { useBoard } from './useBoard.js'
-import { UndoIcon, RedoIcon, LockIcon, HomeIcon, GearIcon, SummaryIcon } from './icons.jsx'
+import { UndoIcon, RedoIcon, LockIcon, HomeIcon, GearIcon, SummaryIcon, ShareIcon } from './icons.jsx'
+import ShareDialog from './ShareDialog.jsx'
+import PageShell from './site/PageShell.jsx'
+import NotFoundCard from './site/NotFoundCard.jsx'
 import ExportMenu from './ExportMenu.jsx'
 import EventBoard from './event/EventBoard.jsx'
 import RetroStage from './RetroStage.jsx'
@@ -63,6 +66,8 @@ function BoardView({ code, viewOnly }) {
   const [themesOpen, setThemesOpen] = useState(false)
   const themesBtn = useRef(null)
   const settingsBtn = useRef(null)
+  const shareBtn = useRef(null)
+  const [shareOpen, setShareOpen] = useState(false)
   const summaryBtn = useRef(null)
 
   useEffect(() => {
@@ -71,9 +76,16 @@ function BoardView({ code, viewOnly }) {
 
   if (phase === 'missing') {
     return (
-      <Panel title="Board not found">
-        <p>There is no board with the code {code}. Check the link, or start a new board.</p>
-      </Panel>
+      <PageShell>
+        <NotFoundCard title="We can't find that board" code={code}>
+          <p>There is no board with that code. A few things to check:</p>
+          <ul>
+            <li>Every letter and number in the code, and that the link was not cut off when it was copied.</li>
+            <li>That the code is for a Retrospace board (it has six letters and numbers).</li>
+            <li>That the owner has not deleted the board. Ask them for the code again.</li>
+          </ul>
+        </NotFoundCard>
+      </PageShell>
     )
   }
   if (phase === 'revoked') {
@@ -170,6 +182,9 @@ function BoardView({ code, viewOnly }) {
               </button>
             )}
             {ctl.isOwner && (
+              <button ref={shareBtn} type="button" className="bd-iconbtn" aria-label="Invite people: scan or link" title="Invite people (QR code and link)" aria-haspopup="dialog" onClick={() => setShareOpen(true)}><ShareIcon /></button>
+            )}
+            {ctl.isOwner && (
               <button ref={settingsBtn} type="button" className="bd-iconbtn" aria-label="Board settings" title="Board settings" aria-haspopup="dialog" onClick={() => setSettingsOpen(true)}><GearIcon /></button>
             )}
           </>
@@ -188,6 +203,7 @@ function BoardView({ code, viewOnly }) {
           onSubmit={async (p) => { const r = await ctl.savePersona(p); if (!r) setChanging(false); return r }}
         />
       )}
+      {shareOpen && ctl.isOwner && <ShareDialog code={code} title={board?.title} openerRef={shareBtn} onClose={() => setShareOpen(false)} />}
       {settingsOpen && ctl.isOwner && <BoardSettings ctl={ctl} openerRef={settingsBtn} focusAi={focusAi} onClose={() => { setSettingsOpen(false); setFocusAi(false) }} />}
       {summaryOpen && ( // stays open when the owner withdraws the summary under a guest who is reading it: the panel then says so
         <SummaryPanel ctl={ctl} openerRef={summaryBtn} onClose={() => setSummaryOpen(false)} onOpenSettings={() => { setSummaryOpen(false); setFocusAi(true); setSettingsOpen(true) }} />

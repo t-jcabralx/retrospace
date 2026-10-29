@@ -42,13 +42,14 @@ export function Draw({ api, v, now, main, run, busy, error }) {
   }, [])
 
   let message
-  if (round.state === 'idle') message = history.length ? 'Ready for the next draw.' : !people || !prizes ? 'Add people and prizes to start.' : 'Ready. Spin to pick the first prize.'
+  const quick = round.state === 'winnerChosen' && !round.prizeId // a plain name pick: no prize
+  if (round.state === 'idle') message = history.length ? 'Ready for the next draw.' : !people ? 'Add people to start.' : !prizes ? 'Ready. Spin to pick a name.' : 'Ready. Spin to pick the first prize.'
   else if (round.state === 'prizeChosen') message = v.prizeShown ? `The prize is ${label(v.prize)}. Now pick who wins it.` : 'Spinning for the prize…'
-  else message = v.winnerShown ? `${v.winner?.name ?? 'Someone'} wins ${label(v.prize)}` : 'Spinning for the winner…'
+  else message = v.winnerShown ? (quick ? `${v.winner?.name ?? 'Someone'} is picked` : `${v.winner?.name ?? 'Someone'} wins ${label(v.prize)}`) : quick ? 'Picking a name…' : 'Spinning for the winner…'
 
   return (
     <section className="ev-draw" aria-label="The draw">
-      <StepBar stage={stage} />
+      {!quick && !(round.state === 'idle' && !prizes) && <StepBar stage={stage} />}
       <div className={`ev-result${v.winnerShown ? ' is-win' : ''}`}>
         <p className="ev-message" role="status" aria-live="polite">{v.winnerShown ? <><span className="ev-cheer">🎉</span>{message}</> : message}</p>
         {v.prizeShown && !v.winnerShown && <p className="ev-chip" aria-hidden="true">{label(v.prize)}</p>}
@@ -63,10 +64,11 @@ export function Draw({ api, v, now, main, run, busy, error }) {
           )}
           {!main && animating && <button type="button" className="ev-btn ev-btn--primary" disabled>Spinning…</button>}
           {main?.why && <p id="ev-why" className="ev-hint">{main.why}</p>}
+          {round.state === 'idle' && people > 0 && prizes > 0 && <div className="ev-row"><button type="button" className="ev-btn ev-btn--quiet" disabled={disabled} onClick={() => run('spin-name')}>Just pick a name, no prize</button></div>}
           {round.state === 'winnerChosen' && v.winnerShown && (
             <div className="ev-row">
               <button type="button" className="ev-btn" disabled={disabled} onClick={() => run('skip')}>Not here, skip</button>
-              <button type="button" className="ev-btn" disabled={disabled} onClick={() => run('back')}>Spin the winner again</button>
+              <button type="button" className="ev-btn" disabled={disabled} onClick={() => run('back')}>{quick ? 'Pick again' : 'Spin the winner again'}</button>
             </div>
           )}
           {round.state === 'prizeChosen' && v.prizeShown && <div className="ev-row"><button type="button" className="ev-btn" disabled={disabled} onClick={() => run('back')}>Pick a different prize</button></div>}
@@ -100,7 +102,7 @@ export function History({ api }) {
     <section aria-label="Draw history">
       <ol className="ev-history" reversed>
         {[...history].reverse().map((h) => (
-          <li key={h.n}><span className="ev-hn">#{h.n}</span><span className="ev-hw">{h.winner.name}</span><span className="ev-hp">{label(h.prize)}</span><time dateTime={new Date(h.at).toISOString()}>{time(h.at)}</time></li>
+          <li key={h.n}><span className="ev-hn">#{h.n}</span><span className="ev-hw">{h.winner.name}</span><span className="ev-hp">{h.prize.name ? label(h.prize) : 'Picked'}</span><time dateTime={new Date(h.at).toISOString()}>{time(h.at)}</time></li>
         ))}
       </ol>
       <button type="button" className="ev-btn" onClick={download}>Download as CSV</button>

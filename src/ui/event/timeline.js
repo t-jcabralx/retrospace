@@ -55,6 +55,7 @@ export function mainAction(wheel, v, now) {
   const prizes = ringPrizes(wheel).length
   if (round.spin && now < round.spin.startAt + round.spin.durationMs) return null
   if (round.state === 'idle') {
+    if (!prizes && people) return { action: 'spin-name', text: 'Pick a name', spin: true, off: false, why: '' } // no prizes: a plain name picker
     return { action: 'spin-prize', text: 'Spin for the prize', spin: true, off: !people || !prizes, why: !people ? 'Add at least one person first.' : !prizes ? 'Add a prize with at least one left.' : '' }
   }
   if (round.state === 'prizeChosen') return v.prizeShown ? { action: 'spin-winner', text: 'Spin for the winner', spin: true, off: !people, why: !people ? 'No one is left to win.' : '' } : null

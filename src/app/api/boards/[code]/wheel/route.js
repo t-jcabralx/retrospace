@@ -8,7 +8,7 @@ import { json, fail, parseBody, windowHit, tooMany, retryAfterSecs } from '../..
 
 export const runtime = 'nodejs'
 
-const ACTIONS = ['spin-prize', 'spin-winner', 'accept', 'skip', 'back', 'undo']
+const ACTIONS = ['spin-prize', 'spin-name', 'spin-winner', 'accept', 'skip', 'back', 'undo']
 const PER_10_SECONDS = 12
 
 // One step of the draw by the owner or a helper the owner named. The result is chosen HERE (crypto.randomInt); the screens

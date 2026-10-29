@@ -1,0 +1,13 @@
+/* The not-found card. Colours come from the site tokens. */
+.nf { max-width: 780px; padding-block: clamp(24px, 6vw, 64px); }
+.nf-card { overflow: hidden; border: 1px solid var(--rs-line); border-radius: var(--rs-r-lg); background: var(--panel); box-shadow: var(--rs-shadow); }
+.nf-photo { position: relative; aspect-ratio: 12 / 5; background: var(--rs-accent-soft); }
+.nf-photo img { object-fit: cover; }
+.nf-body { padding: clamp(20px, 5vw, 36px); }
+.nf-eyebrow { margin: 0 0 6px; color: var(--rs-accent-ink); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.nf h1 { margin: 0 0 12px; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem); line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; }
+.nf-code { margin: 0 0 14px; color: var(--rs-muted); } .nf-code code { margin-left: 6px; padding: 3px 10px; border-radius: 8px; background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); font-size: 1.05em; letter-spacing: 0.14em; }
+.nf-text { color: var(--rs-muted); line-height: 1.65; } .nf-text p { margin: 0 0 10px; }
+.nf-text ul { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 4px; }
+.nf-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+@media (max-width: 480px) { .nf-actions .rs-btn { width: 100%; } }

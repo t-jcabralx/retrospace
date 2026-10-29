@@ -17,7 +17,7 @@ test('a missing board is still reported by the client through the metered API, w
   assert.match(hook, /res\.status === 404\) return \{ missing: true \}/)
   assert.match(hook, /setPhase\('missing'\)/)
   const screen = await read('src/ui/BoardScreen.jsx')
-  assert.match(screen, /phase === 'missing'[\s\S]*Board not found/)
+  assert.match(screen, /phase === 'missing'[\s\S]*NotFoundCard[\s\S]*find that board/)
 })
 
 test('the /b/[code]/reveal server page also does no store lookup and keeps the code out of search indexes', async () => {

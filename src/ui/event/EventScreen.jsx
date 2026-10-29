@@ -10,6 +10,7 @@ import Setup from './Setup.jsx'
 import { Draw, History } from './Panels.jsx'
 import { copyText } from '../boards/CopyButton.jsx'
 import { Effect, GifPop, useCelebration } from './Celebration.jsx'
+import JoinQr from '../JoinQr.jsx'
 import './event.css'
 
 // A small button that copies the board code and says so.
@@ -34,6 +35,7 @@ export default function EventScreen({ api }) {
   const empty = wheel.participants.length === 0 && wheel.prizes.length === 0
   const [tab, setTab] = useState(() => (api.owner && empty ? 'setup' : 'draw'))
   const [present, setPresent] = useState(false)
+  const [qr, setQr] = useState(false)
   const shown = present ? 'draw' : tab
   const cel = useCelebration(wheel, v)
   const main = api.runner ? mainAction(wheel, v, now) : null
@@ -82,8 +84,12 @@ export default function EventScreen({ api }) {
           <button type="button" className="ev-btn ev-btn--quiet ev-present" aria-pressed={present} onClick={() => setPresent((p) => !p)}>{present ? 'Exit' : 'Present'}</button>
         </div>
         {api.owner && api.code && !present && (
-          <p className="ev-share">Guests join with the code <strong>{api.code}</strong> <CopyCode code={api.code} /></p>
+          <div className="ev-share">
+            <span>Guests join with the code <strong>{api.code}</strong></span> <CopyCode code={api.code} />
+            <button type="button" className="ev-btn ev-btn--quiet ev-copy" aria-expanded={qr} onClick={() => setQr((q) => !q)}>{qr ? 'Hide QR' : 'QR code'}</button>
+          </div>
         )}
+        {api.code && (qr || present) && <JoinQr code={api.code} compact={present} />}
         <div role="tabpanel" id={`ev-pan-${shown}`} aria-labelledby={`ev-tab-${shown}`} className="ev-panel">
           {shown === 'draw' && <Draw api={api} v={v} now={now} main={main} run={run} busy={busy} error={error} />}
           {shown === 'setup' && <Setup api={api} onPreview={cel.play} />}

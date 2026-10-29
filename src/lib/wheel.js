@@ -113,24 +113,28 @@ function startSpin(w, step, { now, pick }) {
 // -> { wheel } | { error }. Every action checks the state it needs, so a double press or a stale screen gets a plain message.
 export function applyAction(w, action, { now, pick, by = null } = {}) {
   const { state } = w.round
-  if (['spin-prize', 'spin-winner', 'accept', 'skip', 'back'].includes(action) && spinning(w.round, now)) return bad('Wait for the spin to finish')
+  if (['spin-prize', 'spin-name', 'spin-winner', 'accept', 'skip', 'back'].includes(action) && spinning(w.round, now)) return bad('Wait for the spin to finish')
   switch (action) {
     case 'spin-prize':
       if (state !== 'idle') return bad('Finish or go back from the current round first')
       if (!ringPeople(w).length) return bad('Add a participant first')
       return startSpin(w, 'prize', { now, pick })
+    case 'spin-name': // just pick a name: no prize, straight to the winner step
+      if (state !== 'idle') return bad('Finish or go back from the current round first')
+      if (!ringPeople(w).length) return bad('Add a participant first')
+      return startSpin(w, 'winner', { now, pick })
     case 'spin-winner':
       if (state !== 'prizeChosen') return bad('Pick the prize first')
       return startSpin(w, 'winner', { now, pick })
     case 'accept': {
       if (state !== 'winnerChosen') return bad('There is no winner to accept')
       const next = clone(w)
-      const prize = next.prizes.find((z) => z.id === w.round.prizeId)
+      const prize = w.round.prizeId ? next.prizes.find((z) => z.id === w.round.prizeId) : null // no prize id: a plain name pick
       const winner = next.participants.find((p) => p.id === w.round.winnerId)
-      if (!prize || !winner) return bad('That prize or person is no longer on the wheel')
-      next.history.push({ n: next.history.length ? next.history.at(-1).n + 1 : 1, at: now, prize: { id: prize.id, name: prize.name, emoji: prize.emoji }, winner: { id: winner.id, name: winner.name }, by })
+      if ((w.round.prizeId && !prize) || !winner) return bad('That prize or person is no longer on the wheel')
+      next.history.push({ n: next.history.length ? next.history.at(-1).n + 1 : 1, at: now, prize: prize ? { id: prize.id, name: prize.name, emoji: prize.emoji } : { id: null, name: '', emoji: '' }, winner: { id: winner.id, name: winner.name }, by })
       if (next.history.length > LIMITS.history) next.history.splice(0, next.history.length - LIMITS.history)
-      prize.qty = Math.max(0, prize.qty - 1)
+      if (prize) prize.qty = Math.max(0, prize.qty - 1)
       if (next.rules.removeWinners) winner.won = true
       next.round = { ...next.round, state: 'idle', prizeId: null, winnerId: null, sitOut: [], spin: null }
       return { wheel: next }
@@ -138,13 +142,14 @@ export function applyAction(w, action, { now, pick, by = null } = {}) {
     case 'skip': { // not here: they sit out this round, the winner is spun again
       if (state !== 'winnerChosen') return bad('There is no winner to skip')
       const next = clone(w)
-      next.round = { ...next.round, state: 'prizeChosen', sitOut: [...next.round.sitOut, w.round.winnerId], winnerId: null, spin: null }
+      // with a prize the winner is spun again for it; a plain name pick goes back to the start with that person sitting out
+      next.round = { ...next.round, state: w.round.prizeId ? 'prizeChosen' : 'idle', sitOut: [...next.round.sitOut, w.round.winnerId], winnerId: null, spin: null }
       return { wheel: next }
     }
     case 'back': { // winnerChosen -> prizeChosen (spin the winner again); prizeChosen -> idle (pick another prize)
       if (state === 'idle') return bad('Nothing to go back from')
       const next = clone(w)
-      next.round = state === 'winnerChosen' ? { ...next.round, state: 'prizeChosen', winnerId: null, spin: null } : { ...next.round, state: 'idle', prizeId: null, sitOut: [], spin: null }
+      next.round = state === 'winnerChosen' && w.round.prizeId ? { ...next.round, state: 'prizeChosen', winnerId: null, spin: null } : { ...next.round, state: 'idle', prizeId: null, sitOut: [], spin: null }
       return { wheel: next }
     }
     case 'undo': { // takes back the last accepted result
@@ -152,7 +157,7 @@ export function applyAction(w, action, { now, pick, by = null } = {}) {
       if (!w.history.length) return bad('There is nothing to undo')
       const next = clone(w)
       const last = next.history.pop()
-      const prize = next.prizes.find((z) => z.id === last.prize.id)
+      const prize = last.prize.id ? next.prizes.find((z) => z.id === last.prize.id) : null
       if (prize) prize.qty = Math.min(LIMITS.qty, prize.qty + 1)
       const winner = next.participants.find((p) => p.id === last.winner.id)
       if (winner) delete winner.won

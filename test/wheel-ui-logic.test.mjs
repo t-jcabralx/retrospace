@@ -23,7 +23,7 @@ test('the main action explains why it cannot start', () => {
   const m = mainAction(none, view(none, 0), 0)
   assert.equal(m.off, true)
   assert.match(m.why, /person/)
-  assert.match(mainAction({ ...base(), prizes: [] }, view(base(), 0), 0).why, /prize/)
+  assert.equal(mainAction({ ...base(), prizes: [] }, view(base(), 0), 0).action, 'spin-name') // no prizes: a plain name pick
 })
 
 test('the slice under the pointer matches where spinAngle puts the chosen slice', () => {
