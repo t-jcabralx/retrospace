@@ -234,3 +234,25 @@ test('PATCH through the route drops the board cache: a throw is refused at once 
   assert.equal(off.status, 403)
   assert.equal(await reason(off), 'Throwing is off')
 })
+
+test('drag messages are relayed with only the allowed fields, and bad ones are refused', async () => {
+  const code = await board()
+  const uid = await guest(code, 'Dana Dragger')
+  assert.equal((await post(code, uid, { t: 'drag', items: [{ id: 'a', x: 1, y: 2, w: 100, h: 50, evil: 'x' }] })).status, 200)
+  assert.equal((await post(code, uid, { t: 'drag', end: true, cancel: true, ids: ['a'] })).status, 200)
+  for (const bad of [
+    { t: 'drag' }, { t: 'drag', items: [] }, { t: 'drag', items: [{ id: 'a', x: 'x', y: 1 }] }, { t: 'drag', items: [{ id: '', x: 1, y: 1 }] },
+    { t: 'drag', items: [{ id: 'a', x: 1, y: 1, w: -5 }] }, { t: 'drag', items: [{ id: 'a', x: 1e9, y: 1 }] },
+    { t: 'drag', items: Array.from({ length: 21 }, (_, i) => ({ id: `i${i}`, x: 1, y: 1 })) }, { t: 'drag', end: true, ids: [] },
+  ]) assert.equal((await post(code, uid, bad)).status, 400, JSON.stringify(bad).slice(0, 60))
+})
+
+test('a guest cannot relay drag steps on a closed or locked board; the owner can', async () => {
+  await fakeUpstash(async () => { // without Redis nothing is relayed, so the board checks are never reached
+    const code = await board({ locked: true })
+    const uid = await guest(code, 'Gus Guest')
+    const owner = await ownerOf(code)
+    assert.equal((await post(code, uid, { t: 'drag', items: [{ id: 'a', x: 1, y: 1 }] })).status, 403)
+    assert.equal((await post(code, owner, { t: 'drag', items: [{ id: 'a', x: 1, y: 1 }] })).status, 200)
+  })
+})

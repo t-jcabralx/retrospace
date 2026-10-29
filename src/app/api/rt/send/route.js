@@ -16,8 +16,11 @@ const EFFECTS = new Set(['confetti', 'balloons', 'fireworks']) // the celebratio
 const MAX_COORD = 1e6
 const MAX_SEL = 100
 const MAX_ID = 40
+const MAX_DRAG_ITEMS = 20
 
 const isCoord = (v) => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= MAX_COORD
+const isDim = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= MAX_COORD
+const isItemId = (v) => typeof v === 'string' && v.length > 0 && v.length <= MAX_ID
 
 // Consumers (presence, cursors) must read the sender from the envelope's `from`, never from `msg`: there is no uid in msg.
 // What each message type may carry. Anything else in `msg` is dropped, so a client can never relay a `uid`, `from` or
@@ -28,6 +31,22 @@ const CLEAN = {
   typing: () => ({ t: 'typing' }),
   cursor: (m) => (isCoord(m.x) && isCoord(m.y) ? { t: 'cursor', x: m.x, y: m.y } : null),
   sel: (m) => (Array.isArray(m.ids) && m.ids.length <= MAX_SEL && m.ids.every((i) => typeof i === 'string' && i.length > 0 && i.length <= MAX_ID) ? { t: 'sel', ids: [...m.ids] } : null),
+  // Live drag / resize steps: where the sender's items are right now. Relayed only, never stored (the drop is a normal write);
+  // peers show them as a temporary position. `end` closes the gesture, `cancel` says the items go back where they were.
+  drag: (m) => {
+    if (m.end === true) {
+      return Array.isArray(m.ids) && m.ids.length > 0 && m.ids.length <= MAX_DRAG_ITEMS && m.ids.every(isItemId)
+        ? { t: 'drag', end: true, ...(m.cancel === true && { cancel: true }), ids: [...m.ids] } : null
+    }
+    if (!Array.isArray(m.items) || m.items.length === 0 || m.items.length > MAX_DRAG_ITEMS) return null
+    const items = []
+    for (const it of m.items) {
+      if (it === null || typeof it !== 'object' || !isItemId(it.id) || !isCoord(it.x) || !isCoord(it.y)) return null
+      if ((it.w !== undefined && !isDim(it.w)) || (it.h !== undefined && !isDim(it.h))) return null
+      items.push({ id: it.id, x: it.x, y: it.y, ...(it.w !== undefined && { w: it.w }), ...(it.h !== undefined && { h: it.h }) })
+    }
+    return { t: 'drag', items }
+  },
   celebrate: (m) => (EFFECTS.has(m.effect) ? { t: 'celebrate', effect: m.effect } : null),
   // The board's own rules (is throwing on, is this emoji in its list) are checked by the handler.
   throw: (m) => {
@@ -37,6 +56,7 @@ const CLEAN = {
   },
 }
 const MAX_MSG_BYTES = 1024
+const MAX_DRAG_BYTES = 3 * 1024
 const PER_SECOND = 30
 const CELEBRATE_GAP_MS = 3000 // one celebration per participant per window; the client also waits this long
 
@@ -58,7 +78,7 @@ export async function POST(req) {
   if (!verifyTok(body.code, body.uid, body.tok)) return fail(403, 'not in room')
   const msg = body.msg
   if (msg === null || typeof msg !== 'object' || Array.isArray(msg) || !Object.hasOwn(CLEAN, msg.t)) return fail(400, 'invalid msg')
-  if (Buffer.byteLength(JSON.stringify(msg)) > MAX_MSG_BYTES) return fail(413, 'message too large')
+  if (Buffer.byteLength(JSON.stringify(msg)) > (msg.t === 'drag' ? MAX_DRAG_BYTES : MAX_MSG_BYTES)) return fail(413, 'message too large')
   const clean = CLEAN[msg.t](msg)
   if (!clean) return fail(400, 'invalid msg')
 
@@ -82,7 +102,7 @@ export async function POST(req) {
   if (!isOwner) {
     if (board.revoked) return fail(403, 'This link was revoked')
     if (board.bans?.includes(body.uid)) return fail(403, 'You were removed from this board')
-    if ((msg.t === 'celebrate' || throwing) && (board.status !== 'open' || board.locked)) return fail(403, 'Board is read-only')
+    if ((msg.t === 'celebrate' || msg.t === 'drag' || throwing) && (board.status !== 'open' || board.locked)) return fail(403, 'Board is read-only')
   }
   if (throwing) {
     // Everyone's rules, the owner's included. These checks come before the rate limit, so a refused throw costs no budget.

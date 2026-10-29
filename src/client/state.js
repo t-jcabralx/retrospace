@@ -44,6 +44,7 @@ export function initialState(snapshot) {
     viewer: snapshot.viewer ?? { role: 'guest' }, // who is looking, as the server decided (never from local storage)
     items,
     tombs: new Map(),
+    drags: new Map(), // id -> { base: {x,y,w,h} the item had before a peer's live drag moved it, at } (temporary positions)
     undo: [],
     redo: [],
     lastSeen: Math.max(Number(snapshot.board?.lastTs) || 0, maxUpdated(snapshot.items ?? [])),
@@ -132,6 +133,60 @@ function merge(state, docs, advance) {
   return { ...state, items, tombs, lastSeen }
 }
 
+// --- a peer's live drag: a temporary position, never stored, replaced by the real write that follows the drop ---
+const FRAME = ['x', 'y', 'w', 'h']
+const pick = (item) => Object.fromEntries(FRAME.filter((k) => Number.isFinite(item[k])).map((k) => [k, item[k]]))
+
+function peerDrag(state, list, now = Date.now()) {
+  if (!Array.isArray(list) || !list.length) return state
+  let items = null
+  let drags = null
+  for (const d of list) {
+    if (!isObj(d) || typeof d.id !== 'string') continue
+    const cur = (items ?? state.items).get(d.id)
+    if (!cur || cur.deleted || !Number.isFinite(d.x) || !Number.isFinite(d.y)) continue
+    items ??= new Map(state.items)
+    drags ??= new Map(state.drags)
+    const held = drags.get(d.id)
+    drags.set(d.id, { base: held?.base ?? pick(cur), at: now, ended: false })
+    items.set(d.id, { ...cur, x: d.x, y: d.y, ...(Number.isFinite(d.w) && d.w > 0 && { w: d.w }), ...(Number.isFinite(d.h) && d.h > 0 && { h: d.h }) })
+  }
+  return items ? { ...state, items, drags } : state
+}
+
+// The gesture ended: a cancelled one puts the items back at once; a dropped one keeps the position until the real write arrives.
+function peerDragEnd(state, ids, cancel, now = Date.now()) {
+  if (!Array.isArray(ids)) return state
+  let items = null
+  let drags = null
+  for (const id of ids) {
+    const held = state.drags.get(id)
+    if (!held) continue
+    drags ??= new Map(state.drags)
+    if (cancel) {
+      const cur = state.items.get(id)
+      if (cur) { items ??= new Map(state.items); items.set(id, { ...cur, ...held.base }) }
+      drags.delete(id)
+    } else drags.set(id, { ...held, at: now, ended: true })
+  }
+  return drags ? { ...state, ...(items && { items }), drags } : state
+}
+
+// A drag nobody has updated for `after` ms (the sender left, or the write never came) goes back to where the item was.
+function peerDragExpire(state, now = Date.now(), after = 4000) {
+  // A drop is waited for `after` ms; a drag still in progress may pause (the sender holds still), so it gets three times that.
+  const stale = [...state.drags].filter(([, h]) => now - h.at > (h.ended ? after : after * 3)).map(([id]) => id)
+  return stale.length ? peerDragEnd(state, stale, true, now) : state
+}
+
+// Real data for an item replaces whatever temporary position a peer's drag gave it.
+function clearDrags(state, docs) {
+  if (!state.drags.size) return state
+  let drags = null
+  for (const d of docs ?? []) if (isObj(d) && state.drags.has(d.id)) { drags ??= new Map(state.drags); drags.delete(d.id) }
+  return drags ? { ...state, drags } : state
+}
+
 const capped = (stack) => (stack.length > MAX_HISTORY ? stack.slice(stack.length - MAX_HISTORY) : stack)
 
 export function reducer(state, action) {
@@ -178,11 +233,14 @@ export function reducer(state, action) {
       for (const [id, item] of state.items) items.set(id, item.votes?.length ? { ...item, votes: [] } : item)
       return { ...state, items }
     }
+    case 'peer-drag': return peerDrag(state, action.items, action.now)
+    case 'peer-drag-end': return peerDragEnd(state, action.ids, action.cancel === true, action.now)
+    case 'peer-drag-expire': return peerDragExpire(state, action.now, action.after)
     case 'remote':
-      return merge(state, action.items, true)
+      return clearDrags(merge(state, action.items, true), action.items)
     case 'ack':
       // The author's own writes say nothing about peers' ops, so lastSeen stays where /since needs it.
-      return merge(state, action.items, false)
+      return clearDrags(merge(state, action.items, false), action.items)
     default:
       return state
   }

@@ -333,3 +333,49 @@ test('a board message repaints the Retro stage and the anonymous-notes mode, and
   assert.deepEqual(s2.board.retro, retro)
   assert.equal(s2.board.anonymousNotes, 'always')
 })
+
+// --- a peer's live drag --------------------------------------------------------------------------------
+const dragState = () => initialState(snapshot([doc('a', { x: 10, y: 20, w: 200, h: 100 }), doc('b', { x: 0, y: 0, w: 200, h: 200 })]))
+const at = (s, id) => { const i = s.items.get(id); return [i.x, i.y, i.w, i.h] }
+
+test('a peer drag moves the item temporarily and remembers where it was', () => {
+  const s = reducer(dragState(), { type: 'peer-drag', items: [{ id: 'a', x: 50, y: 60, w: 250 }], now: 1000 })
+  assert.deepEqual(at(s, 'a'), [50, 60, 250, 100])
+  assert.deepEqual(s.drags.get('a').base, { x: 10, y: 20, w: 200, h: 100 })
+  const s2 = reducer(s, { type: 'peer-drag', items: [{ id: 'a', x: 70, y: 80 }], now: 1100 })
+  assert.deepEqual(s2.drags.get('a').base, { x: 10, y: 20, w: 200, h: 100 }) // the base is the position before the FIRST step
+  assert.equal(s2.undo.length, 0)
+})
+
+test('a peer drag ignores unknown or deleted items and bad numbers', () => {
+  const s0 = dragState()
+  assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'zzz', x: 1, y: 1 }] }), s0)
+  assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: NaN, y: 1 }, { id: 'a', x: 'x', y: 1 }, null, 5] }), s0)
+  assert.equal(reducer(s0, { type: 'peer-drag', items: 'no' }), s0)
+  const s1 = reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 5, y: 5, w: -10, h: 0 }] })
+  assert.deepEqual(at(s1, 'a'), [5, 5, 200, 100]) // a non-positive size is not applied
+})
+
+test('a cancelled peer drag puts the item back; a dropped one keeps the position until the real write', () => {
+  const moved = reducer(dragState(), { type: 'peer-drag', items: [{ id: 'a', x: 50, y: 60 }], now: 1000 })
+  const back = reducer(moved, { type: 'peer-drag-end', ids: ['a'], cancel: true, now: 1200 })
+  assert.deepEqual(at(back, 'a'), [10, 20, 200, 100])
+  assert.equal(back.drags.size, 0)
+  const dropped = reducer(moved, { type: 'peer-drag-end', ids: ['a'], now: 1200 })
+  assert.deepEqual(at(dropped, 'a'), [50, 60, 200, 100])
+  assert.equal(dropped.drags.get('a').ended, true)
+  const real = reducer(dropped, { type: 'remote', items: [doc('a', { x: 51, y: 61, w: 200, h: 100, updatedAt: 300 })] })
+  assert.deepEqual(at(real, 'a'), [51, 61, 200, 100])
+  assert.equal(real.drags.size, 0)
+})
+
+test('an unfinished peer drag goes back after a while; a dropped one sooner than one still in progress', () => {
+  const moved = reducer(dragState(), { type: 'peer-drag', items: [{ id: 'a', x: 50, y: 60 }, { id: 'b', x: 9, y: 9 }], now: 1000 })
+  const mix = reducer(moved, { type: 'peer-drag-end', ids: ['b'], now: 1000 })
+  assert.equal(reducer(mix, { type: 'peer-drag-expire', now: 3000 }), mix) // nothing is old enough yet
+  const s = reducer(mix, { type: 'peer-drag-expire', now: 6000 }) // b was dropped > 4 s ago; a is still within 12 s
+  assert.deepEqual(at(s, 'b'), [0, 0, 200, 200].map((v, i) => [0, 0, s.items.get('b').w, s.items.get('b').h][i]))
+  assert.ok(s.drags.has('a') && !s.drags.has('b'))
+  const later = reducer(s, { type: 'peer-drag-expire', now: 20000 })
+  assert.deepEqual(at(later, 'a'), [10, 20, 200, 100])
+})

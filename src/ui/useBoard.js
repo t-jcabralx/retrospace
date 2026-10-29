@@ -36,6 +36,13 @@ function flushLive(r, force = false) {
   if (ops.length) rawSend(r, ops)
 }
 
+// Tells peers a live drag is over: `cancel` puts their temporary positions back, otherwise they keep them until the write arrives.
+function endDrag(r, cancel) {
+  const ids = [...(r.dragIds ?? [])].slice(0, 20)
+  r.dragIds = null
+  if (ids.length) r.sync?.sendEphemeral({ t: 'drag', end: true, ...(cancel && { cancel: true }), ids })
+}
+
 // Forgets held-back live updates for `ids` (their tracked/revert op supersedes them, or the item is gone).
 function forgetLive(r, ids) {
   dropBuffered(r.liveBuf, ids)
@@ -105,6 +112,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
     r.authored = false
     setPhase('loading')
     setStatus('connecting')
+    const dragSweep = setInterval(() => dispatch({ type: 'peer-drag-expire', now: Date.now() }), 1000) // a peer's temporary position nobody finished goes back
     const grace = setTimeout(() => setStatus((s) => (s === 'connecting' ? 'offline' : s)), STATUS_GRACE_MS)
 
     const resync = async () => {
@@ -163,7 +171,13 @@ export function useBoard(code, { viewOnly = false } = {}) {
         onKicked: (id) => dispatch({ type: 'forget-participant', uid: id }),
         onBoard: (next) => dispatch({ type: 'board', board: next }),
         onClock: (serverNow, sentAt, receivedAt) => r.clock.sample(serverNow, sentAt, receivedAt),
-        onEphemeral: (msg, from, cid) => { for (const fn of [...r.eph]) fn(msg, from, cid) },
+        onEphemeral: (msg, from, cid) => {
+          if (msg?.t === 'drag') { // a peer is moving items: a temporary position, no history
+            dispatch(msg.end === true ? { type: 'peer-drag-end', ids: msg.ids, cancel: msg.cancel === true, now: Date.now() } : { type: 'peer-drag', items: msg.items, now: Date.now() })
+            return
+          }
+          for (const fn of [...r.eph]) fn(msg, from, cid)
+        },
         onAck: (items) => {
           const live = settle(items)
           if (live.length) dispatch({ type: 'ack', items: live })
@@ -199,6 +213,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
       clearTimeout(r.toastTimer)
       clearTimeout(r.liveTimer)
       clearTimeout(grace)
+      clearInterval(dragSweep)
     }
   }, [code, attempt, viewOnly, dispatch, put, notify])
 
@@ -277,6 +292,18 @@ export function useBoard(code, { viewOnly = false } = {}) {
   const live = useCallback((ops) => {
     if (readOnly) return
     const r = ref.current
+    // Over the realtime stream, steps go as relayed-only messages (no database write, newest wins), like cursors do: peers
+    // see the motion at about 15 steps a second. Without the stream (polling) they are saved, the slower way, as before.
+    if (r.sync?.status() === 'live') {
+      const items = []
+      for (const o of coalesceUpdates([...r.liveBuf.values(), ...ops])) {
+        const p = o.patch ?? {}
+        if (o.op === 'update' && Number.isFinite(p.x) && Number.isFinite(p.y)) items.push({ id: o.id, x: p.x, y: p.y, ...(Number.isFinite(p.w) && { w: p.w }), ...(Number.isFinite(p.h) && { h: p.h }) })
+      }
+      r.liveBuf.clear()
+      if (items.length) { r.dragIds = new Set([...(r.dragIds ?? []), ...items.map((i) => i.id)]); r.sync.sendEphemeral({ t: 'drag', items: items.slice(0, 20) }) }
+      return
+    }
     for (const o of coalesceUpdates([...r.liveBuf.values(), ...ops])) r.liveBuf.set(o.id, o)
     flushLive(r)
     if (r.liveBuf.size && !r.liveTimer) r.liveTimer = setTimeout(() => { r.liveTimer = null; flushLive(r, true) }, LIVE_FORCE_MS)
@@ -288,6 +315,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
   const commit = useCallback((restore, final) => {
     const cur = ref.current.state
     if (!cur || readOnly) return
+    endDrag(ref.current, false)
     forgetLive(ref.current, [...restore, ...final].map((o) => o.id)) // also for items that vanished
     const exists = (o) => cur.items.has(o.id)
     const ops = final.filter(exists)
@@ -301,6 +329,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
   const revert = useCallback((ops) => {
     const cur = ref.current.state
     if (!cur || readOnly) return
+    endDrag(ref.current, true)
     forgetLive(ref.current, ops.map((o) => o.id))
     const valid = ops.filter((o) => cur.items.has(o.id))
     if (!valid.length) return
