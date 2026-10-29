@@ -261,6 +261,7 @@ export default function Board({ ctl, code, presence = null }) {
                 if (item.kind === 'text' && typeof value === 'string' && !value.trim() && !(item.data?.text ?? '').trim()) c.local([{ op: 'delete', id: item.id }])
               }}
               onChange={(patch) => latest.current.ctl.local([{ op: 'update', id: item.id, patch }])}
+              onDraft={(patch) => latest.current.ctl.local([{ op: 'update', id: item.id, patch }], { draft: true })}
               onSelect={(e) => latest.current.h.onItemDown(e, item.id)}
               onResizeStart={(e, handle) => latest.current.h.onResizeStart(e, item.id, handle)}
             />

@@ -698,18 +698,50 @@ test('retries a failed batch 3 times (500/1500/4000 ms) then goes offline with t
   await h.timers.advance(1)
   assert.equal(n(), 4)
   assert.equal(sync.status(), 'offline')
-  await h.timers.advance(60000)
-  assert.equal(n(), 4, 'no further automatic attempts')
-  // The kept batch goes out again on the next successful open/poll.
+  await h.timers.advance(4999)
+  assert.equal(n(), 4)
+  // Nothing has to happen for it to recover: the kept batch is asked for again after 5 s.
+  fail = false
+  await h.timers.advance(1)
+  assert.equal(n(), 5)
+  assert.deepEqual(h.urls('/api/boards/ABC234/ops')[4].body.ops, [{ op: 'delete', id: 'a' }])
+  assert.equal(sync.status(), 'live')
+  sync.close()
+})
+
+test('a long outage keeps asking by itself, 5 s then 10 s then 20 s then every 30 s, and a stream reopening sends the batch at once', async () => {
+  let fail = true
+  const h = harness({
+    handler: (c, res) => (c.url === '/api/boards/ABC234/ops' && fail ? res(503, { error: 'down' }) : null),
+  })
+  const sync = h.mk()
+  await settle()
+  FakeES.instances[0].open()
+  sync.send([{ op: 'delete', id: 'a' }])
+  const n = () => h.urls('/api/boards/ABC234/ops').length
+  await h.timers.advance(50 + 500 + 1500 + 4000)
+  assert.equal(n(), 4)
+  for (const wait of [5000, 10000, 20000, 30000, 30000]) {
+    const before = n()
+    await h.timers.advance(wait - 1)
+    assert.equal(n(), before, `no attempt before ${wait} ms`)
+    await h.timers.advance(1)
+    assert.equal(n(), before + 1, `an attempt after ${wait} ms`)
+    await h.timers.advance(500 + 1500 + 4000)
+    assert.equal(n(), before + 4)
+  }
+  assert.equal(sync.status(), 'offline')
   fail = false
   const es = FakeES.instances[0]
   es.error()
   es.open()
   await h.timers.advance(50)
-  assert.equal(n(), 5)
-  assert.deepEqual(h.urls('/api/boards/ABC234/ops')[4].body.ops, [{ op: 'delete', id: 'a' }])
+  assert.deepEqual(h.urls('/api/boards/ABC234/ops').at(-1).body.ops, [{ op: 'delete', id: 'a' }], 'the kept batch went out when the stream came back')
   assert.equal(sync.status(), 'live')
   sync.close()
+  const after = n()
+  await h.timers.advance(120000)
+  assert.equal(n(), after, 'closing stops the retries')
 })
 
 test('a new send while offline retries the kept queue, in order', async () => {

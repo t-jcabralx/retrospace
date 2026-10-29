@@ -5,6 +5,8 @@ const POLL_MS = 3000
 const BATCH_MS = 50
 const MAX_BATCH = 50 // the ops route accepts at most 50 per call
 const RETRY_MS = [500, 1500, 4000]
+const OUTAGE_FIRST_MS = 5000 // once those are used up: ask again after 5 s, then 10, 20, 30 and every 30 s
+const OUTAGE_MAX_MS = 30000
 const EPH_GAP_MS = 67 // ~15 per second
 const TOK_REFRESH_MS = 20 * 60_000 // the server's membership token lives 30 minutes
 const SEND_REJOIN_COOLDOWN_MS = 30_000
@@ -95,6 +97,8 @@ export function createSync({
   let live = false // realtime stream in use (as opposed to polling)
   let linkUp = false // stream open / last poll succeeded
   let sendFailed = false
+  let outageTimer = null // after a send gave up: asks again on its own, with a growing wait, so a long outage needs no keystroke to recover
+  let outageTries = 0
   let status = 'offline'
   let es = null
   let refreshTimer = null
@@ -415,6 +419,15 @@ export function createSync({
     flushTimer = timers.setTimeout(() => flush(), BATCH_MS)
   }
 
+  function scheduleOutageRetry() {
+    if (outageTimer !== null || closed) return
+    const wait = Math.min(OUTAGE_MAX_MS, OUTAGE_FIRST_MS * 2 ** outageTries++)
+    outageTimer = timers.setTimeout(() => {
+      outageTimer = null
+      if (!closed && queue.length) flush()
+    }, wait)
+  }
+
   // Re-send what an outage left queued, once the link works again.
   function resume() {
     if (queue.length) scheduleFlush()
@@ -444,6 +457,7 @@ export function createSync({
       if (closed) break
       if (outcome.data) {
         sendFailed = false
+        outageTries = 0
         setStatus()
         const { applied = [], rejected = [] } = outcome.data
         if (applied.length) onAck(applied)
@@ -457,9 +471,10 @@ export function createSync({
         break
       }
       if (attempt >= RETRY_MS.length) {
-        queue.unshift(...batch) // kept for the next successful poll / stream open / send
+        queue.unshift(...batch) // kept for the next successful poll / stream open / send, and retried by itself meanwhile
         sendFailed = true
         setStatus()
+        scheduleOutageRetry()
         break
       }
       await sleep(RETRY_MS[attempt++])
@@ -532,6 +547,8 @@ export function createSync({
       if (backoffTimer !== null) timers.clearTimeout(backoffTimer)
       backoffTimer = null
       if (flushTimer !== null) timers.clearTimeout(flushTimer)
+      if (outageTimer !== null) timers.clearTimeout(outageTimer)
+      outageTimer = null
       for (const id of sleepers) timers.clearTimeout(id)
       pollTimer = flushTimer = null
       pending.clear()

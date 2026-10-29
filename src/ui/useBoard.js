@@ -253,12 +253,19 @@ export function useBoard(code, { viewOnly = false } = {}) {
 
   // Applies ops locally as one undo step and sends them. Ops that cannot apply (item gone) are dropped first.
   // `mergeKey`: repeated calls with the same key inside a short window share a single undo step (nudging).
-  const local = useCallback((ops, { mergeKey } = {}) => {
+  // `draft`: text saved while it is still being typed. Applied and sent like any change, but it is not an undo step (the editor
+  // closing is), and it does not disturb a nudge merge in progress.
+  const local = useCallback((ops, { mergeKey, draft = false } = {}) => {
     const cur = ref.current.state
     if (!cur) return false
     if (readOnly) { notify(`Board is ${readOnlyReason}`); return false }
     const valid = ops.filter((o) => (o.op === 'add' ? !cur.items.has(o.id) : cur.items.has(o.id)))
     if (!valid.length) return false
+    if (draft) {
+      put(reducer(cur, { type: 'local', ops: valid, track: false }))
+      send(valid)
+      return true
+    }
     const m = ref.current.merge
     const joins = mergeKey && m && m.key === mergeKey && Date.now() - m.at < NUDGE_MERGE_MS && m.undoLen === cur.undo.length
     const next = reducer(cur, { type: 'local', ops: valid })

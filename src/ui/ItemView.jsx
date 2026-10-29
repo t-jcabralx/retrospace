@@ -29,7 +29,7 @@ const DOUBLE_TAP_MS = 350
 // button: voting is open and the viewer may vote) and onVote().
 // Accessibility: each item is a focusable role="group" with an aria-label; the selected one carries
 // aria-current="true" (aria-selected/pressed are not valid on a group).
-function ItemView({ item, selected, editable, peerMoving = false, onChange, onSelect, handles = false, onResizeStart, autoEdit = false, onEditEnd, linking = false, label, onFocus, votes = 0, voted = false, voting = false, onVote }) {
+function ItemView({ item, selected, editable, peerMoving = false, onChange, onDraft, onSelect, handles = false, onResizeStart, autoEdit = false, onEditEnd, linking = false, label, onFocus, votes = 0, voted = false, voting = false, onVote }) {
   const field = FIELD[item.kind]
   const canEdit = editable && Boolean(field)
   const [editing, setEditing] = useState(autoEdit && canEdit) // a just-created item opens in its first render
@@ -46,11 +46,14 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onSe
     onEditEnd?.(value)
     if (viaKey) setTimeout(() => box.current?.focus({ preventScroll: true }), 0)
   }
+  const needsText = item.kind === 'card' || item.kind === 'action'
   const commit = (value, viaKey) => {
     // A card needs a message: an emptied editor keeps the old one rather than sending an update the server would refuse.
-    if (value !== (item.data[field] ?? '') && !((item.kind === 'card' || item.kind === 'action') && !value.trim())) onChange({ data: { [field]: value } })
+    if (value !== (item.data[field] ?? '') && !(needsText && !value.trim())) onChange({ data: { [field]: value } })
     done(viaKey, value)
   }
+  // Text is saved while it is typed, so a reload, a crash or a restart of the server in the middle of a sentence does not lose it.
+  const saveDraft = onDraft && ((value) => { if (!(needsText && !value.trim())) onDraft({ data: { [field]: value } }) })
 
   const onPointerUp = (e) => { // double-tap: dblclick is not reliable for touch
     if (e.pointerType !== 'touch' || !canEdit) return
@@ -101,7 +104,7 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onSe
       ) : votes > 0 && (
         <span className="bd-vote-badge" aria-hidden="true"><VoteIcon width={14} height={14} />{votes}</span>
       )}
-      {editing && <Editor kind={item.kind} field={field} value={item.data[field] ?? ''} onCommit={commit} onCancel={() => done(true)} />}
+      {editing && <Editor kind={item.kind} field={field} value={item.data[field] ?? ''} onCommit={commit} onCancel={() => done(true)} onDraft={saveDraft} />}
       {handles && editable && list.map((h) => (
         <span key={h} aria-hidden="true" className={`bd-handle bd-h-${h}`} onPointerDown={(e) => onResizeStart?.(e, h)} />
       ))}
@@ -110,9 +113,33 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onSe
 }
 
 // Textarea laid over the item. Esc cancels; blur or Cmd/Ctrl+Enter commits.
-function Editor({ kind, field, value, onCommit, onCancel }) {
+// Typed text is saved only when the typing pauses (a note is usually one request, a long one two or three), and never more than
+// 15 s apart while someone types without a break: every save is a write and a broadcast to the whole board.
+const DRAFT_IDLE_MS = 3000
+const DRAFT_MAX_MS = 15000
+
+function Editor({ kind, field, value, onCommit, onCancel, onDraft }) {
   const [text, setText] = useState(value)
   const el = useRef(null)
+  const original = useRef(value) // what the editor opened with: the item's own value changes once a draft is sent
+  const latest = useRef(value) // what is in the box now
+  const saved = useRef(value) // what was last sent (the value the editor opened with, until a draft goes out)
+  const timer = useRef(null)
+  const dirtySince = useRef(null) // when the text first differed from what was last sent
+  const draft = useRef(onDraft)
+  draft.current = onDraft
+  const flush = () => {
+    clearTimeout(timer.current)
+    timer.current = null
+    dirtySince.current = null
+    if (draft.current && latest.current !== saved.current) { saved.current = latest.current; draft.current(latest.current) }
+  }
+  useEffect(() => {
+    const hide = () => { if (document.visibilityState === 'hidden') flush() } // leaving the tab: send it now
+    document.addEventListener('visibilitychange', hide)
+    window.addEventListener('pagehide', flush)
+    return () => { document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', flush); clearTimeout(timer.current) }
+  }, [])
   const cancelled = useRef(false)
   const openedAt = useRef(Date.now())
   const asked = useRef(false) // the user asked to finish (Cmd+Enter), so a blur is a real commit
@@ -131,12 +158,21 @@ function Editor({ kind, field, value, onCommit, onCancel }) {
       maxLength={MAX_LEN[field] ?? 2000}
       aria-label={EDITOR_LABEL[field] ?? 'Item text'}
       spellCheck={false}
-      onChange={(e) => setText(e.target.value)}
+      onChange={(e) => {
+        setText(e.target.value)
+        latest.current = e.target.value
+        if (draft.current) {
+          const now = Date.now()
+          dirtySince.current ??= now
+          clearTimeout(timer.current)
+          timer.current = setTimeout(flush, Math.max(0, Math.min(DRAFT_IDLE_MS, dirtySince.current + DRAFT_MAX_MS - now)))
+        }
+      }}
       onPointerDown={stop}
       onDoubleClick={stop}
       onKeyDown={(e) => {
         e.stopPropagation()
-        if (e.key === 'Escape') { cancelled.current = true; onCancel() }
+        if (e.key === 'Escape') { cancelled.current = true; clearTimeout(timer.current); timer.current = null; if (draft.current && saved.current !== original.current) draft.current(original.current); onCancel() } // Esc puts back what the editor opened with, even if a draft went out
         else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || field === 'title')) { e.preventDefault(); asked.current = true; e.currentTarget.blur() }
       }}
       onBlur={() => {
@@ -144,6 +180,8 @@ function Editor({ kind, field, value, onCommit, onCancel }) {
         // The click that created the item still has its own focus change to deliver (touch sends it late):
         // taking focus back is better than closing the editor the moment it opens.
         if (!asked.current && Date.now() - openedAt.current < 350) { setTimeout(() => el.current?.focus(), 0); return }
+        clearTimeout(timer.current)
+        timer.current = null
         onCommit(text, asked.current)
       }}
     />
