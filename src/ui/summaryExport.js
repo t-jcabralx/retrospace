@@ -10,7 +10,11 @@ export const summaryFilename = (title, ext, date = new Date()) =>
 
 const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
 
-async function capture(el) {
+// `el` is the offscreen wrapper (position: fixed; left: -10000px): the clone keeps that offset and renders blank, so the paper inside is what is drawn.
+const paperOf = (el) => el.firstElementChild ?? el
+
+async function capture(wrapper) {
+  const el = paperOf(wrapper)
   await frames()
   await document.fonts?.ready
   const opts = { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: false }
@@ -34,8 +38,9 @@ export async function exportSummaryPng(el, { filename }) {
   download(await toBlob(await capture(el)), filename)
 }
 
-export async function exportSummaryPdf(el, { filename }) {
-  const canvas = await capture(el)
+export async function exportSummaryPdf(wrapper, { filename }) {
+  const canvas = await capture(wrapper)
+  const el = paperOf(wrapper)
   const k = canvas.width / (el.offsetWidth || canvas.width) // canvas pixels per CSS pixel
   const top = el.getBoundingClientRect().top
   const marks = []
