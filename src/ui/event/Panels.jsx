@@ -1,6 +1,6 @@
 'use client'
 // The Draw and History panels beside the wheel.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { ringPeople, ringPrizes, historyRows } from '../../lib/wheel.js'
 import { toCsv } from '../../lib/csv.js'
 
@@ -19,38 +19,21 @@ function StepBar({ stage }) {
   )
 }
 
-export function Draw({ api, v, now }) {
+export function Draw({ api, v, now, main, run, busy, error }) {
   const { wheel, runner } = api
   const { round, history } = wheel
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
   const people = ringPeople(wheel).length
   const prizes = ringPrizes(wheel).length
   const animating = Boolean(round.spin && now < round.spin.startAt + round.spin.durationMs)
   const stage = round.state === 'idle' ? 0 : round.state === 'prizeChosen' ? (v.prizeShown ? 1 : 0) : v.winnerShown ? 3 : 1
-
-  async function run(action) {
-    if (busy) return
-    setBusy(true)
-    setError('')
-    const r = await api.act(action)
-    setBusy(false)
-    if (!r.ok) setError(r.error)
-  }
-
-  // What the main button does now.
-  let main = null
-  if (round.state === 'idle') main = { action: 'spin-prize', text: 'Spin for the prize', off: !people || !prizes, why: !people ? 'Add at least one person first.' : !prizes ? 'Add a prize with at least one left.' : '' }
-  else if (round.state === 'prizeChosen') main = v.prizeShown ? { action: 'spin-winner', text: 'Spin for the winner', off: !people, why: !people ? 'No one is left to win.' : '' } : null
-  else main = v.winnerShown ? { action: 'accept', text: 'Accept winner' } : null
   const disabled = busy || animating || main?.off
-  const ref = useRef({ run, main, disabled, runner })
-  ref.current = { run, main, disabled, runner }
 
   // Space does the main thing, unless the person is typing or pressing a button already.
+  const ref = useRef(null)
+  ref.current = { run, main, disabled, runner }
   useEffect(() => {
     const onKey = (e) => {
-      if (e.code !== 'Space' || e.repeat || e.target.closest?.('input, textarea, select, button, a, [contenteditable]')) return
+      if (e.code !== 'Space' || e.repeat || e.target.closest?.('input, textarea, select, button, a, [contenteditable], [role="button"]')) return
       const c = ref.current
       if (c.runner && c.main && !c.disabled) { e.preventDefault(); c.run(c.main.action) }
     }
@@ -75,9 +58,10 @@ export function Draw({ api, v, now }) {
         <div className="ev-actions">
           {main && (
             <button type="button" className="ev-btn ev-btn--primary" disabled={disabled} onClick={() => run(main.action)} aria-describedby={main.why ? 'ev-why' : undefined}>
-              {animating ? 'Spinning…' : busy ? 'One moment…' : main.text}<kbd aria-hidden="true">Space</kbd>
+              {busy ? 'One moment…' : main.text}<kbd aria-hidden="true">Space</kbd>
             </button>
           )}
+          {!main && animating && <button type="button" className="ev-btn ev-btn--primary" disabled>Spinning…</button>}
           {main?.why && <p id="ev-why" className="ev-hint">{main.why}</p>}
           {round.state === 'winnerChosen' && v.winnerShown && (
             <div className="ev-row">

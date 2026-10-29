@@ -1,8 +1,9 @@
 'use client'
 // The Event board: a two-ring prize wheel with the draw, the setup and the history beside it. `api` comes from hooks.js.
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ringPeople, ringPrizes } from '../../lib/wheel.js'
-import { view } from './timeline.js'
+import { view, mainAction } from './timeline.js'
+import { soundWanted, rememberSound, tick, unlock, win } from './sound.js'
 import { useReducedMotion, useSpinClock } from './hooks.js'
 import WheelSvg from './WheelSvg.jsx'
 import Setup from './Setup.jsx'
@@ -35,6 +36,22 @@ export default function EventScreen({ api }) {
   const [present, setPresent] = useState(false)
   const shown = present ? 'draw' : tab
   const cel = useCelebration(wheel, v)
+  const main = api.runner ? mainAction(wheel, v, now) : null
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [sound, setSound] = useState(false)
+  useEffect(() => { setSound(soundWanted()) }, [])
+  async function run(action) {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    const r = await api.act(action)
+    setBusy(false)
+    if (!r.ok) setError(r.error)
+  }
+  const onTick = useCallback(() => { if (sound) tick() }, [sound])
+  const wasWin = useRef(false)
+  useEffect(() => { if (v.winnerShown && !wasWin.current && sound) win(); wasWin.current = v.winnerShown }, [v.winnerShown, sound])
 
   useEffect(() => {
     if (!present) return undefined
@@ -49,7 +66,7 @@ export default function EventScreen({ api }) {
   return (
     <div className={`ev${present ? ' is-present' : ''}`}>
       <div className="ev-stage">
-        <WheelSvg people={people} prizes={prizes} v={v} hub={hub} />
+        <WheelSvg people={people} prizes={prizes} v={v} hub={hub} spin={main?.spin ? { text: main.text, off: busy || main.off } : null} onSpin={() => main && run(main.action)} onTick={onTick} />
         {cel.effect && <Effect effect={cel.effect} seed={cel.seed} />}
         <GifPop cel={cel} />
         <p className="ev-legend" aria-hidden="true"><span><i className="ev-dot ev-dot--people" />Outer ring: people</span><span><i className="ev-dot ev-dot--prizes" />Inner ring: prizes</span></p>
@@ -61,13 +78,14 @@ export default function EventScreen({ api }) {
               <button key={key} type="button" role="tab" id={`ev-tab-${key}`} aria-selected={shown === key} aria-controls={`ev-pan-${key}`} className={shown === key ? 'is-on' : ''} onClick={() => setTab(key)}>{text}</button>
             ))}
           </div>
+          <button type="button" className="ev-btn ev-btn--quiet ev-sound" aria-pressed={sound} aria-label="Sound" title={sound ? 'Sound is on' : 'Sound is off'} onClick={() => { const on = !sound; setSound(on); rememberSound(on); if (on) { unlock(); tick() } }}>{sound ? '🔊' : '🔈'}</button>
           <button type="button" className="ev-btn ev-btn--quiet ev-present" aria-pressed={present} onClick={() => setPresent((p) => !p)}>{present ? 'Exit' : 'Present'}</button>
         </div>
         {api.owner && api.code && !present && (
           <p className="ev-share">Guests join with the code <strong>{api.code}</strong> <CopyCode code={api.code} /></p>
         )}
         <div role="tabpanel" id={`ev-pan-${shown}`} aria-labelledby={`ev-tab-${shown}`} className="ev-panel">
-          {shown === 'draw' && <Draw api={api} v={v} now={now} />}
+          {shown === 'draw' && <Draw api={api} v={v} now={now} main={main} run={run} busy={busy} error={error} />}
           {shown === 'setup' && <Setup api={api} onPreview={cel.play} />}
           {shown === 'history' && <History api={api} />}
         </div>

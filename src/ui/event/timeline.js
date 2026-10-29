@@ -46,3 +46,20 @@ export const msLeft = (wheel, now) => {
   const s = wheel.round.spin
   return s ? Math.max(0, s.startAt + s.durationMs - now) : 0
 }
+
+// What the main button (and the wheel's centre) does right now: { action, text, off, why } or null when nothing is for the
+// host to press (a spin is turning, or the result is being held back).
+export function mainAction(wheel, v, now) {
+  const { round } = wheel
+  const people = ringPeople(wheel).length
+  const prizes = ringPrizes(wheel).length
+  if (round.spin && now < round.spin.startAt + round.spin.durationMs) return null
+  if (round.state === 'idle') {
+    return { action: 'spin-prize', text: 'Spin for the prize', spin: true, off: !people || !prizes, why: !people ? 'Add at least one person first.' : !prizes ? 'Add a prize with at least one left.' : '' }
+  }
+  if (round.state === 'prizeChosen') return v.prizeShown ? { action: 'spin-winner', text: 'Spin for the winner', spin: true, off: !people, why: !people ? 'No one is left to win.' : '' } : null
+  return v.winnerShown ? { action: 'accept', text: 'Accept winner', spin: false } : null
+}
+
+// Which slice of a ring is under the pointer at the top for a ring turned `angle` degrees clockwise.
+export const sliceAtPointer = (angle, count) => (count > 0 ? Math.floor((((360 - (angle % 360)) % 360) / 360) * count) % count : 0)

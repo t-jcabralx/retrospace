@@ -1,17 +1,29 @@
 /* The Event board. Colours come from the app tokens, so light and dark both work. Every class is prefixed ev-. */
 .ev { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 20px; align-content: start; padding: 16px; max-width: 1180px; width: 100%; margin: 0 auto; }
 @media (min-width: 920px) { .ev { grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); gap: 32px; padding: 24px; align-items: start; } .ev-stage { position: sticky; top: 8px; } }
+.ev > * { min-width: 0; }
 .ev-stage { position: relative; display: grid; justify-items: center; gap: 10px; }
 .ev-wheel { width: min(100%, 560px, 78vh); height: auto; overflow: visible; }
 .ev-ring { transform-box: view-box; transform-origin: 230px 230px; will-change: transform; }
-.ev-pointer { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); }
+.ev-pointer { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); transform-box: fill-box; transform-origin: 50% 100%; animation: ev-flick 140ms ease-out; }
+@keyframes ev-flick { 0% { transform: rotate(-16deg); } 100% { transform: rotate(0); } }
+.ev-bulb { fill: #f6d65b; opacity: 0.55; }
+.ev-wheel.is-turning .ev-bulb { animation: ev-blink 360ms steps(2, jump-none) infinite; }
+.ev-wheel.is-win .ev-bulb { animation: ev-blink 220ms steps(2, jump-none) infinite; fill: #ffffff; }
+@keyframes ev-blink { 0% { opacity: 0.25; } 100% { opacity: 1; } }
+.ev-winslice { animation: ev-glow 1100ms ease-in-out infinite alternate; }
+@keyframes ev-glow { to { filter: drop-shadow(0 0 7px var(--accent)); } }
+.ev-hub { cursor: default; } .ev-hub.is-ready { cursor: pointer; transform-box: fill-box; transform-origin: center; animation: ev-breathe 2200ms ease-in-out infinite; }
+.ev-hub.is-ready:hover circle { filter: brightness(1.12); } .ev-hub:focus-visible { outline: none; } .ev-hub:focus-visible circle { stroke: var(--ink); stroke-width: 3; }
+@keyframes ev-breathe { 50% { transform: scale(1.05); } }
+.ev-sound { padding: 0 10px; min-width: 44px; }
 .ev-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin: 0; color: var(--muted); font-size: 13px; }
 .ev-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; }
 .ev-dot--people { background: #b5d4f4; } .ev-dot--prizes { background: #7f77dd; }
 
-.ev-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.ev-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin-bottom: 10px; }
 .ev-tabs { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
-.ev-tabs button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ev-tabs button { min-height: 40px; padding: 0 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .ev-tabs button.is-on { background: var(--accent); color: var(--rs-on-accent, #fff); }
 .ev-tabs button:focus-visible, .ev-btn:focus-visible, .ev-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ev-share { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; color: var(--muted); font-size: 14px; }
@@ -80,8 +92,13 @@ textarea.ev-input { margin-bottom: 8px; resize: vertical; }
 .ev.is-present .ev-tabs { display: none; } .ev.is-present .ev-bar { justify-content: flex-end; }
 .ev.is-present .ev-message { font-size: 22px; } .ev.is-present .is-win .ev-message { font-size: 32px; }
 
+/* On a phone the wheel is smaller so the button is always in reach, and the main button stays at the bottom while scrolling */
+@media (max-width: 919px) {
+  .ev-wheel { width: min(100%, 440px, 54vh); }
+  .ev-actions { position: sticky; bottom: -18px; z-index: 4; padding: 10px 0 14px; background: linear-gradient(to top, var(--panel) 78%, transparent); }
+}
 @media (max-width: 480px) { .ev { padding: 10px; } .ev-panel { padding: 14px; border-radius: 14px; } .ev-steps { flex-direction: column; } .ev-savebar { margin: 0 -14px -14px; padding: 10px 14px; } }
-@media (prefers-reduced-motion: reduce) { .is-win .ev-message { animation: none; } .ev-fx { display: none; } .ev-gifpop { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ev-bulb, .ev-winslice, .ev-hub, .ev-pointer { animation: none !important; } .is-win .ev-message { animation: none; } .ev-fx { display: none; } .ev-gifpop { animation: none; } }
 
 .ev-copy { min-height: 36px; padding: 0 10px; border: 1px solid var(--line); font-size: 13px; color: var(--ink); }
 .ev-vh { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -118,3 +135,5 @@ textarea.ev-input { margin-bottom: 8px; resize: vertical; }
 .ev-more select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
 .ev-list li.has-more { flex-wrap: wrap; }
 .ev-list li .ev-more { flex: 1 1 100%; margin-bottom: 6px; }
+
+@media (max-width: 480px) { .ev-tabs { flex: 1 1 100%; } .ev-tabs button { flex: 1; padding: 0 6px; } .ev-bar .ev-btn--quiet { flex: 1; } }
