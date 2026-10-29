@@ -189,3 +189,12 @@
   .bd-switch, .bd-switch-knob, .bd-tray-hint { transition: none; }
   .bd-throw-spark { display: none; }
 }
+
+/* The colour and delete bar: a phone has no spare room at the top, where it covered the notes, so it sits above the zoom control and can be moved. */
+.bd-context { touch-action: none; cursor: grab; }
+.bd-context .bd-vote-grip { display: none; }
+.bd-context.is-dragging, .bd-context.is-dragging * { cursor: grabbing; }
+@media (max-width: 640px) {
+  .bd-hud .bd-context { position: fixed; z-index: 14; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 128px); top: auto; margin-inline: auto; }
+  .bd-context .bd-vote-grip { display: grid; width: 28px; height: 40px; }
+}

@@ -11,20 +11,10 @@ import { perPerson, votesUsed, anyVotes, topVoted, excerpt, ballotStartsOpen } f
 import { VoteIcon, TrophyIcon } from './icons.jsx'
 import Ballot from './Ballot.jsx'
 import { useDragPanel } from './useDragPanel.js'
+import DragGrip from './DragGrip.jsx'
 import './settings.css'
 
 const plural = (n, one, many) => (n === 1 ? one : many)
-
-// The handle that moves the whole voting panel: drag it, or use the arrow keys when it has focus; Home or a double tap puts it back.
-function Grip({ grip, dragging }) {
-  return (
-    <button type="button" className={`bd-vote-grip${dragging ? ' is-dragging' : ''}`} aria-label="Move the voting panel. Use the arrow keys, or Home to put it back" title="Drag to move" {...grip}>
-      <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true" focusable="false">
-        {[2, 8, 14].flatMap((y) => [2, 8].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.4" fill="currentColor" />))}
-      </svg>
-    </button>
-  )
-}
 
 function Dots({ total, used }) {
   return (
@@ -68,7 +58,7 @@ export default function VotePanel({ ctl, onJump }) {
     return (
       <div ref={drag.panel} style={drag.style} {...drag.card} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting">
         <div className="bd-vote-bar">
-          <Grip grip={drag.grip} dragging={drag.dragging} />
+          <DragGrip grip={drag.grip} dragging={drag.dragging} label="Move the voting panel" />
           <VoteIcon width={18} height={18} aria-hidden="true" />
           {readOnly ? (
             <span className="bd-vote-line">Voting open — view only</span>
@@ -91,7 +81,7 @@ export default function VotePanel({ ctl, onJump }) {
   return (
     <div ref={drag.panel} style={drag.style} {...drag.card} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting results">
       <div className="bd-vote-bar">
-        <Grip grip={drag.grip} dragging={drag.dragging} />
+        <DragGrip grip={drag.grip} dragging={drag.dragging} label="Move the voting panel" />
         <TrophyIcon width={18} height={18} aria-hidden="true" />
         <span className="bd-vote-line">Results</span>
         <button type="button" className="bd-sbtn bd-vote-manage" aria-expanded={!collapsed} aria-controls={`${id}-r`} onClick={() => setCollapsed((c) => !c)}>{collapsed ? 'Show' : 'Hide'}</button>

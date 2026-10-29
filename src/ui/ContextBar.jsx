@@ -1,5 +1,7 @@
 'use client'
 import { NOTE_COLORS, SHAPE_KINDS } from './ops.js'
+import { useDragPanel } from './useDragPanel.js'
+import DragGrip from './DragGrip.jsx'
 
 const SHAPE_ICONS = {
   rect: <rect x="4" y="6" width="16" height="12" rx="2" />,
@@ -9,9 +11,11 @@ const SHAPE_ICONS = {
 
 // Colour and shape pickers. They change the selection and also set what the next note/shape is created with.
 export default function ContextBar({ colors, shapes, color, shape, onColor, onShape, onDelete, deleteCount = 0 }) {
+  const drag = useDragPanel('retrospace-context-bar')
   if (!colors && !shapes && !onDelete) return null
   return (
-    <div className="bd-context" role="toolbar" aria-label="Item style">
+    <div ref={drag.panel} style={drag.style} {...drag.card} className={`bd-context${drag.dragging ? ' is-dragging' : ''}`} role="toolbar" aria-label="Item style">
+      <DragGrip grip={drag.grip} dragging={drag.dragging} label="Move the colour bar" />
       {shapes && SHAPE_KINDS.map((s) => (
         <button key={s} type="button" className={`bd-chip${shape === s ? ' is-active' : ''}`} aria-label={s} title={s} aria-pressed={shape === s} onClick={() => onShape(s)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">{SHAPE_ICONS[s]}</svg>
