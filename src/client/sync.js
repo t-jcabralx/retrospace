@@ -8,6 +8,24 @@ const RETRY_MS = [500, 1500, 4000]
 const EPH_GAP_MS = 67 // ~15 per second
 const TOK_REFRESH_MS = 20 * 60_000 // the server's membership token lives 30 minutes
 const SEND_REJOIN_COOLDOWN_MS = 30_000
+const MAX_QUEUE = 1000 // unsent ops kept while the link is down; past this, repeated updates of one item are merged
+const KEEPALIVE_MAX_BYTES = 60_000 // a keepalive request body may not exceed 64 KiB
+
+// Merges runs of 'update' ops on the same item (later patches win key by key). Order is kept, and a run ends at any
+// other op on that item (an add, delete or undo step in between must not be reordered). Pure; the input is not changed.
+export function compactQueue(ops) {
+  const out = []
+  const open = new Map() // id -> index in `out` of the last update with nothing else on that id since
+  for (const o of ops) {
+    if (o.op !== 'update' || !isObj(o.patch)) { open.delete(o.id); out.push(o); continue }
+    const i = open.get(o.id)
+    if (i === undefined) { open.set(o.id, out.length); out.push(o); continue }
+    const prev = out[i]
+    const data = isObj(prev.patch.data) || isObj(o.patch.data) ? { data: { ...prev.patch.data, ...o.patch.data } } : {}
+    out[i] = { ...prev, patch: { ...prev.patch, ...o.patch, ...data } }
+  }
+  return out
+}
 
 // Wrapped so the browser never sees them called detached from window.
 const defaultTimers = () => ({
@@ -70,6 +88,7 @@ export function createSync({
   fetchImpl = globalThis.fetch,
   EventSourceImpl = globalThis.EventSource,
   timers = defaultTimers(),
+  pageEvents = typeof globalThis.addEventListener === 'function' ? globalThis : null, // window: online / pagehide / visibilitychange
 }) {
   let closed = false
   let tok = null
@@ -105,7 +124,10 @@ export function createSync({
     onStatus(status)
   }
 
-  const post = (url, body) => fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  const post = (url, body, keepalive = false) => {
+    const text = JSON.stringify(body)
+    return fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: text, ...(keepalive && text.length < KEEPALIVE_MAX_BYTES && { keepalive: true }) })
+  }
   const sleep = (ms) => new Promise((resolve) => {
     const id = timers.setTimeout(() => { sleepers.delete(id); resolve() }, ms)
     sleepers.add(id)
@@ -390,7 +412,7 @@ export function createSync({
   // --- writing ops ---
   function scheduleFlush() {
     if (flushTimer !== null || flushing || closed) return
-    flushTimer = timers.setTimeout(flush, BATCH_MS)
+    flushTimer = timers.setTimeout(() => flush(), BATCH_MS)
   }
 
   // Re-send what an outage left queued, once the link works again.
@@ -398,8 +420,8 @@ export function createSync({
     if (queue.length) scheduleFlush()
   }
 
-  async function flush() {
-    flushTimer = null
+  async function flush(keepalive = false) {
+    if (flushTimer !== null) { timers.clearTimeout(flushTimer); flushTimer = null }
     if (flushing || closed || !queue.length) return
     flushing = true
     const batch = queue.splice(0, MAX_BATCH)
@@ -407,7 +429,7 @@ export function createSync({
     for (;;) {
       let outcome
       try {
-        const res = await post(`/api/boards/${code}/ops`, { cid, ops: batch })
+        const res = await post(`/api/boards/${code}/ops`, { cid, ops: batch }, keepalive && attempt === 0)
         if (res.ok) {
           outcome = { data: await res.json() }
         } else if (res.status >= 500 || res.status === 429 || res.status === 408) {
@@ -472,12 +494,22 @@ export function createSync({
     timers.setTimeout(() => { cooling = false; pumpEphemeral() }, EPH_GAP_MS)
   }
 
+  // The browser says the network is back, or the tab is being hidden / closed: do not wait for the next poll or the batch timer.
+  // A hidden tab sends with keepalive so the request outlives the page.
+  const onOnline = () => { if (!closed && queue.length) { sendFailed = false; flush() } }
+  const onHide = () => { if (!closed && queue.length) flush(true) }
+  const onVisibility = () => { if (globalThis.document?.visibilityState === 'hidden') onHide() }
+  pageEvents?.addEventListener('online', onOnline)
+  pageEvents?.addEventListener('pagehide', onHide)
+  pageEvents?.addEventListener('visibilitychange', onVisibility)
+
   start()
 
   return {
     send(ops) {
       if (closed || !Array.isArray(ops) || !ops.length) return
       queue.push(...ops)
+      if (queue.length > MAX_QUEUE) { const merged = compactQueue(queue); queue.splice(0, queue.length, ...merged) } // a long outage must not grow it without bound
       scheduleFlush()
     },
     // `done(status, error)`, optional: how the server answered this message (never called if a newer one of the same type
@@ -490,6 +522,9 @@ export function createSync({
     },
     close() {
       closed = true
+      pageEvents?.removeEventListener?.('online', onOnline)
+      pageEvents?.removeEventListener?.('pagehide', onHide)
+      pageEvents?.removeEventListener?.('visibilitychange', onVisibility)
       es?.close()
       es = null
       if (pollTimer !== null) timers.clearInterval(pollTimer)
