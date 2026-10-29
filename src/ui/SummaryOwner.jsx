@@ -7,6 +7,7 @@ import CopyButton from './boards/CopyButton.jsx'
 import { useOwnerSummary } from './useOwnerSummary.js'
 import { MAX_SUMMARY } from '../lib/aiBoard.js'
 import { sourceLabel } from './summaryApi.js'
+import SummaryReport from './SummaryReport.jsx'
 
 const count = (s) => Array.from(s).length
 
@@ -27,6 +28,7 @@ export default function SummaryOwner({ ctl, guardRef, onClose, onOpenSettings })
   const stored = summary?.text ?? ''
   const [text, setText] = useState('')
   const synced = useRef('')
+  const [pick, setPick] = useState(null) // 'report' | 'edit' once the owner chose; until then Report whenever there is text
   const [confirm, setConfirm] = useState(null) // 'regenerate' | 'share' | 'delete' | 'close'
 
   // Whatever the server holds replaces the box, unless the owner has typed something that is not saved yet.
@@ -37,6 +39,7 @@ export default function SummaryOwner({ ctl, guardRef, onClose, onOpenSettings })
   }, [stored])
 
   const dirty = text !== stored
+  const tab = pick ?? (text.trim() ? 'report' : 'edit')
   const length = count(text)
   const tooLong = length > MAX_SUMMARY
   const info = ctl.state.viewer?.ai ?? { configured: false }
@@ -85,14 +88,31 @@ export default function SummaryOwner({ ctl, guardRef, onClose, onOpenSettings })
         </div>
       )}
 
+      <div className="bd-sum-tabs" role="tablist" aria-label="Summary view">
+        {['report', 'edit'].map((k) => (
+          <button key={k} type="button" role="tab" id={`${id}-tab-${k}`} aria-selected={tab === k} aria-controls={`${id}-pan-${k}`} tabIndex={tab === k ? 0 : -1}
+            className={`bd-sum-tab${tab === k ? ' is-on' : ''}`} onClick={() => setPick(k)}
+            onKeyDown={(e) => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setPick(k === 'report' ? 'edit' : 'report'); document.getElementById(`${id}-tab-${k === 'report' ? 'edit' : 'report'}`)?.focus() } }}>
+            {k === 'report' ? 'Report' : 'Edit'}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`${id}-pan-report`} aria-labelledby={`${id}-tab-report`} hidden={tab !== 'report'}>
+        {tab === 'report' && (text.trim()
+          ? <SummaryReport summary={{ ...(summary ?? { source: 'owner' }), text }} board={ctl.board} items={ctl.items} />
+          : <p className="bd-sum-empty">Nothing to show yet. Generate a summary or write one on the Edit tab.</p>)}
+      </div>
+      <div role="tabpanel" id={`${id}-pan-edit`} aria-labelledby={`${id}-tab-edit`} hidden={tab !== 'edit'}>
       <label className="bd-set-label" htmlFor={`${id}-t`}>Summary</label>
       <textarea
-        id={`${id}-t`} ref={area} className="bd-sinput bd-sum-area" rows={12} value={text} readOnly={generating || busy === 'save'}
+        id={`${id}-t`} ref={area} className="bd-sinput bd-sum-area" rows={22} value={text} readOnly={generating || busy === 'save'}
         disabled={!loaded} aria-invalid={tooLong ? 'true' : undefined} aria-describedby={`${id}-c`}
         placeholder={generating ? '' : 'Write a summary of this session, or have AI draft one for you to edit.'}
         onChange={(e) => setText(e.target.value)}
       />
       <p id={`${id}-c`} className={`bd-sum-count${tooLong ? ' is-over' : ''}`}>{length} of {MAX_SUMMARY} characters{tooLong ? ' (too long)' : ''}</p>
+
+      </div>
 
       {confirm && (
         <ConfirmStep

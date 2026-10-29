@@ -16,9 +16,9 @@
   .bd-sumbtn-dot { position: absolute; top: 8px; right: 8px; }
 }
 
-/* the panel is a little wider than the settings drawer: it holds a paragraph or two */
-.bd-sum { width: min(520px, 100vw); }
-.bd-sum-area { height: auto; min-height: 220px; padding: 10px 12px; line-height: 1.5; resize: vertical; white-space: pre-wrap; }
+/* the panel is wide and the text box tall: a summary is several short sections and must be readable without scrolling inside the box */
+.bd-sum { width: min(820px, 100vw); }
+.bd-sum-area { height: auto; min-height: min(62vh, 640px); max-height: 80vh; padding: 14px 16px; font-size: 16px; line-height: 1.6; resize: vertical; white-space: pre-wrap; field-sizing: content; }
 .bd-sum-area:read-only { background: color-mix(in srgb, var(--muted) 10%, var(--bg)); }
 .bd-sum-count { margin: 4px 0 0; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .bd-sum-count.is-over { color: color-mix(in srgb, var(--bd-bad) 75%, var(--ink)); font-weight: 600; }
@@ -34,7 +34,7 @@
 .bd-sum-why { margin-top: 8px; }
 .bd-sum-link { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
 .bd-sum-source { margin: 0 0 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
-.bd-sum-text { padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
+.bd-sum-text { padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 16px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 78vh; overflow-y: auto; }
 .bd-sum-empty { margin: 0; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) {
@@ -44,3 +44,9 @@
 
 /* the inline confirm step is red for destructive choices; a plain "I understand" or "Share" step is not */
 .bd-set-confirm.is-info { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+
+/* Owner tabs: Report (the designed view) and Edit (the textarea) */
+.bd-sum-tabs { display: flex; gap: 4px; margin: 0 0 12px; border-bottom: 1px solid var(--line); }
+.bd-sum-tab { min-height: 44px; padding: 0 16px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
+.bd-sum-tab.is-on { color: var(--ink); border-bottom-color: var(--accent); }
+.bd-sum-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }

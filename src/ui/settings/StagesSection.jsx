@@ -45,7 +45,7 @@ export default function StagesSection({ retro, patchBoard }) {
             <li key={s.key} className="rt-stagerow">
               <input type="checkbox" id={`${id}-e${i}`} checked={s.enabled} onChange={(e) => edit(i, { enabled: e.target.checked })} aria-label={`${s.label} on`} />
               <input className="bd-sinput" aria-label={`Name of stage ${i + 1}`} maxLength={40} value={s.label} onChange={(e) => edit(i, { label: e.target.value })} />
-              <input className="bd-sinput bd-sinput--short" type="number" min="0.17" max="240" step="0.5" placeholder="No timer" aria-label={`Minutes for ${s.label} (empty: no timer)`} value={s.mins} onChange={(e) => edit(i, { mins: e.target.value })} />
+              <input className="bd-sinput bd-sinput--short" type="number" min="0.17" max="240" step="any" placeholder="No timer" aria-label={`Minutes for ${s.label} (empty: no timer)`} value={s.mins} onChange={(e) => edit(i, { mins: e.target.value })} />
               <button type="button" className="bd-sbtn" aria-label={`Move ${s.label} up`} disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
               <button type="button" className="bd-sbtn" aria-label={`Move ${s.label} down`} disabled={i === draft.stages.length - 1} onClick={() => move(i, 1)}>↓</button>
             </li>

@@ -322,3 +322,14 @@ test('votes-cleared empties every item\'s votes and leaves the rest of the state
   assert.equal(s1.lastSeen, s0.lastSeen)
   assert.deepEqual(s0.items.get('a').votes, ['x', 'y'], 'the old state is not mutated')
 })
+
+test('a board message repaints the Retro stage and the anonymous-notes mode, and ignores malformed values', () => {
+  const s0 = initialState(snapshot())
+  const retro = { stageIndex: 1, stages: [{ key: 'collect' }] }
+  const s1 = reducer(s0, { type: 'board', board: { retro, anonymousNotes: 'always', updatedAt: 300 } })
+  assert.deepEqual(s1.board.retro, retro)
+  assert.equal(s1.board.anonymousNotes, 'always')
+  const s2 = reducer(s1, { type: 'board', board: { retro: 'x', anonymousNotes: 'sometimes', updatedAt: 400 } })
+  assert.deepEqual(s2.board.retro, retro)
+  assert.equal(s2.board.anonymousNotes, 'always')
+})

@@ -29,6 +29,8 @@ const BOARD_FIELDS = {
   ai: isObj, // the owner's AI settings (guests never get this key)
   summary: (v) => v === null || isObj(v), // a shared summary for guests; the owner's own draft comes from the summary route
   summaryState: (v) => v === 'idle' || v === 'generating' || v === 'failed',
+  retro: (v) => v === null || isObj(v), // the staged Retro workflow (stage bar, timers)
+  anonymousNotes: (v) => v === 'optional' || v === 'always' || v === 'never',
   hasPasscode: isBool, // whether a passcode is set (the hash itself never reaches a client)
 }
 

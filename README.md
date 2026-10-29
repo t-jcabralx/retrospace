@@ -14,21 +14,19 @@ npm run build
 
 ## Status
 
-Everything in the spec is now built: workshop canvas, celebration board with reveal, retro boards (configurable columns and saved templates, staged workflow, anonymous notes, action cards, AI summary and AI theme grouping, print/PDF view), team wall, participant removal, and CSV/PNG export. `npm test` passes (1049 tests) and the production build succeeds.
+Everything in the spec is built: workshop canvas, celebration board with reveal, retro boards (configurable columns and saved templates, staged workflow, anonymous notes, action cards, AI summary and AI theme suggestions, print/PDF view), team wall, participant removal, and CSV/PNG export. Not built: password reset and email verification. `npm test` passes and the production build succeeds.
 
-Final end-to-end verification of the merged work (production build, real MongoDB Atlas, real Anthropic, scripted guest; report: `.superpowers/sdd/2026-10-28-kudo-mural/task-20-e2e-report.md`):
+Final end-to-end verification (production build, real MongoDB Atlas, Upstash, Giphy and Anthropic, a browser as the owner and a scripted guest; reports in `.superpowers/sdd/2026-10-28-kudo-mural/task-20-e2e-report.md` and `task-20-e2e2-report.md`):
 
-**Verified live:** sign-up; New board dialog with four types and the Columns step (rename, remove, reorder, add); Settings -> Columns rename; staged Retro (stage header, facilitator bar, timer, notes refused outside Collect, voting only in Vote, Discuss ranking, action cards with missing owner/due flags); anonymous notes (author fields absent for everyone including the owner, CSV shows "Anonymous"); AI enable with the confirmation notice; team wall (feed, birthday/anniversary banner, shout-outs, reactions, no birthdays in guest JSON); participant removal (403 "removed" on every route, notes kept); CSV (BOM, formula-injection prefix), PNG (non-empty image), print view; a `shoutout` on a workshop board is rejected; reveal page polling does not multiply; nosniff and frame-protection headers; persistence of boards, stage, votes, people and the owner session across a server restart.
+**Verified live:** the 375px Retro top bar; the staged Retro end to end (Join refuses guest notes, Collect, Group, Vote with the creation-time limit, Discuss, Actions with owner/due flags, Wrap up); the Settings drawer on a staged board; saved column templates; anonymous notes (no author data in any JSON, CSV says "Anonymous"); AI summary (private draft, then shared) and AI theme suggestions (accepted theme is votable); participant removal (403 on every route); team wall and its Canvas toolbar; CSV, PNG and print view; persistence across a server restart.
 
-**Known failures (see report):** AI theme suggestions returned "The AI did not write anything" against the real API (probable cause: only the first response content block is read), so AI summary generation is also unproven; on phones (375px) the Retro board's top bar overflows and the Settings gear cannot be reached; the emoji picker in the Columns editor is clipped and a pick did not apply.
+**Known bugs (see `docs/DEMO.md`, "Known rough edges"):** the stage bar does not repaint after Start / Next until the page is reloaded (`retro` is missing from `BOARD_FIELDS` in `src/client/state.js`); Settings > Stages cannot be saved with whole-minute durations (`step="0.5"` in `src/ui/settings/StagesSection.jsx`).
 
-**Not verified:** AI summary (draft owner-only, share), Settings -> Stages editor, a real keyboard-only pass, kicked-participant UI, saved templates, drag reorder, real print preview, real touch, Safari/Firefox, a Vercel runtime, 20 simultaneous guests (not re-run).
-
-**Deferred (not built):** password reset and e-mail verification.
+**Not verified:** a real second browser as guest, a runtime capture of presence `sel` for anonymous notes, the Stages editor saving, drag reordering, real print preview, real touch, Safari/Firefox, a Vercel runtime, the 20-guest simulation re-run.
 
 ## Retro boards
 
-Create a **Retro board** from the dashboard and pick a template: **Went Well / Could Be Improved / Blockers / Ideas**, **Start / Stop / Continue** or **Mad / Sad / Glad**. Each is a header line plus one column (a frame) per heading, laid out left to right. It is the same canvas as a workshop board, so there is voting (the owner opens a round in settings), the shared timer, throwable emoji, the access code and the optional passcode. A note's column is simply the frame whose area holds the middle of the note.
+Create a **Retro board** from the dashboard and pick a template: **Went Well / Could Be Improved / Blockers / Ideas**, **Start / Stop / Continue** or **Mad / Sad / Glad**. Each is a header line plus one column (a frame) per heading, laid out left to right. It is the same canvas as a workshop board (shared timer, throwable emoji, the access code and the optional passcode), driven by a **staged workflow**: Join, Collect feedback, Group, Vote, Review and discuss, Create actions, Wrap up. A new board starts in Join, not started; the owner presses **Start** and **Next stage** in the facilitator bar. Guests can only add notes in Collect, vote only in Vote (the per-person limit is chosen when the board is created), and add actions only in Create actions. The Settings drawer of such a board has a **Stages** section instead of separate Voting and Timer sections. A note's column is simply the frame whose area holds the middle of the note.
 
 ### AI summary (optional)
 
@@ -44,7 +42,7 @@ The owner can switch on **AI summaries** in the board's settings, and open **Sum
 
 `scripts/ai-smoke.mjs` makes one real call with a few invented notes and prints the model, the outcome, the length, token counts and the first 120 characters (never the key): `ANTHROPIC_API_KEY=... node scripts/ai-smoke.mjs`. With `AI_FAKE=1` it exercises the same path with the development fake. No test calls the real API.
 
-Not part of this release: AI theme grouping and the staged retro workflow.
+AI **theme suggestions** use the same consent and limits: the owner presses **Suggest themes** in the Themes panel, reviews the proposed groups and accepts, renames or dismisses them; nothing changes on the board until accepted, and notes are never edited.
 
 ## Celebration boards
 

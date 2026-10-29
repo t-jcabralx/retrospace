@@ -2,11 +2,11 @@
 // The Summary panel: a right-hand dialog like the settings drawer (focus moves in and stays in, Esc closes, the board behind
 // is inert, focus goes back to the Summary button). The owner reads, edits, shares and deletes the summary here and can
 // ask for an AI-written draft; everyone else sees only a summary the owner has shared, as plain text.
-import { useId, useRef } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useModal } from './boards/useModal.js'
 import { CloseIcon } from './icons.jsx'
 import SummaryOwner from './SummaryOwner.jsx'
-import CopyButton from './boards/CopyButton.jsx'
+import SummaryReport from './SummaryReport.jsx'
 import { sourceLabel } from './summaryApi.js'
 import './site/site.css'
 import './settings.css'
@@ -14,13 +14,14 @@ import './summary.css'
 
 const BEHIND = '.bd-top, .bd-board'
 
-function GuestSummary({ summary }) {
+function GuestSummary({ summary, board, items }) {
+  const [plain, setPlain] = useState(false) // the original text, for reading with a screen reader or copying by hand
   if (!summary) return <p className="bd-sum-empty" role="status">No summary is shared right now.</p>
   return (
     <>
-      <p className="bd-sum-source">{sourceLabel(summary)}</p>
-      <div className="bd-sum-text" role="region" aria-label="Summary text" tabIndex={0}>{summary.text}</div>
-      <div className="bd-set-actions"><CopyButton text={summary.text} label="Copy" ariaLabel="Copy the summary" /></div>
+      <SummaryReport summary={summary} board={board} items={items} showCopy />
+      <div className="bd-set-actions"><button type="button" className="bd-sbtn" aria-expanded={plain} onClick={() => setPlain(!plain)}>{plain ? 'Hide plain text' : 'Show plain text'}</button></div>
+      {plain && <div className="bd-sum-text" role="region" aria-label="Summary text" tabIndex={0}>{summary.text}</div>}
     </>
   )
 }
@@ -40,7 +41,7 @@ export default function SummaryPanel({ ctl, onClose, openerRef, onOpenSettings }
           <button type="button" className="bd-iconbtn bd-settings-close" aria-label="Close summary" onClick={() => { if (!guard.current?.()) onClose() }}><CloseIcon /></button>
         </header>
         <div className="bd-settings-body">
-          {ctl.isOwner ? <SummaryOwner ctl={ctl} guardRef={guard} onClose={onClose} onOpenSettings={onOpenSettings} /> : <GuestSummary summary={ctl.board.summary} />}
+          {ctl.isOwner ? <SummaryOwner ctl={ctl} guardRef={guard} onClose={onClose} onOpenSettings={onOpenSettings} /> : <GuestSummary summary={ctl.board.summary} board={ctl.board} items={ctl.items} />}
         </div>
       </aside>
     </>
