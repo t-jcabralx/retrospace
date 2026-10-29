@@ -62,8 +62,9 @@ The dry run prints "encrypted 1,204, not yet 311" per collection. `/api/health` 
 ## Rollout
 
 1. Ship the code with the key unset: nothing changes.
-2. Add the key on Vercel and redeploy: new and changed records are encrypted, old ones still read.
-3. Take a database backup, run the dry run, then `--apply`.
+2. Add `DATA_ENCRYPTION_KEY` (and `_KEY_ID`) on Vercel and redeploy: the site can now open encrypted records but still writes plain text, so nothing changes in the database and a rollback to the previous deployment is safe. A key that cannot be used is reported on `/api/health` (`encryption.error`) and ignored, so a typo cannot take the site down.
+3. Add `DATA_ENCRYPTION_WRITE=on` and redeploy: new and changed records are encrypted, old ones still read. From here on, never roll back to a version older than step 2 (it cannot read encrypted records); turning the switch off again is safe.
+4. Take a database backup, run the dry run, then `--apply`.
 4. Check the counts, then remove the plaintext fallback only if you want a hard guarantee (a setting that refuses to read an unflagged record).
 
 ## Testing

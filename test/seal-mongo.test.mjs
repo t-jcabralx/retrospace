@@ -15,7 +15,7 @@ test('real MongoDB: legacy records stay readable, new ones are sealed, backfill 
   const { sealConfig } = await import('../src/lib/seal.js')
   const { backfill } = await import('../src/lib/sealBackfill.js')
   const client = await new MongoClient(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 }).connect()
-  const withKey = (key, fn) => { const before = process.env.DATA_ENCRYPTION_KEY; if (key) process.env.DATA_ENCRYPTION_KEY = key; else delete process.env.DATA_ENCRYPTION_KEY; try { return fn() } finally { if (before === undefined) delete process.env.DATA_ENCRYPTION_KEY; else process.env.DATA_ENCRYPTION_KEY = before } }
+  const withKey = (key, fn) => { process.env.DATA_ENCRYPTION_WRITE = key ? 'on' : ''; const before = process.env.DATA_ENCRYPTION_KEY; if (key) process.env.DATA_ENCRYPTION_KEY = key; else delete process.env.DATA_ENCRYPTION_KEY; try { return fn() } finally { if (before === undefined) delete process.env.DATA_ENCRYPTION_KEY; else process.env.DATA_ENCRYPTION_KEY = before } }
   const mk = (key) => withKey(key, () => createMongoStore(client, DB))
   const note = (id, text) => validateOp({ op: 'add', item: { id, kind: 'note', x: 1, y: 2, w: 200, h: 120, data: { text } } }).op
   const actor = (uid) => ({ uid, name: 'Real Mongo Person', avatar: { bg: 1, body: 2, eyes: 3, mouth: 4, extra: 5 }, isOwner: true })

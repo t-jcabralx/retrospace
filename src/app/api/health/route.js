@@ -1,17 +1,25 @@
 import { getRedis, getMongo, envValue, messyEnv, upstashConfig } from '../../../lib/db.js'
 import { json } from '../../../lib/http.js'
+import { sealConfigForSite } from '../../../lib/seal.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const NAMES = ['MONGODB_URI', 'MONGODB_DB', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'RT_SECRET', 'ANTHROPIC_API_KEY', 'NEXT_PUBLIC_GIPHY_API_KEY', 'NEXT_PUBLIC_SITE_URL', 'DATA_ENCRYPTION_KEY', 'ERROR_WEBHOOK_URL']
+const NAMES = ['MONGODB_URI', 'MONGODB_DB', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'RT_SECRET', 'ANTHROPIC_API_KEY', 'NEXT_PUBLIC_GIPHY_API_KEY', 'NEXT_PUBLIC_SITE_URL', 'DATA_ENCRYPTION_KEY', 'DATA_ENCRYPTION_WRITE', 'ERROR_WEBHOOK_URL']
 const within = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
+
+// reading: a usable key is present; writing: new records are sealed too; error: a key is set but cannot be used (never its value).
+function encryptionState(set) {
+  let c
+  try { c = sealConfigForSite() } catch (e) { return { configured: set.DATA_ENCRYPTION_KEY, reading: false, writing: false, error: e.message } }
+  return { configured: set.DATA_ENCRYPTION_KEY, reading: c.configured, writing: c.writing, ...(c.error && { error: c.error }) }
+}
 
 // What is set and what answers, never a value: for checking a new deployment (open /api/health). The settings that carry
 // stray quotes or spaces are listed by name; the app strips them, but fixing them in the dashboard is cleaner.
 export async function GET() {
   const set = Object.fromEntries(NAMES.map((n) => [n, envValue(n) !== '']))
-  const out = { ok: true, settings: set, tidy: messyEnv(NAMES), realtime: { configured: Boolean(upstashConfig()) }, database: { configured: set.MONGODB_URI }, encryption: { configured: set.DATA_ENCRYPTION_KEY } }
+  const out = { ok: true, settings: set, tidy: messyEnv(NAMES), realtime: { configured: Boolean(upstashConfig()) }, database: { configured: set.MONGODB_URI }, encryption: encryptionState(set) }
 
   // Enough to tell two configurations apart without revealing either: the host of the URL and how long the token is.
   const up = upstashConfig()

@@ -1,6 +1,7 @@
 // A drop-in wrapper around a MongoDB collection that seals what is written and opens what is read (see seal.js). The store
-// code above it is unchanged: it asks for and receives ordinary documents. Without a key nothing is sealed (reads still open
-// whatever is already sealed), so deploying this alone changes nothing in the database.
+// code above it is unchanged: it asks for and receives ordinary documents. Writes are sealed only when `cfg.writing` (a key and
+// DATA_ENCRYPTION_WRITE=on); with a key alone the wrapper only reads, opening whatever is sealed and leaving plain records
+// plain, so deploying with a key changes nothing in the database.
 import { sealConfig, sealDoc, openDoc, sealUpdate, blind, SEALED_COLLECTIONS } from './seal.js'
 import { nameKey } from './persona.js'
 
@@ -11,12 +12,13 @@ const sealOp = (cfg, name, op) => (op.replaceOne ? { replaceOne: { ...op.replace
 
 export function wrapCollection(cfg, name, raw) {
   if (!SEALED_COLLECTIONS.includes(name)) return raw
-  const on = cfg.configured
+  const on = cfg.writing
+  const reading = cfg.configured
   const open = (d) => openDoc(cfg, name, d)
 
   // Email lookups must find an account whether it is sealed (by blind index) or still plain.
   const lookup = (f) => {
-    if (name === 'users' && on && f && typeof f.email === 'string' && Object.keys(f).length === 1) return { $or: [{ emailIdx: blind(cfg, 'users-email', f.email.trim().toLowerCase()) }, { email: f.email }] }
+    if (name === 'users' && reading && f && typeof f.email === 'string' && Object.keys(f).length === 1) return { $or: [{ emailIdx: blind(cfg, 'users-email', f.email.trim().toLowerCase()) }, { email: f.email }] }
     return f
   }
   const cursor = (c) => ({
@@ -41,7 +43,7 @@ export function wrapCollection(cfg, name, raw) {
   }
 
   const wrapped = {
-    sealing: on,
+    sealing: reading, // sealed records may exist, so they are measured and looked up the sealed way
     raw,
     async insertOne(doc, o) { await noLegacyClash(doc); return raw.insertOne(on ? sealDoc(cfg, name, doc) : doc, o) },
     insertMany: (docs, o) => raw.insertMany(on ? docs.map((d) => sealDoc(cfg, name, d)) : docs, o),

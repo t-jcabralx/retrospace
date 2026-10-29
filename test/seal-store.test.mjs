@@ -9,13 +9,16 @@ const { validateOp } = await import('../src/lib/validate.js')
 const { isSealed } = await import('../src/lib/seal.js')
 
 const KEY = randomBytes(32).toString('base64')
-const withKey = async (key, fn) => {
-  const before = process.env.DATA_ENCRYPTION_KEY
+const withKey = async (key, fn, write = true) => {
+  const before = [process.env.DATA_ENCRYPTION_KEY, process.env.DATA_ENCRYPTION_WRITE]
   if (key) process.env.DATA_ENCRYPTION_KEY = key; else delete process.env.DATA_ENCRYPTION_KEY
-  try { return await fn() } finally { if (before === undefined) delete process.env.DATA_ENCRYPTION_KEY; else process.env.DATA_ENCRYPTION_KEY = before }
+  if (write) process.env.DATA_ENCRYPTION_WRITE = 'on'; else delete process.env.DATA_ENCRYPTION_WRITE
+  try { return await fn() } finally {
+    for (const [i, n] of ['DATA_ENCRYPTION_KEY', 'DATA_ENCRYPTION_WRITE'].entries()) if (before[i] === undefined) delete process.env[n]; else process.env[n] = before[i]
+  }
 }
 // A store reads the key when it is created, so build it inside withKey.
-const mk = (client, key) => withKey(key, async () => createMongoStore(client, 'test'))
+const mk = (client, key, write = true) => withKey(key, async () => createMongoStore(client, 'test'), write)
 const everything = (client) => JSON.stringify([...client.cols.values()].map((c) => c.docs))
 const note = (id, text) => validateOp({ op: 'add', item: { id, kind: 'note', x: 1, y: 2, w: 200, h: 120, data: { text } } }).op
 const actor = (uid, isOwner = false) => ({ uid, name: 'Ann Secretname', avatar: { bg: 1, body: 2, eyes: 3, mouth: 4, extra: 5 }, isOwner })
@@ -127,4 +130,38 @@ test('the media budget still counts pictures when their contents are sealed', as
   const r = await store.applyOps('ABC234', [img.op], actor('KM-AAAA', true))
   assert.equal(r.applied.length, 1, JSON.stringify(r.rejected))
   assert.ok(isSealed([...client.cols.get('items').docs][0].data))
+})
+
+test('a key alone only reads: nothing new is sealed, and a sealed record still opens', async () => {
+  const client = fakeClient()
+  const writer = await mk(client, KEY)
+  await writer.createBoard(board('SEAL02'))
+  await writer.applyOps('SEAL02', [note('n1', 'Sealed before')], actor('KM-AAAA', true))
+  assert.ok(!everything(client).includes('Sealed before'))
+  const reader = await mk(client, KEY, false)
+  assert.equal((await reader.getBoard('SEAL02')).title, 'Confidential roadmap')
+  assert.equal((await reader.listItems('SEAL02'))[0].data.text, 'Sealed before')
+  await reader.createBoard(board('PLAIN1'))
+  await reader.applyOps('PLAIN1', [note('n2', 'Written in read-only mode')], actor('KM-BBBB', true))
+  assert.ok(everything(client).includes('Written in read-only mode'), 'read-only mode must keep writing plain, as the version before it did')
+  assert.ok(!client.cols.get('boards').docs.find((d) => d.code === 'PLAIN1').enc)
+  const none = await mk(client, undefined)
+  await none.createBoard(board('PLAIN2'))
+  assert.ok(everything(client).includes('Confidential roadmap'))
+})
+
+test('a key that cannot be used does not stop the site unless writing is on', async () => {
+  const { sealConfigForSite } = await import('../src/lib/seal.js')
+  const bad = { DATA_ENCRYPTION_KEY: 'short' }
+  const errors = []
+  const was = console.error
+  console.error = (m) => errors.push(m)
+  try {
+    const c = sealConfigForSite(bad)
+    assert.equal(c.configured, false)
+    assert.equal(c.writing, false)
+    assert.match(c.error, /32 bytes/)
+    assert.equal(errors.length, 1)
+  } finally { console.error = was }
+  assert.throws(() => sealConfigForSite({ ...bad, DATA_ENCRYPTION_WRITE: 'on' }), /32 bytes/)
 })

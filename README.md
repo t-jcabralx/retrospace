@@ -97,7 +97,7 @@ When Mongo is missing, an in-memory store is used so `npm run dev` works with ze
 ## Operations
 
 - **Health:** open `/api/health` on the live site: which settings are set, whether Redis and MongoDB answer, which commit is running. It never shows a value.
-- **Encryption of stored content:** set `DATA_ENCRYPTION_KEY` (see `.env.example`). Nothing changes until it is set. Existing records are encrypted only by `node --env-file=.env.local scripts/encrypt-backfill.mjs` (a dry run unless `--apply --yes-i-have-a-backup`; `--decrypt` undoes it). Details: `docs/specs/2026-10-29-encryption-at-rest-design.md`.
+- **Encryption of stored content:** set `DATA_ENCRYPTION_KEY` (see `.env.example`), which only lets the site read encrypted records; add `DATA_ENCRYPTION_WRITE=on` in a second deployment to encrypt what is written. Nothing changes until the second step. Existing records are encrypted only by `node --env-file=.env.local scripts/encrypt-backfill.mjs` (a dry run unless `--apply --yes-i-have-a-backup`; `--decrypt` undoes it). Details: `docs/specs/2026-10-29-encryption-at-rest-design.md`.
 - **Old boards:** `node --env-file=.env.local scripts/purge-old-boards.mjs --days 365` lists boards with no activity for a year (add `--apply --yes-i-have-a-backup` to delete them).
 - **Error alerts:** set `ERROR_WEBHOOK_URL` to a Slack, Teams or Discord incoming webhook to get a short message when the server fails.
 - **Tests:** `npm test` (no database needed). GitHub Actions runs the tests and a build on every push. `KM_TEST_MONGO=1 MONGODB_URI=... npm test` also runs the suites that use a real MongoDB in throwaway databases.

@@ -8,6 +8,9 @@ const cfg = (extra = {}) => sealConfig({ DATA_ENCRYPTION_KEY: key(), ...extra })
 
 test('config: no key means not configured; keys must be 32 bytes in base64 or hex; quotes from a dashboard are tolerated', () => {
   assert.equal(sealConfig({}).configured, false)
+  assert.equal(sealConfig({ DATA_ENCRYPTION_KEY: key() }).writing, false, 'a key alone does not turn writing on')
+  assert.equal(sealConfig({ DATA_ENCRYPTION_KEY: key(), DATA_ENCRYPTION_WRITE: 'on' }).writing, true)
+  assert.equal(sealConfig({ DATA_ENCRYPTION_WRITE: 'on' }).writing, false, 'writing needs a key')
   assert.equal(sealConfig({ DATA_ENCRYPTION_KEY: `"${key()}"` }).configured, true)
   assert.equal(sealConfig({ DATA_ENCRYPTION_KEY: randomBytes(32).toString('hex') }).configured, true)
   assert.throws(() => sealConfig({ DATA_ENCRYPTION_KEY: 'short' }), /32 bytes/)

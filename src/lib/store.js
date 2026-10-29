@@ -2,7 +2,7 @@ import { planOps, planClearVotes, mediaSize } from './plan.js'
 import { DEFAULT_PER_PERSON } from './vote.js'
 import { getMongo, dbName, envValue } from './db.js'
 import { nameKey } from './persona.js'
-import { sealConfig } from './seal.js'
+import { sealConfigForSite } from './seal.js'
 import { wrapCollection } from './sealStore.js'
 import { planTombstones, TOMBSTONE_FIELDS, MAX_BANS, bansFullError } from './ownerTools.js'
 
@@ -328,13 +328,13 @@ export function ensureIndexes(c, state, { sealing = false } = {}) {
 // store call, so a failed connect is retried instead of being captured forever.
 export function createMongoStore(client, name) {
   const state = {}
-  const seal = sealConfig() // no DATA_ENCRYPTION_KEY: nothing is sealed, and what already is stays readable only with a key
+  const seal = sealConfigForSite() // no key: nothing is sealed; a key alone only reads; DATA_ENCRYPTION_WRITE=on also seals what is written
   const cols = async () => {
     const resolved = await (typeof client === 'function' ? client() : client)
     if (state.client !== resolved) { state.client = resolved; state.ready = undefined } // new client after a reconnect: re-ensure indexes
     const db = resolved.db(name)
     const raw = { boards: db.collection('boards'), items: db.collection('items'), people: db.collection('people'), participants: db.collection('participants'), users: db.collection('users'), sessions: db.collection('sessions') }
-    await ensureIndexes(raw, state, { sealing: seal.configured })
+    await ensureIndexes(raw, state, { sealing: seal.writing })
     return { ...raw, boards: wrapCollection(seal, 'boards', raw.boards), items: wrapCollection(seal, 'items', raw.items), people: wrapCollection(seal, 'people', raw.people), participants: wrapCollection(seal, 'participants', raw.participants), users: wrapCollection(seal, 'users', raw.users) }
   }
 

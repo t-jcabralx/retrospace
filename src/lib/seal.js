@@ -16,7 +16,10 @@ import { nameKey } from './persona.js'
 export const PREFIX = 'enc1.'
 const b64 = (buf) => Buffer.from(buf).toString('base64url')
 
-// -> { configured, kid, keys: Map<kid, Buffer> } from the environment. Old keys stay readable after a rotation.
+// -> { configured, writing, kid, keys: Map<kid, Buffer> } from the environment. Old keys stay readable after a rotation.
+// `configured`: a key is present, so sealed records can be opened. `writing`: new and changed records are sealed as well, which
+// needs DATA_ENCRYPTION_WRITE=on. A key alone is read-only on purpose: the version that carries a key can be deployed (and
+// rolled back to) while every record is still plain, and writing is switched on later as a separate, deliberate step.
 export function sealConfig(env = process.env) {
   const raw = envValue('DATA_ENCRYPTION_KEY', env)
   const keys = new Map()
@@ -33,7 +36,19 @@ export function sealConfig(env = process.env) {
     try { map = JSON.parse(old) } catch { throw new Error('DATA_ENCRYPTION_KEYS_OLD must be JSON like {"k0":"<key>"}') }
     for (const [id, v] of Object.entries(map)) if (!keys.has(id)) keys.set(id, parse(String(v)))
   }
-  return { configured: Boolean(raw), kid, keys }
+  const writing = Boolean(raw) && /^(on|1|true|yes)$/i.test(envValue('DATA_ENCRYPTION_WRITE', env))
+  return { configured: Boolean(raw), writing, kid, keys }
+}
+
+// For the running site: a key that cannot be used must not take the whole site down while nothing depends on it yet. Without
+// DATA_ENCRYPTION_WRITE the problem is reported (the health page shows it) and the site runs unencrypted as before; with it, the
+// error is raised, because silently writing plain text when the owner asked for sealed text would be worse than failing.
+export function sealConfigForSite(env = process.env) {
+  try { return sealConfig(env) } catch (e) {
+    if (/^(on|1|true|yes)$/i.test(envValue('DATA_ENCRYPTION_WRITE', env))) throw e
+    console.error(`retrospace: encryption key ignored: ${e.message}`)
+    return { configured: false, writing: false, kid: 'k1', keys: new Map(), error: e.message }
+  }
 }
 
 const derived = new WeakMap() // per configuration: two different master keys never share a derived key
