@@ -299,8 +299,9 @@ export function useBoard(code, { viewOnly = false } = {}) {
     const item = cur.items.get(id)
     if (!isVotable(item)) return false // frames and connectors are not votable (the server says so too)
     if (!item.votes?.includes(cur.viewer.uid) && votesLeft(cur.board, [...cur.items.values()], cur.viewer.uid) <= 0) { notify('No votes left'); return false }
+    dispatch({ type: 'vote-local', id, uid: cur.viewer.uid }) // shown at once; the answer from the server settles it
     return local([{ op: 'vote', id }])
-  }, [local, notify])
+  }, [local, notify, dispatch])
 
   // Streams drag steps to peers without touching history or state (the canvas draws the motion itself).
   const live = useCallback((ops) => {

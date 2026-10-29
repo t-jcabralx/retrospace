@@ -248,6 +248,15 @@ export function reducer(state, action) {
     case 'peer-drag': return peerDrag(state, action.items, action.now, action.from, action.q)
     case 'peer-drag-end': return peerDragEnd(state, action.ids, action.cancel === true, action.now)
     case 'peer-drag-expire': return peerDragExpire(state, action.now, action.after)
+    case 'vote-local': { // this viewer's own vote, shown at once; the server's answer replaces it (a refusal reloads the board)
+      const cur = state.items.get(action.id)
+      if (!cur || cur.deleted || typeof action.uid !== 'string') return state
+      const votes = cur.votes ?? []
+      const items = new Map(state.items)
+      // One millisecond newer, so a stale copy of the item that is still on its way cannot undo it; the server's own answer is newer still.
+      items.set(action.id, { ...cur, votes: votes.includes(action.uid) ? votes.filter((v) => v !== action.uid) : [...votes, action.uid], updatedAt: (cur.updatedAt || 0) + 1 })
+      return { ...state, items }
+    }
     case 'remote':
       return clearDrags(merge(state, action.items, true), action.items)
     case 'ack':

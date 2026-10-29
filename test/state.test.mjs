@@ -402,3 +402,24 @@ test('a peer drag step that arrives after a newer one is ignored', () => {
   assert.equal(s2, s1)
   assert.deepEqual(at(reducer(s1, { type: 'peer-drag', items: [{ id: 'a', x: 70, y: 80 }], q: 250, now: 1020 }), 'a').slice(0, 2), [70, 80])
 })
+
+test('my own vote shows at once, is not an undo step, and survives a stale copy of the item; the server\'s answer then settles it', () => {
+  const ME = 'KM-MMMM-MMMM-MMMM'
+  let s = initialState(snapshot([doc('a', { updatedAt: 100, votes: ['KM-OTHER'] })]))
+  s = reducer(s, { type: 'vote-local', id: 'a', uid: ME })
+  assert.deepEqual(s.items.get('a').votes, ['KM-OTHER', ME])
+  assert.equal(s.items.get('a').updatedAt, 101)
+  assert.deepEqual([s.undo, s.redo], [[], []], 'a vote is not an undo step')
+  // a copy of the item from before the vote (the same version as before) cannot take it back
+  s = reducer(s, { type: 'remote', items: [doc('a', { updatedAt: 100, votes: ['KM-OTHER'] })] })
+  assert.deepEqual(s.items.get('a').votes, ['KM-OTHER', ME])
+  // the server's answer is newer and wins
+  s = reducer(s, { type: 'ack', items: [doc('a', { updatedAt: 250, votes: ['KM-OTHER', ME] })] })
+  assert.equal(s.items.get('a').updatedAt, 250)
+  // tapping again takes it back at once
+  s = reducer(s, { type: 'vote-local', id: 'a', uid: ME })
+  assert.deepEqual(s.items.get('a').votes, ['KM-OTHER'])
+  // an item that is not there, or no uid: nothing happens
+  assert.equal(reducer(s, { type: 'vote-local', id: 'nope', uid: ME }), s)
+  assert.equal(reducer(s, { type: 'vote-local', id: 'a' }), s)
+})
