@@ -7,12 +7,24 @@ import { SaveNote } from './settings/controls.jsx'
 import ResetVotes from './settings/ResetVotes.jsx'
 import { useSetting } from './settings/useSetting.js'
 import { useOwnerActions } from './useOwnerActions.js'
-import { perPerson, votesUsed, anyVotes, topVoted, excerpt } from './voteResults.js'
+import { perPerson, votesUsed, anyVotes, topVoted, excerpt, ballotStartsOpen } from './voteResults.js'
 import { VoteIcon, TrophyIcon } from './icons.jsx'
 import Ballot from './Ballot.jsx'
+import { useDragPanel } from './useDragPanel.js'
 import './settings.css'
 
 const plural = (n, one, many) => (n === 1 ? one : many)
+
+// The handle that moves the whole voting panel: drag it, or use the arrow keys when it has focus; Home or a double tap puts it back.
+function Grip({ grip, dragging }) {
+  return (
+    <button type="button" className={`bd-vote-grip${dragging ? ' is-dragging' : ''}`} aria-label="Move the voting panel. Use the arrow keys, or Home to put it back" title="Drag to move" {...grip}>
+      <svg width="10" height="16" viewBox="0 0 10 16" aria-hidden="true" focusable="false">
+        {[2, 8, 14].flatMap((y) => [2, 8].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.4" fill="currentColor" />))}
+      </svg>
+    </button>
+  )
+}
 
 function Dots({ total, used }) {
   return (
@@ -41,8 +53,9 @@ export default function VotePanel({ ctl, onJump }) {
   const { board, items, uid, isOwner, readOnly } = ctl
   const id = useId()
   const [collapsed, setCollapsed] = useState(false)
+  const drag = useDragPanel('retrospace-vote-panel')
   const [manage, setManage] = useState(false)
-  const [ballot, setBallot] = useState(true) // the voter card starts open while voting is open; "My votes" folds it away
+  const [ballot, setBallot] = useState(() => ballotStartsOpen(typeof window === 'undefined' ? 1024 : window.innerWidth)) // the voter card starts open on a wide screen and folded on a phone; "My votes" toggles it
   const open = Boolean(board?.vote?.active)
   const voted = anyVotes(items)
   if (!open && !voted) return null
@@ -53,8 +66,9 @@ export default function VotePanel({ ctl, onJump }) {
 
   if (open) {
     return (
-      <div className="bd-vote" role="region" aria-label="Voting">
+      <div ref={drag.panel} style={drag.style} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting">
         <div className="bd-vote-bar">
+          <Grip grip={drag.grip} dragging={drag.dragging} />
           <VoteIcon width={18} height={18} aria-hidden="true" />
           {readOnly ? (
             <span className="bd-vote-line">Voting open — view only</span>
@@ -75,8 +89,9 @@ export default function VotePanel({ ctl, onJump }) {
 
   const top = topVoted(items)
   return (
-    <div className="bd-vote" role="region" aria-label="Voting results">
+    <div ref={drag.panel} style={drag.style} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting results">
       <div className="bd-vote-bar">
+        <Grip grip={drag.grip} dragging={drag.dragging} />
         <TrophyIcon width={18} height={18} aria-hidden="true" />
         <span className="bd-vote-line">Results</span>
         <button type="button" className="bd-sbtn bd-vote-manage" aria-expanded={!collapsed} aria-controls={`${id}-r`} onClick={() => setCollapsed((c) => !c)}>{collapsed ? 'Show' : 'Hide'}</button>

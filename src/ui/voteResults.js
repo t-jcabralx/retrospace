@@ -52,3 +52,6 @@ export function ballotSummary(board, items, participants = []) {
     voting: [...counts.values()].reduce((a, b) => a + b, 0),
   }
 }
+
+// The voter card covers part of the board while it is open, so on a phone it starts folded (the "My votes" button opens it).
+export const ballotStartsOpen = (viewportWidth) => !(viewportWidth <= 640)

@@ -110,6 +110,11 @@
 .bd-hud > * { pointer-events: auto; }
 .bd-hud .bd-context { position: static; margin: 0; }
 .bd-vote { box-sizing: border-box; width: min(520px, 100%); padding: 6px 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: var(--bd-shadow); }
+.bd-vote-grip { flex: none; display: grid; place-items: center; width: 24px; height: 36px; margin: 0 -2px 0 -4px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
+.bd-vote-grip:hover, .bd-vote-grip:focus-visible { background: var(--bd-hover); color: var(--ink); }
+.bd-vote-grip.is-dragging { cursor: grabbing; }
+.bd-vote.is-dragging { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28); user-select: none; }
+@media (pointer: coarse) { .bd-vote-grip { width: 36px; height: 44px; } }
 .bd-vote-bar { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .bd-vote-line { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
 .bd-vote-dots { display: inline-flex; flex-wrap: wrap; gap: 4px; max-width: 120px; }

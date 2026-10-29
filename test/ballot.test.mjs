@@ -34,3 +34,11 @@ test('the card shows tokens, where my votes are, a take-back button, and counts 
   const panel = await readFile(new URL('../src/ui/VotePanel.jsx', import.meta.url), 'utf8')
   assert.ok(panel.includes('<Ballot ctl={ctl} onJump={onJump} />') && panel.includes('My votes'))
 })
+
+test('the voter card starts folded on a phone-width screen and open on a wide one', async () => {
+  const { ballotStartsOpen } = await import('../src/ui/voteResults.js')
+  assert.equal(ballotStartsOpen(375), false)
+  assert.equal(ballotStartsOpen(640), false)
+  assert.equal(ballotStartsOpen(641), true)
+  assert.equal(ballotStartsOpen(1440), true)
+})
