@@ -203,3 +203,5 @@
 .rs-join-result { margin-top: 16px; }
 .rs-join-result .rs-board-line { margin-bottom: 12px; }
 @media (max-width: 400px) { .rs-join-row .rs-input { font-size: 18px; letter-spacing: 0.2em; } .rs-join-row .rs-btn { padding-inline: 16px; } }
+
+.rs-footer-legal { max-width: var(--rs-max); margin: 0 auto; padding: 0 var(--rs-gutter) 28px; color: var(--rs-muted); font-size: 13px; }

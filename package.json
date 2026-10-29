@@ -2,6 +2,8 @@
   "name": "retrospace",
   "version": "1.0.0",
   "private": true,
+  "author": "Jason Cabral (Partners with Veehk Corps)",
+  "license": "UNLICENSED",
   "type": "module",
   "engines": {
     "node": ">=22"

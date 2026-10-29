@@ -89,3 +89,7 @@ When Mongo is missing, an in-memory store is used so `npm run dev` works with ze
 3. Allow the host's outbound IPs in the MongoDB Atlas network access list.
 4. Serve over HTTPS behind a proxy that sets the client IP (see Deployment notes).
 5. Smoke test: register, create a board, join it from a second browser as a guest. The demo script is in `docs/DEMO.md`.
+
+## Ownership
+
+© 2026 Jason Cabral, Partners with Veehk Corps. All rights reserved. See `LICENSE`.
