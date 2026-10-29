@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { initialState, reducer, undo as undoStep, redo as redoStep, ordered, freshId } from '../client/state.js'
 import { createSync } from '../client/sync.js'
 import { reportDiag } from './diag.js'
+import { withoutPending } from './pendingGuard.js'
 import { fixLinks, coalesceUpdates, dropBuffered } from './ops.js'
 import { createClock } from './timer.js'
 import { votesLeft } from './voteResults.js'
@@ -20,7 +21,7 @@ const STATUS_GRACE_MS = 4000 // "Connecting" turns into "Offline" if sync never 
 // Counts every op handed to sync per item (see settle) and in total (`out`: sent, not yet answered).
 function rawSend(r, ops) {
   if (ops.some((o) => o.op === 'add')) r.authored = true // a persona is fixed once its owner has added something
-  for (const o of ops) r.pending.set(o.id, (r.pending.get(o.id) ?? 0) + 1)
+  for (const o of ops) { r.pending.set(o.id, (r.pending.get(o.id) ?? 0) + 1); r.sentAt.set(o.id, Date.now()) }
   r.out += ops.length
   r.sync?.send(ops)
 }
@@ -75,7 +76,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
   const [toast, setToast] = useState(null)
   const [lockedByServer, setLockedByServer] = useState(false)
   const [attempt, setAttempt] = useState(0)
-  const ref = useRef({ state: null, sync: null, pending: new Map(), merge: null, toastTimer: null, out: 0, liveBuf: new Map(), liveTimer: null, authored: false, eph: new Set() })
+  const ref = useRef({ state: null, sync: null, pending: new Map(), sentAt: new Map(), merge: null, toastTimer: null, out: 0, liveBuf: new Map(), liveTimer: null, authored: false, eph: new Set() })
   if (!ref.current.clock) ref.current.clock = createClock()
 
   const put = useCallback((next) => {
@@ -111,6 +112,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
     let sync = null
     const r = ref.current
     r.pending = new Map()
+    r.sentAt = new Map()
     r.out = 0
     r.liveBuf = new Map()
     r.sync = null
@@ -172,7 +174,10 @@ export function useBoard(code, { viewOnly = false } = {}) {
       sync = createSync({
         watchOnly: watching,
         code, identity: { uid: viewer.uid }, lastSeen: r.state.lastSeen, boardRev: Number.isFinite(Number(b.rev)) ? Number(b.rev) : undefined, boardAt: Number(b.updatedAt) || 0,
-        onRemote: (items) => dispatch({ type: 'remote', items }),
+        onRemote: (items) => {
+          const fresh = withoutPending(items, r.pending, r.sentAt) // not over changes of mine that are still being saved (see pendingGuard.js)
+          if (fresh.length) dispatch({ type: 'remote', items: fresh })
+        },
         onKicked: (id) => dispatch({ type: 'forget-participant', uid: id }),
         onBoard: (next) => dispatch({ type: 'board', board: next }),
         onClock: (serverNow, sentAt, receivedAt) => r.clock.sample(serverNow, sentAt, receivedAt),
