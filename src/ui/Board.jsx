@@ -251,7 +251,12 @@ export default function Board({ ctl, code, presence = null }) {
               onVote={() => latest.current.ctl.vote(item.id)}
               onFocus={(e) => focusSelect(e, item.id)}
               autoEdit={editing === item.id}
-              onEditEnd={() => latest.current.setEditing(null)}
+              onEditEnd={(value) => {
+                const { ctl: c, setEditing } = latest.current
+                setEditing(null)
+                // A text box left empty shows nothing to guests (only the editor sees the "Text" hint): drop it.
+                if (item.kind === 'text' && typeof value === 'string' && !value.trim() && !(item.data?.text ?? '').trim()) c.local([{ op: 'delete', id: item.id }])
+              }}
               onChange={(patch) => latest.current.ctl.local([{ op: 'update', id: item.id, patch }])}
               onSelect={(e) => latest.current.h.onItemDown(e, item.id)}
               onResizeStart={(e, handle) => latest.current.h.onResizeStart(e, item.id, handle)}

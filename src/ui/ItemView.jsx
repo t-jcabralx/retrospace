@@ -41,15 +41,15 @@ function ItemView({ item, selected, editable, onChange, onSelect, handles = fals
   useEffect(() => { if (!editable) setEditing(false) }, [editable])
 
   // `viaKey`: the editor was closed from the keyboard, so focus goes back to the item instead of falling to <body>.
-  const done = (viaKey = false) => {
+  const done = (viaKey = false, value) => {
     setEditing(false)
-    onEditEnd?.()
+    onEditEnd?.(value)
     if (viaKey) setTimeout(() => box.current?.focus({ preventScroll: true }), 0)
   }
   const commit = (value, viaKey) => {
     // A card needs a message: an emptied editor keeps the old one rather than sending an update the server would refuse.
     if (value !== (item.data[field] ?? '') && !((item.kind === 'card' || item.kind === 'action') && !value.trim())) onChange({ data: { [field]: value } })
-    done(viaKey)
+    done(viaKey, value)
   }
 
   const onPointerUp = (e) => { // double-tap: dblclick is not reliable for touch
