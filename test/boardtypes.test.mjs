@@ -4,8 +4,8 @@ import { BOARD_TYPES, typeInfo, templateList, defaultTitle, checkBoardDetails, t
 import { BOARD_TEMPLATES } from '../src/lib/templates.js'
 import { validateBoardInput } from '../src/lib/validate.js'
 
-test('the creatable types are workshop, celebration, retro and wall, each backed by real templates', () => {
-  assert.deepEqual(BOARD_TYPES.map((t) => t.key), ['workshop', 'celebration', 'retro', 'wall'])
+test('the creatable types are workshop, celebration, retro, event and wall, each backed by real templates', () => {
+  assert.deepEqual(BOARD_TYPES.map((t) => t.key), ['workshop', 'celebration', 'retro', 'event', 'wall'])
   for (const t of BOARD_TYPES) assert.ok(Object.hasOwn(BOARD_TEMPLATES, t.key) && t.label && t.short && t.blurb)
   assert.equal(BOARD_TYPES.find((t) => t.key === 'celebration').needsRecipient, true)
   assert.ok(!BOARD_TYPES.find((t) => t.key === 'workshop').needsRecipient)
