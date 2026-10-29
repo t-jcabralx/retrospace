@@ -1,6 +1,6 @@
 import { planOps, planClearVotes, mediaSize } from './plan.js'
 import { DEFAULT_PER_PERSON } from './vote.js'
-import { getMongo, dbName } from './db.js'
+import { getMongo, dbName, envValue } from './db.js'
 import { nameKey } from './persona.js'
 import { planTombstones, TOMBSTONE_FIELDS, MAX_BANS, bansFullError } from './ownerTools.js'
 
@@ -536,7 +536,7 @@ export function createMongoStore(client, name) {
 let singleton
 export function getStore() {
   if (!singleton) {
-    singleton = process.env.MONGODB_URI
+    singleton = envValue('MONGODB_URI')
       ? createMongoStore(() => getMongo(), dbName())
       : createMemoryStore((globalThis._kmMem ??= newMemState()))
   }

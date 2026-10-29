@@ -1,6 +1,6 @@
 // Realtime helpers: one Redis pub/sub channel per board. No Upstash configured -> everything here is a no-op.
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { getRedis } from './db.js'
+import { getRedis, envValue } from './db.js'
 
 export const chan = (code) => `kb:${code}`
 
@@ -15,10 +15,10 @@ export const chan = (code) => `kb:${code}`
 // In production it must be RT_SECRET itself: borrowing a vendor credential would tie every stored identity to it. Outside
 // production the Upstash token (then a fixed dev value) stands in, so a local setup runs without ceremony.
 export function rtSecret() {
-  const s = process.env.RT_SECRET
+  const s = envValue('RT_SECRET')
   if (s) return s
   if (process.env.NODE_ENV === 'production') throw new Error('RT_SECRET must be set in production')
-  return process.env.UPSTASH_REDIS_REST_TOKEN || 'dev-secret'
+  return envValue('UPSTASH_REDIS_REST_TOKEN') || 'dev-secret'
 }
 
 // Signed membership token '<expMs>.<hmac>': lets /send and /stream authorize without a Redis read. It expires

@@ -1,4 +1,4 @@
-import { getRedis } from '../../../../lib/db.js'
+import { getRedis, upstashConfig } from '../../../../lib/db.js'
 import { chan, verifyTok } from '../../../../lib/rt.js'
 import { getStore } from '../../../../lib/store.js'
 import { authorize, HttpError } from '../../../../lib/access.js'
@@ -45,8 +45,9 @@ export async function GET(req) {
   const deadline = setTimeout(() => ac.abort(), deadlineMs(searchParams.get('tok')))
   let upstream
   try {
-    upstream = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/subscribe/${encodeURIComponent(chan(code))}`, {
-      headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`, Accept: 'text/event-stream' },
+    const up = upstashConfig()
+    upstream = await fetch(`${up?.url}/subscribe/${encodeURIComponent(chan(code))}`, {
+      headers: { Authorization: `Bearer ${up?.token}`, Accept: 'text/event-stream' },
       signal: ac.signal,
       cache: 'no-store',
     })
