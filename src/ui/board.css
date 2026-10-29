@@ -114,10 +114,26 @@
 .bd-body-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 18px; line-height: 1.35; }
 .bd-placeholder { margin: 0; color: var(--muted); font-size: 14px; opacity: 0.85; }
 
+.bd-note-wrap { position: relative; width: 100%; height: 100%; }
 .bd-note {
-  width: 100%; height: 100%; padding: 14px; overflow: hidden; border-radius: 4px;
-  box-shadow: var(--bd-item-shadow);
+  width: 100%; height: 100%; padding: 14px; overflow-x: hidden; overflow-y: auto; border-radius: 4px;
+  box-shadow: var(--bd-item-shadow); overscroll-behavior: contain; scrollbar-width: thin;
 }
+.bd-note.has-foot { padding-bottom: 34px; } /* room under the text for the author badge and the Read all button */
+.bd-readall {
+  position: absolute; right: 8px; bottom: 6px; z-index: 2; min-height: 22px; padding: 0 9px; border: 0; border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62); color: #fff; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.bd-readall:hover { background: rgba(0, 0, 0, 0.8); } .bd-readall:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bd-reader {
+  position: fixed; z-index: 60; top: 50%; left: 50%; width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; transform: translate(-50%, -50%); padding: 16px 18px;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.bd-reader:focus { outline: none; }
+.bd-reader-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; } .bd-reader-head h2 { margin: 0; font-size: 17px; }
+.bd-reader-text { overflow-y: auto; padding: 4px 2px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 18px; line-height: 1.5; }
+.bd-reader-foot { display: flex; justify-content: flex-end; }
 .bd-textbox { width: 100%; height: 100%; padding: 4px 6px; overflow: hidden; }
 .bd-textbox .bd-body-text { font-size: 22px; font-weight: 500; }
 .bd-shape { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }

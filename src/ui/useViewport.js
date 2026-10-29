@@ -14,6 +14,13 @@ export function loadView(code) {
   return null
 }
 
+// Is the wheel over a note whose text can still scroll in that direction?
+export function scrollsInside(target, dy) {
+  const note = target?.closest?.('.bd-note')
+  if (!note || note.scrollHeight <= note.clientHeight + 1) return false
+  return dy < 0 ? note.scrollTop > 0 : dy > 0 && note.scrollTop + note.clientHeight < note.scrollHeight - 1
+}
+
 export function useViewport(code) {
   const rootRef = useRef(null)
   const [view, setViewState] = useState({ x: 0, y: 0, scale: 1 })
@@ -46,6 +53,7 @@ export function useViewport(code) {
     if (!el) return undefined
     const onWheel = (e) => {
       if (e.target.closest?.('textarea')) return
+      if (!e.ctrlKey && !e.metaKey && scrollsInside(e.target, e.deltaY)) return // a long note scrolls first; at its end the canvas pans again
       e.preventDefault()
       const unit = e.deltaMode === 1 ? 16 : 1
       if (e.ctrlKey || e.metaKey) {
