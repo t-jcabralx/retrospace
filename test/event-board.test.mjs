@@ -55,3 +55,42 @@ test('the client keeps the wheel from a board message and ignores a malformed on
   const s2 = reducer(s1, { type: 'board', board: { wheel: 'nope', updatedAt: 6 } })
   assert.deepEqual(s2.board.wheel, wheel)
 })
+
+test('an Event board starts from its template: the prizes, the rules and the winner effect, and every preset is a valid wheel', async () => {
+  const keys = ['raffle', 'lunch', 'party', 'giveaway']
+  for (const k of keys) assert.ok(getTemplate('event', k), k)
+  const made = async (template) => {
+    const code = (await newBoard(owner.cookie, { type: 'event', template, title: `Preset ${template}` })).data.code
+    return (await call(board.GET, 'GET', `/api/boards/${code}`, { code, cookie: owner.cookie })).data.board
+  }
+  const plain = await made('raffle')
+  assert.deepEqual(plain.wheel.prizes, [])
+  assert.equal(plain.wheel.rules.removeWinners, true)
+
+  const lunch = await made('lunch')
+  assert.deepEqual(lunch.wheel.prizes, [], 'a name-only wheel: the plain name pick needs no prize')
+  assert.equal(lunch.wheel.rules.removeWinners, false, 'people stay on the wheel so it can be spun again')
+  assert.equal(lunch.wheel.rules.effect, 'sparkles')
+
+  const party = await made('party')
+  assert.deepEqual(party.wheel.prizes.map((p) => [p.name, p.qty]), [['Gift card', 1], ['Extra day off', 1], ['Coffee voucher', 5], ['Team swag', 3]])
+  assert.ok(party.wheel.prizes.every((p) => p.id && /^#[0-9a-f]{6}$/.test(p.color) && p.emoji))
+  assert.equal(new Set(party.wheel.prizes.map((p) => p.id)).size, 4)
+  assert.equal(party.wheel.rules.effect, 'fireworks')
+  assert.deepEqual(party.wheel.participants, [])
+  assert.equal(party.wheel.round.state, 'idle')
+
+  const giveaway = await made('giveaway')
+  assert.equal(giveaway.wheel.prizes.length, 3)
+  assert.equal(giveaway.wheel.rules.effect, 'stars')
+  // two boards from one preset never share prize ids' state
+  const again = await made('party')
+  assert.notDeepEqual(again.wheel.prizes.map((p) => p.id), party.wheel.prizes.map((p) => p.id))
+})
+
+test('a template preset that is not usable falls back to an empty wheel instead of failing the board', async () => {
+  const { wheelFromPreset, defaultWheel } = await import('../src/lib/wheel.js')
+  assert.deepEqual(wheelFromPreset(undefined), defaultWheel())
+  assert.deepEqual(wheelFromPreset({ rules: { effect: 'nonsense' }, prizes: [] }), defaultWheel())
+  assert.deepEqual(wheelFromPreset({ prizes: [{ name: 'X', qty: 500 }] }), defaultWheel())
+})

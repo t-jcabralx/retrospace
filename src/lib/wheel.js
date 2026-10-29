@@ -32,6 +32,14 @@ export const defaultWheel = () => ({
   round: { state: 'idle', prizeId: null, winnerId: null, sitOut: [], spin: null, n: 0 }, history: [],
 })
 
+// A new wheel that starts from a template's preset ({ rules, prizes }); an unusable preset falls back to an empty wheel.
+export function wheelFromPreset(preset) {
+  const base = defaultWheel()
+  if (!preset) return base
+  const r = cleanSetup({ participants: [], prizes: preset.prizes ?? [], helpers: [], rules: { ...base.rules, ...preset.rules } }, { previous: base })
+  return r.value ? { ...base, ...r.value } : base
+}
+
 // --- setup ----------------------------------------------------------------------------------------------------
 // -> { value: { participants, prizes, helpers, rules } } | { error }. Blank and repeated names are dropped, not refused, so a
 // pasted list can be sloppy. `won` survives only for ids that were already marked won (the owner cannot hand it out here).

@@ -6,7 +6,7 @@ import { resolvePersona } from '../../../lib/participants.js'
 import { avatarFromSeed } from '../../../lib/persona.js'
 import { DEFAULT_THROW_EMOJIS } from '../../../lib/emoji.js'
 import { defaultRetro } from '../../../lib/retro.js'
-import { defaultWheel } from '../../../lib/wheel.js'
+import { wheelFromPreset } from '../../../lib/wheel.js'
 import { AI_DEFAULTS } from '../../../lib/aiBoard.js'
 import { createBoardWithStarter, CodeAllocationError } from '../../../lib/boards.js'
 import { json, fail, parseBody, rateLimited } from '../../../lib/http.js'
@@ -47,7 +47,7 @@ async function handle(req) {
     summaryState: 'idle',
     closedAt: null,
     ...(type === 'retro' && { retro: defaultRetro(votes ?? undefined) }), // the staged workflow; boards without it behave as before
-    ...(type === 'event' && { wheel: defaultWheel() }), // the prize wheel: lists, helpers, the current round and the history
+    ...(type === 'event' && { wheel: wheelFromPreset(tpl.wheel?.()) }), // the prize wheel: lists, helpers, the current round and the history
   })
 
   // Check the template before anything is created, so a bad template leaves nothing behind.

@@ -48,6 +48,12 @@ const retro = (key, label, emoji, accent, columns) => ({
   },
 })
 
+// An Event board has no canvas: its screen is the prize wheel. A preset only differs in the wheel it starts with: its prizes
+// (the lists of people are the owner's to fill in) and the rules. `wheel()` is turned into a full wheel by the board route.
+function eventPreset(key, label, emoji, theme, title, rules, prizes) {
+  return { key, label, emoji, theme, title: () => title, starterItems: () => [], wheel: () => ({ rules, prizes }) }
+}
+
 export const BOARD_TEMPLATES = {
   workshop: {
     blank: workshop('blank', 'Blank board', '⬜', '#4f6df5'),
@@ -71,12 +77,14 @@ export const BOARD_TEMPLATES = {
     'retro-msg': retro('retro-msg', 'Mad / Sad / Glad', '🎭', '#e0568a', PRESET_TITLES['retro-msg']),
   },
   event: {
-    raffle: {
-      key: 'raffle', label: 'Raffle day', emoji: '🎡',
-      theme: { bg: '#f6f3ff', pattern: 'dots', accent: '#6d5ae6', effect: 'confetti' },
-      title: () => 'Raffle day',
-      starterItems: () => [], // an Event board has no canvas: its screen is the prize wheel
-    },
+    raffle: eventPreset('raffle', 'Raffle day', '🎡', { bg: '#f6f3ff', pattern: 'dots', accent: '#6d5ae6', effect: 'confetti' }, 'Raffle day', { removeWinners: true, effect: 'confetti' }, []),
+    lunch: eventPreset('lunch', 'Team lunch pick', '🍕', { bg: '#fff6ec', pattern: 'dots', accent: '#e0802b', effect: 'confetti' }, 'Who picks lunch?', { removeWinners: false, effect: 'sparkles' }, []),
+    party: eventPreset('party', 'Holiday party raffle', '🎁', { bg: '#f1faf4', pattern: 'stars', accent: '#2f9e6f', effect: 'fireworks' }, 'Holiday party raffle', { removeWinners: true, effect: 'fireworks' }, [
+      { name: 'Gift card', emoji: '🎁', qty: 1 }, { name: 'Extra day off', emoji: '🏖️', qty: 1 }, { name: 'Coffee voucher', emoji: '☕', qty: 5 }, { name: 'Team swag', emoji: '👕', qty: 3 },
+    ]),
+    giveaway: eventPreset('giveaway', 'Conference giveaway', '🏆', { bg: '#eef4ff', pattern: 'stars', accent: '#3b6cf6', effect: 'confetti' }, 'Conference giveaway', { removeWinners: true, effect: 'stars' }, [
+      { name: 'Grand prize', emoji: '🏆', qty: 1 }, { name: 'T-shirt', emoji: '👕', qty: 10 }, { name: 'Sticker pack', emoji: '⭐', qty: 20 },
+    ]),
   },
   wall: {
     team: {

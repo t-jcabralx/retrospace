@@ -24,7 +24,7 @@ const TYPES = [
   {
     key: 'event', art: 'wheel', Icon: PartyIcon, title: 'Event raffle',
     text: 'A two-ring prize wheel for raffles and give-aways: people on the outer ring, prizes on the inner ring, a two-step draw everyone watches live, with your own winner celebration.',
-    templates: ['Raffle day', 'Helpers can run the draw', 'Giphy winner GIFs'],
+    templates: ['Raffle day', 'Team lunch pick', 'Holiday party raffle', 'Conference giveaway'],
   },
   {
     key: 'wall', photo: '/photos/wall.jpg', Icon: SparkIcon, title: 'Team wall',
