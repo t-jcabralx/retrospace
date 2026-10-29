@@ -1,8 +1,14 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { TOC, BOARD_TYPES, OWNER_STEPS, GUEST_STEPS, TOOLS, TIPS, STAGES, AI_STEPS, HELP } from './guideData.js'
 import CreateBoardLink from '../landing/CreateBoardLink.jsx'
 import { ArrowIcon } from '../site/icons.jsx'
+import { STAGE_ICONS } from './StageIcons.jsx'
+import { CreateIllustration, ShareIllustration, CollabIllustration } from '../landing/Illustrations.jsx'
+import '../landing/landing.css' // the illustrations' own styles (ls-ill, ls-float)
 import './guide.css'
+
+const PHOTO = { Workshop: 'workshop', Celebration: 'celebration', Retro: 'retro', 'Team wall': 'wall' }
 
 const Steps = ({ items }) => (
   <ol className="gd-steps">
@@ -11,6 +17,9 @@ const Steps = ({ items }) => (
     ))}
   </ol>
 )
+
+// Steps on the left, a drawing on the right (stacked on a phone).
+const Split = ({ art, children }) => <div className="gd-split"><div>{children}</div><div className="gd-art">{art}</div></div>
 
 function Section({ id, eyebrow, title, children }) {
   return (
@@ -26,6 +35,7 @@ export default function Guide() {
   return (
     <div className="rs-wrap gd">
       <header className="gd-hero" id="start">
+        <div className="gd-photo gd-photo--hero"><Image src="/photos/team.jpg" alt="" fill priority sizes="(min-width: 900px) 880px, 100vw" /></div>
         <p className="gd-eyebrow">User guide</p>
         <h1>How to use Retrospace</h1>
         <p className="gd-lede">One person creates a board and shares a six-character code. Everyone else joins with the code, with no account, and works together live on a laptop or a phone.</p>
@@ -37,18 +47,23 @@ export default function Guide() {
           {TOC.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
         </nav>
         <ul className="gd-types">
-          {BOARD_TYPES.map(([name, text]) => <li key={name}><strong>{name}</strong><span>{text}</span></li>)}
+          {BOARD_TYPES.map(([name, text]) => (
+            <li key={name}>
+              <div className="gd-photo"><Image src={`/photos/${PHOTO[name]}.jpg`} alt="" fill sizes="(min-width: 720px) 430px, 100vw" /></div>
+              <strong>{name}</strong><span>{text}</span>
+            </li>
+          ))}
         </ul>
       </header>
 
-      <Section id="owner" eyebrow="For the owner" title="Create a board and share it"><Steps items={OWNER_STEPS} /></Section>
-      <Section id="guest" eyebrow="For guests" title="Join with a code"><Steps items={GUEST_STEPS} /></Section>
+      <Section id="owner" eyebrow="For the owner" title="Create a board and share it"><Split art={<CreateIllustration />}><Steps items={OWNER_STEPS} /></Split></Section>
+      <Section id="guest" eyebrow="For guests" title="Join with a code"><Split art={<ShareIllustration />}><Steps items={GUEST_STEPS} /></Split></Section>
 
       <Section id="board" eyebrow="On the board" title="The tools and everyday actions">
         <div className="gd-grid">
           {TOOLS.map(([name, text]) => <div key={name} className="gd-card"><h3>{name}</h3><p>{text}</p></div>)}
         </div>
-        <ul className="gd-tips">{TIPS.map((t) => <li key={t}>{t}</li>)}</ul>
+        <Split art={<CollabIllustration />}><ul className="gd-tips">{TIPS.map((t) => <li key={t}>{t}</li>)}</ul></Split>
       </Section>
 
       <Section id="stages" eyebrow="Retro boards" title="The seven stages, step by step">
@@ -59,7 +74,7 @@ export default function Guide() {
         <ol className="gd-stages">
           {STAGES.map((s, i) => (
             <li key={s.key} className="gd-stage">
-              <div className="gd-stage-head"><span className="gd-num" aria-hidden="true">{i + 1}</span><h3>{s.name}</h3><span className="gd-time">{s.minutes}</span></div>
+              <div className="gd-stage-head">{(() => { const Icon = STAGE_ICONS[s.key]; return <span className="gd-stage-icon"><Icon /></span> })()}<h3><span className="gd-step-no">Stage {i + 1}</span>{s.name}</h3><span className="gd-time">{s.minutes}</span></div>
               <p className="gd-what">{s.what}</p>
               <dl>
                 <div><dt>You (owner)</dt><dd>{s.owner}</dd></div>

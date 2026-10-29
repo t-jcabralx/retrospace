@@ -53,3 +53,18 @@
 .gd-help dt { margin-bottom: 4px; font-weight: 650; }
 .gd-help dd { margin: 0; color: var(--rs-muted); font-size: 15px; line-height: 1.55; }
 .gd-end { margin-top: 32px; }
+
+/* pictures: the hero photo, board-type photos, a drawing beside the steps, and an icon on every stage */
+.gd-photo { position: relative; overflow: hidden; aspect-ratio: 3 / 2; border-radius: var(--rs-r); background: var(--rs-accent-soft); }
+.gd-photo img { object-fit: cover; }
+.gd-photo--hero { aspect-ratio: 16 / 7; margin-bottom: 28px; border-radius: 20px; }
+.gd-types li { overflow: hidden; padding: 0 0 14px; }
+.gd-types li .gd-photo { margin-bottom: 12px; border-radius: 0; aspect-ratio: 16 / 8; }
+.gd-types li strong, .gd-types li span { padding-inline: 18px; }
+.gd-split { display: grid; gap: 22px; align-items: start; }
+.gd-art .ls-ill { width: 100%; height: auto; max-width: 340px; }
+@media (min-width: 820px) { .gd-split { grid-template-columns: minmax(0, 1fr) 300px; } .gd-art { position: sticky; top: 90px; } }
+.gd-stage-icon { flex: none; display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--rs-accent-ink); }
+.gd-step-no { display: block; margin-bottom: 1px; color: var(--rs-muted); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.gd-stage-head h3 { line-height: 1.15; }
+@media (prefers-reduced-motion: reduce) { .gd-art .ls-float, .gd-art .ls-dash { animation: none; } }
