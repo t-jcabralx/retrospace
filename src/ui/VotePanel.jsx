@@ -66,7 +66,7 @@ export default function VotePanel({ ctl, onJump }) {
 
   if (open) {
     return (
-      <div ref={drag.panel} style={drag.style} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting">
+      <div ref={drag.panel} style={drag.style} {...drag.card} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting">
         <div className="bd-vote-bar">
           <Grip grip={drag.grip} dragging={drag.dragging} />
           <VoteIcon width={18} height={18} aria-hidden="true" />
@@ -89,7 +89,7 @@ export default function VotePanel({ ctl, onJump }) {
 
   const top = topVoted(items)
   return (
-    <div ref={drag.panel} style={drag.style} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting results">
+    <div ref={drag.panel} style={drag.style} {...drag.card} className={`bd-vote${drag.dragging ? ' is-dragging' : ''}`} role="region" aria-label="Voting results">
       <div className="bd-vote-bar">
         <Grip grip={drag.grip} dragging={drag.dragging} />
         <TrophyIcon width={18} height={18} aria-hidden="true" />

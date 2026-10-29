@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { clampOffset } from '../src/ui/useDragPanel.js'
+import { clampOffset, isDrag, DRAG_SLOP } from '../src/ui/useDragPanel.js'
 
 const rect = { left: 100, top: 50, width: 300, height: 80 }
 const base = { x: 0, y: 0 }
@@ -26,4 +26,12 @@ test('a window smaller than the panel brings it back (the offset is re-fitted wi
   const far = { left: 900, top: 600, width: 300, height: 80 } // pushed right and down, then the window shrank
   const fit = clampOffset(far, { x: 800, y: 550 }, 0, 0, 800, 500)
   assert.ok(far.left + (fit.x - 800) <= 800 - 56 && far.top + (fit.y - 550) <= 500 - 56)
+})
+
+test('a press on the card is a tap until it has moved more than 6 px, then it is a drag', () => {
+  assert.equal(DRAG_SLOP, 6)
+  assert.equal(isDrag(0, 0), false)
+  assert.equal(isDrag(3, 4), false, 'exactly 5 px')
+  assert.equal(isDrag(4, 5), true)
+  assert.equal(isDrag(-20, 0), true)
 })
