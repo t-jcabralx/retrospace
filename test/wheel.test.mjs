@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { defaultWheel, cleanSetup, applyAction, ringPeople, ringPrizes, isRunner, spinAngle, spinning, historyRows, LIMITS, SPIN } from '../src/lib/wheel.js'
+import { defaultWheel, cleanSetup, celebrationFor, applyAction, ringPeople, ringPrizes, isRunner, spinAngle, spinning, historyRows, LIMITS, SPIN } from '../src/lib/wheel.js'
 
 let n = 0
 const genId = () => `g${++n}`
@@ -211,4 +211,24 @@ test('applyAction never mutates the wheel it is given', () => {
   const copy = structuredClone(w)
   run(w, 'spin-prize')
   assert.deepEqual(w, copy)
+})
+
+test('celebrations: effects and GIF links are validated, kept per prize, and the GIF wins over the animation', () => {
+  const ok = (extra, prizes) => cleanSetup({ participants: [], prizes: prizes ?? [], ...extra }, { genId })
+  assert.deepEqual(defaultWheel().rules, { removeWinners: true, effect: 'confetti', gif: null })
+  const r = ok({ rules: { removeWinners: false, effect: 'fireworks', gif: 'https://media.giphy.com/media/abc/giphy.gif' } }, [{ name: 'Mug', effect: 'balloons', gif: 'https://media.giphy.com/media/xyz/giphy.gif' }, { name: 'Pen' }])
+  assert.deepEqual(r.value.rules, { removeWinners: false, effect: 'fireworks', gif: 'https://media.giphy.com/media/abc/giphy.gif' })
+  assert.deepEqual([r.value.prizes[0].effect, r.value.prizes[0].gif, r.value.prizes[1].effect, r.value.prizes[1].gif], ['balloons', 'https://media.giphy.com/media/xyz/giphy.gif', undefined, undefined])
+  for (const bad of [{ effect: 'nuke' }, { gif: 'http://x.example/a.gif' }, { gif: 'javascript:alert(1)' }, { gif: 'https://x.example/a b.gif' }, { gif: 'https://x.example/"onerror=' }]) assert.ok(ok({ rules: { removeWinners: true, ...bad } }).error, JSON.stringify(bad))
+  assert.ok(ok({}, [{ name: 'x', effect: 'nuke' }]).error)
+  assert.ok(ok({}, [{ name: 'x', gif: 'ftp://x/y.gif' }]).error)
+  assert.equal(ok({ rules: { removeWinners: true, gif: '' } }).value.rules.gif, null)
+  const keep = cleanSetup({ participants: [], prizes: [] }, { previous: { ...defaultWheel(), rules: { removeWinners: true, effect: 'stars', gif: null } }, genId })
+  assert.equal(keep.value.rules.effect, 'stars') // a setup that does not mention the effect keeps it
+  const w = { ...defaultWheel(), rules: { removeWinners: true, effect: 'fireworks', gif: null } }
+  assert.deepEqual(celebrationFor(w, { name: 'Mug' }), { gif: null, effect: 'fireworks' })
+  assert.deepEqual(celebrationFor(w, { name: 'Mug', effect: 'stars' }), { gif: null, effect: 'stars' })
+  assert.deepEqual(celebrationFor({ ...w, rules: { ...w.rules, gif: 'https://a.example/w.gif' } }, { name: 'Mug' }).gif, 'https://a.example/w.gif')
+  assert.equal(celebrationFor({ ...w, rules: { ...w.rules, gif: 'https://a.example/w.gif' } }, { gif: 'https://a.example/p.gif' }).gif, 'https://a.example/p.gif')
+  assert.deepEqual(celebrationFor({ ...defaultWheel(), rules: { removeWinners: true } }, null), { gif: null, effect: 'confetti' }) // an older wheel without the new fields
 })

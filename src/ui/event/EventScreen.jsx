@@ -8,6 +8,7 @@ import WheelSvg from './WheelSvg.jsx'
 import Setup from './Setup.jsx'
 import { Draw, History } from './Panels.jsx'
 import { copyText } from '../boards/CopyButton.jsx'
+import { Effect, GifPop, useCelebration } from './Celebration.jsx'
 import './event.css'
 
 // A small button that copies the board code and says so.
@@ -33,6 +34,7 @@ export default function EventScreen({ api }) {
   const [tab, setTab] = useState(() => (api.owner && empty ? 'setup' : 'draw'))
   const [present, setPresent] = useState(false)
   const shown = present ? 'draw' : tab
+  const cel = useCelebration(wheel, v)
 
   useEffect(() => {
     if (!present) return undefined
@@ -48,6 +50,8 @@ export default function EventScreen({ api }) {
     <div className={`ev${present ? ' is-present' : ''}`}>
       <div className="ev-stage">
         <WheelSvg people={people} prizes={prizes} v={v} hub={hub} />
+        {cel.effect && <Effect effect={cel.effect} seed={cel.seed} />}
+        <GifPop cel={cel} />
         <p className="ev-legend" aria-hidden="true"><span><i className="ev-dot ev-dot--people" />Outer ring: people</span><span><i className="ev-dot ev-dot--prizes" />Inner ring: prizes</span></p>
       </div>
       <aside className="ev-side">
@@ -64,7 +68,7 @@ export default function EventScreen({ api }) {
         )}
         <div role="tabpanel" id={`ev-pan-${shown}`} aria-labelledby={`ev-tab-${shown}`} className="ev-panel">
           {shown === 'draw' && <Draw api={api} v={v} now={now} />}
-          {shown === 'setup' && <Setup api={api} />}
+          {shown === 'setup' && <Setup api={api} onPreview={cel.play} />}
           {shown === 'history' && <History api={api} />}
         </div>
       </aside>

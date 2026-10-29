@@ -3,9 +3,9 @@
 //
 // wheel = { participants, prizes, helpers, rules, round, history }
 //   participants [{ id, name, on, won?, uid? }]   the outer ring (uid: the per-board id of someone who joined)
-//   prizes       [{ id, name, emoji, qty, color }] the inner ring (qty = how many are left)
+//   prizes       [{ id, name, emoji, qty, color, effect?, gif? }] the inner ring (qty = how many are left; effect and gif override the wheel's own for this prize)
 //   helpers      [uid]                              people besides the owner who may run the round
-//   rules        { removeWinners }
+//   rules        { removeWinners, effect, gif }   effect: one of EFFECTS; gif: an https link or null (shown to every winner)
 //   round        { state, prizeId, winnerId, sitOut[], spin, n }
 //   history      [{ n, at, prize, winner, by }]     newest last
 //
@@ -15,6 +15,10 @@
 
 export const LIMITS = { participants: 200, prizes: 30, helpers: 10, name: 60, qty: 99, history: 500 }
 export const SPIN = { leadMs: 700, prizeMs: 5000, winnerMs: 6000, turns: 5 }
+// The animation played when a winner is revealed. A GIF (per prize, else for the whole wheel) replaces it when one is set.
+export const EFFECTS = ['confetti', 'fireworks', 'balloons', 'stars', 'sparkles', 'none']
+const GIF_URL = /^https:\/\/[^\s"'<>]{4,1990}$/i
+export const isGifUrl = (v) => typeof v === 'string' && GIF_URL.test(v)
 export const PRIZE_COLORS = ['#7f77dd', '#1d9e75', '#d85a30', '#d4537e', '#378add', '#639922', '#ba7517', '#888780']
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
@@ -24,7 +28,7 @@ const newId = () => globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 10
 const text = (v, max) => (typeof v === 'string' ? Array.from(v.replace(/\s+/g, ' ').trim()).slice(0, max).join('') : '')
 
 export const defaultWheel = () => ({
-  participants: [], prizes: [], helpers: [], rules: { removeWinners: true },
+  participants: [], prizes: [], helpers: [], rules: { removeWinners: true, effect: 'confetti', gif: null },
   round: { state: 'idle', prizeId: null, winnerId: null, sitOut: [], spin: null, n: 0 }, history: [],
 })
 
@@ -63,15 +67,21 @@ export function cleanSetup(input, { previous = defaultWheel(), genId = newId } =
     if (!Number.isInteger(qty) || qty < 0 || qty > LIMITS.qty) return { error: `Prize quantity is 0 to ${LIMITS.qty}` }
     const id = typeof z.id === 'string' && ID.test(z.id) && !gids.has(z.id) ? z.id : genId()
     gids.add(id)
-    gifts.push({ id, name, emoji: text(z.emoji, 8), qty, color: typeof z.color === 'string' && HEX.test(z.color) ? z.color.toLowerCase() : PRIZE_COLORS[gifts.length % PRIZE_COLORS.length] })
+    if (z.effect !== undefined && z.effect !== '' && !EFFECTS.includes(z.effect)) return { error: 'Unknown celebration effect' }
+    if (z.gif !== undefined && z.gif !== null && z.gif !== '' && !isGifUrl(z.gif)) return { error: 'A GIF link must start with https://' }
+    gifts.push({ id, name, emoji: text(z.emoji, 8), qty, color: typeof z.color === 'string' && HEX.test(z.color) ? z.color.toLowerCase() : PRIZE_COLORS[gifts.length % PRIZE_COLORS.length], ...(z.effect && { effect: z.effect }), ...(z.gif && { gif: z.gif }) })
   }
   if (gifts.length > LIMITS.prizes) return { error: `A wheel holds up to ${LIMITS.prizes} prizes` }
 
   const helperList = helpers === undefined ? previous.helpers : helpers
   if (!Array.isArray(helperList) || helperList.length > LIMITS.helpers || !helperList.every((h) => typeof h === 'string' && h.length > 0 && h.length <= 40)) return { error: `Up to ${LIMITS.helpers} helpers` }
-  if (rules !== undefined && !(isObj(rules) && typeof rules.removeWinners === 'boolean')) return { error: 'invalid rules' }
+  if (rules !== undefined) {
+    if (!(isObj(rules) && typeof rules.removeWinners === 'boolean')) return { error: 'invalid rules' }
+    if (rules.effect !== undefined && !EFFECTS.includes(rules.effect)) return { error: 'Unknown celebration effect' }
+    if (rules.gif !== undefined && rules.gif !== null && rules.gif !== '' && !isGifUrl(rules.gif)) return { error: 'A GIF link must start with https://' }
+  }
 
-  return { value: { participants: people, prizes: gifts, helpers: [...new Set(helperList)], rules: { removeWinners: (rules ?? previous.rules).removeWinners } } }
+  return { value: { participants: people, prizes: gifts, helpers: [...new Set(helperList)], rules: { removeWinners: (rules ?? previous.rules).removeWinners, effect: rules?.effect ?? previous.rules.effect ?? 'confetti', gif: (rules ? rules.gif : previous.rules.gif) || null } } }
 }
 
 // --- the two rings --------------------------------------------------------------------------------------------
@@ -152,6 +162,9 @@ export function applyAction(w, action, { now, pick, by = null } = {}) {
       return bad('Unknown action')
   }
 }
+
+// What to play for a winner of `prize`: that prize's GIF, else the wheel's GIF, else the prize's own effect, else the wheel's.
+export const celebrationFor = (w, prize) => ({ gif: prize?.gif || w.rules.gif || null, effect: prize?.effect || w.rules.effect || 'confetti' })
 
 // Rows for the CSV export, header first.
 export const historyRows = (w) => [['Draw', 'Time (UTC)', 'Prize', 'Winner', 'Run by'], ...w.history.map((h) => [h.n, new Date(h.at).toISOString(), `${h.prize.emoji ? `${h.prize.emoji} ` : ''}${h.prize.name}`, h.winner.name, h.by ?? ''])]

@@ -19,13 +19,6 @@ function StepBar({ stage }) {
   )
 }
 
-const BITS = Array.from({ length: 26 }, (_, i) => ({ left: (i * 37) % 100, delay: (i % 7) * 70, hue: i % 6, size: 7 + (i % 4) * 2 }))
-const Confetti = () => (
-  <div className="ev-confetti" aria-hidden="true">
-    {BITS.map((b, i) => <span key={i} className={`h${b.hue}`} style={{ left: `${b.left}%`, animationDelay: `${b.delay}ms`, width: b.size, height: b.size }} />)}
-  </div>
-)
-
 export function Draw({ api, v, now }) {
   const { wheel, runner } = api
   const { round, history } = wheel
@@ -74,7 +67,6 @@ export function Draw({ api, v, now }) {
     <section className="ev-draw" aria-label="The draw">
       <StepBar stage={stage} />
       <div className={`ev-result${v.winnerShown ? ' is-win' : ''}`}>
-        {v.winnerShown && <Confetti />}
         <p className="ev-message" role="status" aria-live="polite">{v.winnerShown ? <><span className="ev-cheer">🎉</span>{message}</> : message}</p>
         {v.prizeShown && !v.winnerShown && <p className="ev-chip" aria-hidden="true">{label(v.prize)}</p>}
       </div>

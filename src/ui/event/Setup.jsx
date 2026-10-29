@@ -3,13 +3,16 @@
 // so a half-typed list never reaches the wheel; the draft follows the server again as soon as it is saved or unchanged.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { LIMITS } from '../../lib/wheel.js'
+import GifPicker from '../GifPicker.jsx'
+import { EFFECT_INFO } from './Celebration.jsx'
 
 let tmp = 0
 const tmpId = () => `t${Date.now().toString(36)}${(tmp++).toString(36)}`
 const NAMES = /[\n\r,;\t]+/
-const snapshot = (w) => JSON.stringify([w.participants, w.prizes, w.helpers, w.rules.removeWinners])
+const snapshot = (w) => JSON.stringify([w.participants, w.prizes, w.helpers, w.rules.removeWinners, w.rules.effect ?? 'confetti', w.rules.gif ?? null])
+const draftOf = (people, prizes, helpers, removeWinners, effect, gif) => ({ participants: people, prizes, helpers, rules: { removeWinners, effect, gif } })
 
-export default function Setup({ api }) {
+export default function Setup({ api, onPreview }) {
   const { wheel, owner, joined } = api
   const locked = wheel.round.state !== 'idle'
   const server = useMemo(() => snapshot(wheel), [wheel])
@@ -17,15 +20,19 @@ export default function Setup({ api }) {
   const [prizes, setPrizes] = useState(wheel.prizes)
   const [helpers, setHelpers] = useState(wheel.helpers)
   const [removeWinners, setRemove] = useState(wheel.rules.removeWinners)
+  const [effect, setEffect] = useState(wheel.rules.effect ?? 'confetti')
+  const [gif, setGif] = useState(wheel.rules.gif ?? null)
+  const [picking, setPicking] = useState(null) // 'wheel' | a prize id: choosing a GIF
+  const [open, setOpen] = useState(null) // the prize whose celebration options are showing
   const base = useRef(server)
-  const dirty = snapshot({ participants: people, prizes, helpers, rules: { removeWinners } }) !== base.current
+  const dirty = snapshot(draftOf(people, prizes, helpers, removeWinners, effect, gif)) !== base.current
   const [paste, setPaste] = useState('')
   const [prize, setPrize] = useState({ name: '', emoji: '', qty: 1 })
   const [state, setState] = useState({ phase: 'idle', error: '' })
 
   useEffect(() => { // someone else (or an accepted draw) changed the wheel and there is nothing unsaved here: follow it
-    if (snapshot({ participants: people, prizes, helpers, rules: { removeWinners } }) === base.current) {
-      setPeople(wheel.participants); setPrizes(wheel.prizes); setHelpers(wheel.helpers); setRemove(wheel.rules.removeWinners)
+    if (snapshot(draftOf(people, prizes, helpers, removeWinners, effect, gif)) === base.current) {
+      setPeople(wheel.participants); setPrizes(wheel.prizes); setHelpers(wheel.helpers); setRemove(wheel.rules.removeWinners); setEffect(wheel.rules.effect ?? 'confetti'); setGif(wheel.rules.gif ?? null)
       base.current = server
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,6 +40,18 @@ export default function Setup({ api }) {
 
   const won = useMemo(() => new Map(wheel.history.map((h) => [h.winner.id, h.prize])), [wheel.history])
   if (!owner) return <p className="ev-empty">Only the host sets up the wheel.</p>
+  if (picking) { // choosing a GIF replaces the panel until it is picked or cancelled
+    return (
+      <GifPicker
+        onBack={() => setPicking(null)}
+        onPick={(g) => {
+          if (picking === 'wheel') setGif(g.url)
+          else setPrizes(prizes.map((q) => (q.id === picking ? { ...q, gif: g.url } : q)))
+          setPicking(null)
+        }}
+      />
+    )
+  }
 
   function addNames(text) {
     const have = new Set(people.map((p) => p.name.toLowerCase()))
@@ -63,8 +82,9 @@ export default function Setup({ api }) {
   }
   async function save() {
     setState({ phase: 'saving', error: '' })
-    const r = await api.saveSetup({ participants: people, prizes, helpers, rules: { removeWinners } })
-    if (r.ok) { base.current = snapshot({ participants: people, prizes, helpers, rules: { removeWinners } }); setState({ phase: 'saved', error: '' }) } else setState({ phase: 'idle', error: r.error })
+    const draft = draftOf(people, prizes, helpers, removeWinners, effect, gif)
+    const r = await api.saveSetup(draft)
+    if (r.ok) { base.current = snapshot(draft); setState({ phase: 'saved', error: '' }) } else setState({ phase: 'idle', error: r.error })
   }
 
   const on = people.filter((p) => p.on && !p.won).length
@@ -104,7 +124,7 @@ export default function Setup({ api }) {
         {prizes.length > 0 && (
           <ul className="ev-list">
             {prizes.map((z) => (
-              <li key={z.id} className={z.qty === 0 ? 'is-won' : ''}>
+              <li key={z.id} className={`${z.qty === 0 ? 'is-won' : ''}${open === z.id ? ' has-more' : ''}`}>
                 <span className="ev-swatch" style={{ background: z.color || '#7f77dd' }} aria-hidden="true" />
                 <span className="ev-grow">{z.emoji} {z.name}</span>
                 <span className="ev-stepper">
@@ -112,11 +132,49 @@ export default function Setup({ api }) {
                   <output aria-label={`${z.qty} left`}>{z.qty}</output>
                   <button type="button" aria-label={`One more ${z.name}`} onClick={() => setPrizes(prizes.map((q) => (q.id === z.id ? { ...q, qty: Math.min(LIMITS.qty, q.qty + 1) } : q)))}>+</button>
                 </span>
+                <button type="button" className="ev-x" aria-label={`Celebration for ${z.name}`} aria-expanded={open === z.id} title="Choose the celebration for this prize" onClick={() => setOpen(open === z.id ? null : z.id)}>{z.gif || z.effect ? '✨' : '☆'}</button>
                 <button type="button" className="ev-x" aria-label={`Remove ${z.name}`} onClick={() => setPrizes(prizes.filter((q) => q.id !== z.id))}>×</button>
+                {open === z.id && (
+                  <div className="ev-more">
+                    <label className="ev-label" htmlFor={`ev-fx-${z.id}`}>When {z.name} is won</label>
+                    <select id={`ev-fx-${z.id}`} value={z.effect ?? ''} onChange={(e) => setPrizes(prizes.map((q) => (q.id === z.id ? { ...q, effect: e.target.value } : q)))}>
+                      <option value="">Use the wheel's effect</option>
+                      {EFFECT_INFO.map(([key, name]) => <option key={key} value={key}>{name}</option>)}
+                    </select>
+                    {z.gif ? (
+                      <div className="ev-gifrow">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- a GIF chosen by the host */}
+                        <img className="ev-gifthumb" src={z.gif} alt="" referrerPolicy="no-referrer" />
+                        <button type="button" className="ev-btn" onClick={() => setPicking(z.id)}>Change GIF</button>
+                        <button type="button" className="ev-btn ev-btn--quiet" onClick={() => setPrizes(prizes.map((q) => (q.id === z.id ? { ...q, gif: '' } : q)))}>Remove GIF</button>
+                      </div>
+                    ) : <button type="button" className="ev-btn" onClick={() => setPicking(z.id)}>Show a GIF instead</button>}
+                    <button type="button" className="ev-btn ev-btn--quiet" onClick={() => onPreview?.({ effect: z.effect || effect, gif: z.gif || gif })}>Preview</button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         )}
+      </fieldset>
+
+      <fieldset className="ev-fs">
+        <h3>Winner celebration <span className="ev-count">plays when someone wins</span></h3>
+        <fieldset className="ev-fxgrid" aria-label="Celebration effect">
+          {EFFECT_INFO.map(([key, name, glyph]) => (
+            <label key={key}><input type="radio" name="ev-effect" checked={effect === key} onChange={() => { setEffect(key); onPreview?.({ effect: key, gif: null }) }} /><span aria-hidden="true">{glyph}</span>{name}</label>
+          ))}
+        </fieldset>
+        {gif ? (
+          <div className="ev-gifrow">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a GIF chosen by the host */}
+            <img className="ev-gifthumb" src={gif} alt="" referrerPolicy="no-referrer" />
+            <div className="ev-grow"><strong>GIF for every winner</strong><p className="ev-hint">It replaces the effect. A prize can have its own GIF.</p></div>
+            <button type="button" className="ev-btn" onClick={() => setPicking('wheel')}>Change</button>
+            <button type="button" className="ev-btn ev-btn--quiet" onClick={() => setGif(null)}>Remove</button>
+          </div>
+        ) : <button type="button" className="ev-btn" onClick={() => setPicking('wheel')}>Show a GIF when someone wins</button>}
+        <p className="ev-hint">No GIF? The effect above plays. You can also set a different celebration for each prize (the ☆ on a prize).</p>
       </fieldset>
 
       <fieldset disabled={locked} className="ev-fs">
