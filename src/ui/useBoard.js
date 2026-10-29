@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { initialState, reducer, undo as undoStep, redo as redoStep, ordered, freshId } from '../client/state.js'
 import { createSync } from '../client/sync.js'
+import { reportDiag } from './diag.js'
 import { fixLinks, coalesceUpdates, dropBuffered } from './ops.js'
 import { createClock } from './timer.js'
 import { votesLeft } from './voteResults.js'
@@ -84,13 +85,17 @@ export function useBoard(code, { viewOnly = false } = {}) {
   const dispatch = useCallback((action) => {
     const cur = ref.current.state
     if (action.type === 'load') return put(initialState(action.snapshot))
-    if (cur) put(reducer(cur, action))
+    if (!cur) return
+    const next = reducer(cur, action)
+    // A peer's temporary position that never got its real write is put back after 10 s: say so, it is one reason a change "goes back".
+    if (action.type === 'peer-drag-expire' && next.drags.size < cur.drags.size) reportDiag('drag-expired', { n: cur.drags.size - next.drags.size, board: cur.board?.type, role: cur.viewer?.role })
+    put(next)
   }, [put])
 
-  const notify = useCallback((message) => {
+  const notify = useCallback((message, ms = 3500) => {
     clearTimeout(ref.current.toastTimer)
     setToast({ message, id: Date.now() })
-    ref.current.toastTimer = setTimeout(() => setToast(null), 3500)
+    ref.current.toastTimer = setTimeout(() => setToast(null), ms)
   }, [])
 
   // Every sent op is counted per item; an ack only reaches the state once the item has no newer op in flight,
@@ -199,7 +204,9 @@ export function useBoard(code, { viewOnly = false } = {}) {
           flushLive(r)
           const real = list.filter((x) => x.error !== 'Item already exists')
           if (!real.length) return
-          notify(real[0].error)
+          const st = r.state
+          reportDiag('rejected', { error: String(real[0].error ?? ''), n: real.length, board: st?.board?.type, role: st?.viewer?.role, stage: st?.board?.retro ? String(st.board.retro.current ?? '') : undefined, status: r.sync?.status?.() })
+          notify(real[0].error, 8000) // long enough to read, and to tell us: it says why the change was put back
           resync()
         },
       })
