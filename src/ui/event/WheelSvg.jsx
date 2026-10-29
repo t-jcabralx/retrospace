@@ -25,34 +25,42 @@ function slice([r1, r2], a0, a1) {
   return `M${x1} ${y1} A${r2} ${r2} 0 ${big} 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 ${big} 0 ${x4} ${y4} Z`
 }
 const initials = (name) => Array.from(name.trim().split(/\s+/).slice(0, 2).map((w) => Array.from(w)[0] ?? '').join('').toUpperCase()).join('')
-// Text that fits `avail` px along a slice: the size shrinks to a floor of 9, then the text is cut with an ellipsis.
-function fitText(str, base, avail) {
+// Text that follows the curve of a slice, so it reads left to right: along the top it sits above its baseline, along the bottom
+// the baseline runs the other way. `turned` = how far the ring has turned while resting, so what is at the bottom OF THE SCREEN
+// is the half that gets flipped. The size shrinks to the arc that is available, then the text is cut with an ellipsis.
+function arcLabel(id, r, a0, a1, str, { base, fill, weight = 600, turned = 0 }) {
+  const mid = (a0 + a1) / 2
+  const eff = (mid + turned) % 360
+  const bottom = eff > 90 && eff < 270
   const chars = Array.from(str)
-  const size = Math.max(9, Math.min(base, avail / (0.6 * Math.max(1, chars.length))))
-  const room = Math.max(3, Math.floor(avail / (0.6 * size)))
-  return { text: chars.length > room ? `${chars.slice(0, room - 1).join('')}…` : str, size: Math.round(size * 10) / 10 }
-}
-
-// `turned` = how far the ring is turned while it rests, so a label on the left half of the SCREEN is the one that is flipped,
-// not the one that started there: after a spin nothing reads upside down.
-function labelAt(r, deg, text, { size, fill, weight = 600, turned = 0 }) {
-  const [x, y] = pt(r, deg)
-  const rot = deg - 90 + ((deg + turned) % 360 > 180 ? 180 : 0)
-  return <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={size} fontWeight={weight} fill={fill} transform={`rotate(${rot} ${x} ${y})`}>{text}</text>
+  const arc = r * (((a1 - a0) * Math.PI) / 180) * 0.84 - 6
+  const size = Math.max(9, Math.min(base, arc / (0.58 * Math.max(1, chars.length))))
+  const room = Math.max(3, Math.floor(arc / (0.58 * size)))
+  const text = chars.length > room ? `${chars.slice(0, room - 1).join('')}…` : str
+  const rr = bottom ? r + size * 0.34 : r - size * 0.34
+  const [x0, y0] = pt(rr, bottom ? a1 : a0)
+  const [x1, y1] = pt(rr, bottom ? a0 : a1)
+  const d = `M${x0} ${y0} A${rr} ${rr} 0 ${a1 - a0 > 180 ? 1 : 0} ${bottom ? 0 : 1} ${x1} ${y1}`
+  return (
+    <>
+      <path id={id} d={d} fill="none" />
+      <text fontSize={Math.round(size * 10) / 10} fontWeight={weight} fill={fill}><textPath href={`#${id}`} startOffset="50%" textAnchor="middle">{text}</textPath></text>
+    </>
+  )
 }
 
 const People = memo(function People({ list, winnerId, turned }) {
   const n = list.length
   const a = 360 / n
-  const base = n <= 8 ? 15 : n <= 16 ? 12.5 : n <= 24 ? 11 : 10
+  const base = n <= 6 ? 18 : n <= 10 ? 16 : n <= 16 ? 14 : n <= 24 ? 12 : 10
   return list.map((p, i) => {
     const won = winnerId === p.id
     const dim = winnerId && !won
-    const t = n > 24 ? { text: initials(p.name), size: base } : fitText(p.name, base, OUT[1] - OUT[0] - 14)
+    const fill = INK[shade(i, n, INK.length)]
     return (
       <g key={p.id} opacity={dim ? 0.35 : 1}>
         <path className={won ? 'ev-winslice' : undefined} d={slice(OUT, i * a, (i + 1) * a)} fill={SOFT[shade(i, n, SOFT.length)]} stroke={won ? 'var(--accent)' : 'var(--panel)'} strokeWidth={won ? 4 : 1.5} />
-        {labelAt((OUT[0] + OUT[1]) / 2, (i + 0.5) * a, t.text, { size: t.size, fill: INK[shade(i, n, INK.length)], turned })}
+        {arcLabel(`ev-p${i}`, (OUT[0] + OUT[1]) / 2, i * a, (i + 1) * a, n > 24 ? initials(p.name) : p.name, { base, fill, turned })}
       </g>
     )
   })
@@ -61,16 +69,14 @@ const People = memo(function People({ list, winnerId, turned }) {
 const Prizes = memo(function Prizes({ list, prizeId, turned }) {
   const n = list.length
   const a = 360 / n
-  const base = n <= 5 ? 14 : n <= 10 ? 12 : 10.5
+  const base = n <= 4 ? 17 : n <= 8 ? 15 : n <= 12 ? 13 : 11
   return list.map((z, i) => {
     const picked = prizeId === z.id
     const dim = prizeId && !picked
-    const t = fitText(`${z.emoji ? `${z.emoji} ` : ''}${z.name}`, base, IN[1] - IN[0] - 8)
     return (
       <g key={z.id} opacity={dim ? 0.4 : 1}>
         <path className={picked ? 'ev-winslice' : undefined} d={slice(IN, i * a, (i + 1) * a)} fill={z.color} stroke={picked ? '#ffffff' : 'var(--panel)'} strokeWidth={picked ? 4 : 1.5} />
-        {labelAt((IN[0] + IN[1]) / 2 + 3, (i + 0.5) * a, t.text, { size: t.size, fill: '#ffffff', turned })}
-        {z.qty > 1 && n <= 12 && Array.from(z.name).length <= 7 && labelAt(IN[0] + 14, (i + 0.5) * a, `×${z.qty}`, { size: 10.5, fill: '#ffffffd9', weight: 500, turned })}
+        {arcLabel(`ev-z${i}`, (IN[0] + IN[1]) / 2 + 2, i * a, (i + 1) * a, `${z.emoji ? `${z.emoji} ` : ''}${z.name}${z.qty > 1 ? ` ×${z.qty}` : ''}`, { base, fill: '#ffffff', turned })}
       </g>
     )
   })
