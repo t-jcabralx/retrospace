@@ -247,6 +247,20 @@ export function createMemoryStore(state = newMemState()) {
       const s = state.sessions.get(h)
       if (s) s.lastSeenAt = now
     },
+    // Account removal: every sign-in, every template and the account itself. (The boards go through deleteBoard.)
+    async deleteSessionsByUser(userId) {
+      for (const [h, s] of state.sessions) if (s.userId === userId) state.sessions.delete(h)
+    },
+    async deleteTemplatesByOwner(ownerId) {
+      for (const [id, t] of state.templates) if (t.ownerId === ownerId) state.templates.delete(id)
+    },
+    async deleteUser(id) {
+      const u = state.usersById.get(id)
+      if (!u) return false
+      state.usersById.delete(id)
+      for (const [email, v] of state.users) if (v.id === id) state.users.delete(email)
+      return true
+    },
   }
 }
 
@@ -554,6 +568,15 @@ export function createMongoStore(client, name) {
     },
     async touchSession(h, now = Date.now()) {
       await (await cols()).sessions.updateOne({ tokenHash: h }, { $set: { lastSeenAt: now } })
+    },
+    async deleteSessionsByUser(userId) {
+      await (await cols()).sessions.deleteMany({ userId })
+    },
+    async deleteTemplatesByOwner(ownerId) {
+      await (await tplCol()).deleteMany({ ownerId })
+    },
+    async deleteUser(id) {
+      return ((await (await cols()).users.deleteOne({ id })).deletedCount ?? 0) > 0
     },
   }
 }

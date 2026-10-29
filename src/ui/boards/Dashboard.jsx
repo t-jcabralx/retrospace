@@ -7,6 +7,7 @@ import { useAuth, setSignedOut, refreshAuth } from '../site/useAuth.js'
 import { PlusIcon } from '../site/icons.jsx'
 import BoardCard from './BoardCard.jsx'
 import NewBoardDialog from './NewBoardDialog.jsx'
+import DeleteAccount from './DeleteAccount.jsx'
 import './boards.css'
 
 const SKELETONS = [0, 1, 2]
@@ -84,6 +85,8 @@ export default function Dashboard() {
           {load.boards.map((b) => <li key={b.code}><BoardCard board={b} now={now} /></li>)}
         </ul>
       )}
+
+      {auth.status === 'in' && <DeleteAccount />}
 
       {creating && <NewBoardDialog onClose={closeDialog} openerRef={openerRef} />}
     </div>

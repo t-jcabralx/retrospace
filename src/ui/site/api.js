@@ -14,5 +14,8 @@ async function request(url, init) {
 
 export const getJson = (url) => request(url)
 
+export const deleteJson = (url, body = {}) =>
+  request(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
 export const postJson = (url, body = {}) =>
   request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })

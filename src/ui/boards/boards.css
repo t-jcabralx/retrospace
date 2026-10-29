@@ -82,3 +82,12 @@
   .db-overlay, .db-dialog, .db-skel i { animation: none; }
   .db-card, .db-choice, .db-tpl { transition: none; }
 }
+
+/* Delete my account: quiet until opened */
+.db-danger { margin: 48px 0 8px; padding-top: 18px; border-top: 1px solid var(--rs-line); }
+.db-danger summary { cursor: pointer; color: var(--rs-muted); font-size: 14px; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.db-danger-form { display: grid; gap: 8px; max-width: 460px; padding: 14px 0; }
+.db-danger-form p { margin: 0 0 4px; line-height: 1.6; font-size: 14px; }
+.db-danger-form label { font-size: 13px; font-weight: 600; }
+.db-danger-error { color: var(--rs-danger); }
+.db-danger-btn { margin-top: 6px; background: var(--rs-danger); color: #fff; border-color: transparent; }
