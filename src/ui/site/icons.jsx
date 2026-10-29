@@ -20,6 +20,7 @@ export const CopyIcon = I(<><rect x="8.5" y="8.5" width="11" height="11" rx="2.2
 export const CheckIcon = I(<path d="M5 12.5l4.5 4.5L19 7.5" />)
 export const LinkIcon = I(<><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0010 18.7l1-1" /></>)
 export const PlusIcon = I(<path d="M12 5v14M5 12h14" />)
+export const LogOutIcon = I(<><path d="M9.5 4.5h-3a2 2 0 00-2 2v11a2 2 0 002 2h3" /><path d="M15 8l4 4-4 4M19 12H9.5" /></>)
 export const CloseIcon = I(<path d="M6 6l12 12M18 6L6 18" />)
 export const HeartIcon = I(<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0112 7.4 4.3 4.3 0 0119.5 10c0 5.4-7.5 10-7.5 10z" fill="currentColor" strokeWidth="1" />)
 

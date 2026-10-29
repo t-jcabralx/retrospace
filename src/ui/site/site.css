@@ -87,6 +87,25 @@
 .rs-skel { display: block; height: 44px; border-radius: var(--rs-r); background: color-mix(in srgb, var(--ink) 7%, transparent); }
 .rs-skel-a { width: 84px; }
 .rs-skel-b { width: 118px; }
+/* signed-in actions: My boards (button), the account chip, Sign out (quiet) */
+.rs-boards-link[aria-current='page'] { border-color: var(--accent); color: var(--accent); }
+.rs-account { display: inline-flex; align-items: center; gap: 8px; max-width: 160px; padding: 0 6px 0 4px; }
+.rs-avatar {
+  flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 22%, var(--panel)); color: var(--ink); font-size: 14px; font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.rs-account-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.rs-signout { color: var(--rs-muted); }
+.rs-signout:hover:not(:disabled) { color: var(--ink); }
+@media (max-width: 900px) { .rs-account-name { display: none; } }
+@media (max-width: 480px) { .rs-account { display: none; } }
+@media (max-width: 560px) {
+  .rs-actions { gap: 4px; }
+  .rs-boards-link { padding-inline: 12px; }
+  .rs-signout { width: 44px; padding: 0; }
+  .rs-signout-text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 @media (max-width: 720px) { .rs-nav { display: none; } }
 @media (max-width: 420px) {
   .rs-header-in { gap: 8px; }

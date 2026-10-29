@@ -3,8 +3,11 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LogoMark } from './Logo.jsx'
+import { LayoutIcon, LogOutIcon } from './icons.jsx'
 import { useAuth, signOut } from './useAuth.js'
 import './site.css'
+
+const initial = (name) => (Array.from(String(name ?? '').trim())[0] ?? '?').toUpperCase()
 
 // Sticky top bar for the landing, account, join and dashboard pages. The auth-aware buttons wait for /api/auth/me
 // behind a placeholder of the same size, so the wrong buttons never flash.
@@ -53,9 +56,15 @@ export default function SiteHeader({ landing = false }) {
           )}
           {auth.status === 'in' && (
             <>
-              <Link className="rs-btn rs-btn--ghost" href="/boards" aria-current={pathname === '/boards' ? 'page' : undefined}>My boards</Link>
-              <button type="button" className="rs-btn rs-btn--secondary" onClick={handleSignOut} disabled={busy}>
-                {busy ? 'Signing out…' : 'Sign out'}
+              <Link className="rs-btn rs-btn--secondary rs-boards-link" href="/boards" aria-current={pathname === '/boards' ? 'page' : undefined}>
+                <LayoutIcon />My boards
+              </Link>
+              <span className="rs-account" title={auth.user?.name || undefined}>
+                <span className="rs-avatar" aria-hidden="true">{initial(auth.user?.name)}</span>
+                {auth.user?.name && <span className="rs-account-name">{auth.user.name}</span>}
+              </span>
+              <button type="button" className="rs-btn rs-btn--ghost rs-signout" onClick={handleSignOut} disabled={busy} aria-label={busy ? 'Signing out' : 'Sign out'}>
+                <LogOutIcon /><span className="rs-signout-text">{busy ? 'Signing out…' : 'Sign out'}</span>
               </button>
             </>
           )}
