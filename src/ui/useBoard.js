@@ -173,7 +173,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
         onClock: (serverNow, sentAt, receivedAt) => r.clock.sample(serverNow, sentAt, receivedAt),
         onEphemeral: (msg, from, cid) => {
           if (msg?.t === 'drag') { // a peer is moving items: a temporary position, no history
-            dispatch(msg.end === true ? { type: 'peer-drag-end', ids: msg.ids, cancel: msg.cancel === true, now: Date.now() } : { type: 'peer-drag', items: msg.items, now: Date.now() })
+            dispatch(msg.end === true ? { type: 'peer-drag-end', ids: msg.ids, cancel: msg.cancel === true, now: Date.now() } : { type: 'peer-drag', items: msg.items, from, now: Date.now() })
             return
           }
           for (const fn of [...r.eph]) fn(msg, from, cid)

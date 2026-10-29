@@ -285,3 +285,9 @@
 .bd-anon.is-on { background: var(--ink, #222); color: var(--panel, #fff) }
 .bd-anon-locked { margin: 0; cursor: default; max-width: 280px }
 .bd-anon-badge { position: absolute; left: 8px; bottom: 6px; padding: 1px 6px; border-radius: 999px; font-size: 10px; background: rgba(0, 0, 0, .55); color: #fff; pointer-events: none }
+
+/* Delete in the selection bar: a trash icon, with its word where there is room */
+.bd-chip.bd-chip--danger { width: auto; min-width: 36px; height: 36px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; color: var(--bd-bad, #d64545); }
+.bd-chip--danger:hover { background: color-mix(in srgb, var(--bd-bad, #d64545) 12%, transparent); }
+.bd-chip-text { font-size: 13px; font-weight: 600; }
+@media (max-width: 480px) { .bd-chip.bd-chip--danger { width: 44px; height: 44px; padding: 0; justify-content: center; } .bd-chip-text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }

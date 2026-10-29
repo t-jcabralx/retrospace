@@ -132,6 +132,8 @@ export default function Board({ ctl, code, presence = null }) {
   const single = selection.size === 1 ? byId.get([...selection][0]) : null
   const sel = [...selection].map((id) => byId.get(id)).filter(Boolean)
   const hasKind = (k) => sel.some((i) => i.kind === k)
+  // The Delete key has no equivalent on a phone: whatever is selected and may be deleted gets a button.
+  const deletable = ctl.readOnly ? [] : [...selection].map((id) => byId.get(id)).filter((i) => i && ctl.canEdit(i))
   const showColors = !ctl.readOnly && (tool === 'note' || tool === 'shape' || hasKind('note') || hasKind('shape'))
   const showShapes = !ctl.readOnly && (tool === 'shape' || hasKind('shape'))
   const ctxColor = single && (single.kind === 'note' || single.kind === 'shape') ? single.data.color : tool === 'shape' || (!hasKind('note') && hasKind('shape')) ? style.shape : style.note
@@ -278,6 +280,8 @@ export default function Board({ ctl, code, presence = null }) {
         <VotePanel ctl={ctl} onJump={jump} />
         <AnonToggle mode={ctl.board?.anonymousNotes} on={style.anon} onChange={(anon) => setStyleState((s) => ({ ...s, anon }))} />
         <ContextBar
+          onDelete={deletable.length ? () => actions.deleteSelected() : undefined}
+          deleteCount={deletable.length}
           colors={showColors}
           shapes={showShapes}
           color={ctxColor}

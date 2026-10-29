@@ -379,3 +379,10 @@ test('an unfinished peer drag goes back after a while; a dropped one sooner than
   const later = reducer(s, { type: 'peer-drag-expire', now: 20000 })
   assert.deepEqual(at(later, 'a'), [10, 20, 200, 100])
 })
+
+test('a peer drag of someone else\'s named item is ignored unless the sender is the board creator', () => {
+  const s0 = initialState({ ...snapshot([doc('a', { x: 10, y: 20, w: 200, h: 100, authorUid: 'KM-AUTH-0000-0000' })]), participants: [{ uid: 'KM-OWNR-0000-0000', kind: 'account' }, { uid: 'KM-OTHR-0000-0000', kind: 'custom' }] })
+  assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 1, y: 1 }], from: 'KM-OTHR-0000-0000' }), s0)
+  assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 1, y: 1 }], from: 'KM-AUTH-0000-0000' }).items.get('a').x, 1)
+  assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 2, y: 2 }], from: 'KM-OWNR-0000-0000' }).items.get('a').x, 2)
+})

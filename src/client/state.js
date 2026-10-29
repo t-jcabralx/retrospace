@@ -137,14 +137,21 @@ function merge(state, docs, advance) {
 const FRAME = ['x', 'y', 'w', 'h']
 const pick = (item) => Object.fromEntries(FRAME.filter((k) => Number.isFinite(item[k])).map((k) => [k, item[k]]))
 
-function peerDrag(state, list, now = Date.now()) {
+// Who may move this item, as far as this client can tell: its author, or the board creator (the only signed-in account in a room).
+// An anonymous note hides its author, so it cannot be checked here; the temporary position is never saved, only shown.
+function mayDrag(state, item, from) {
+  if (from === undefined || item.anon === true || !item.authorUid || item.authorUid === from) return true
+  return state.participants.some((p) => p.uid === from && p.kind === 'account')
+}
+
+function peerDrag(state, list, now = Date.now(), from) {
   if (!Array.isArray(list) || !list.length) return state
   let items = null
   let drags = null
   for (const d of list) {
     if (!isObj(d) || typeof d.id !== 'string') continue
     const cur = (items ?? state.items).get(d.id)
-    if (!cur || cur.deleted || !Number.isFinite(d.x) || !Number.isFinite(d.y)) continue
+    if (!cur || cur.deleted || !Number.isFinite(d.x) || !Number.isFinite(d.y) || !mayDrag(state, cur, from)) continue
     items ??= new Map(state.items)
     drags ??= new Map(state.drags)
     const held = drags.get(d.id)
@@ -233,7 +240,7 @@ export function reducer(state, action) {
       for (const [id, item] of state.items) items.set(id, item.votes?.length ? { ...item, votes: [] } : item)
       return { ...state, items }
     }
-    case 'peer-drag': return peerDrag(state, action.items, action.now)
+    case 'peer-drag': return peerDrag(state, action.items, action.now, action.from)
     case 'peer-drag-end': return peerDragEnd(state, action.ids, action.cancel === true, action.now)
     case 'peer-drag-expire': return peerDragExpire(state, action.now, action.after)
     case 'remote':

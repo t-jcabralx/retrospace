@@ -143,3 +143,12 @@ test('AI summary input never carries an author, anonymous or not', () => {
 test('resolveAnon is the one rule: item kinds outside the list never become anonymous', () => {
   assert.deepEqual(resolveAnon(retro({ anonymousNotes: 'always' }), { kind: 'connector' }, false), { anon: false })
 })
+
+test('only the author and the board creator can change an anonymous note\'s text; any other guest is refused', () => {
+  const board = retro()
+  const items = new Map([['n1', stored({ anon: true, authorUid: 'g1' })]])
+  const patch = [val({ op: 'update', id: 'n1', patch: { data: { text: 'changed' } } })]
+  assert.equal(planOps(board, items, patch, actor('g2'), 100).rejected[0].error, 'Not allowed')
+  assert.equal(planOps(board, items, patch, actor('own', true), 100).applied[0].data.text, 'changed')
+  assert.equal(planOps(board, items, patch, actor('own', true), 100).applied[0].anon, true) // still anonymous after the creator edits it
+})

@@ -8,8 +8,8 @@ const SHAPE_ICONS = {
 }
 
 // Colour and shape pickers. They change the selection and also set what the next note/shape is created with.
-export default function ContextBar({ colors, shapes, color, shape, onColor, onShape }) {
-  if (!colors && !shapes) return null
+export default function ContextBar({ colors, shapes, color, shape, onColor, onShape, onDelete, deleteCount = 0 }) {
+  if (!colors && !shapes && !onDelete) return null
   return (
     <div className="bd-context" role="toolbar" aria-label="Item style">
       {shapes && SHAPE_KINDS.map((s) => (
@@ -31,6 +31,15 @@ export default function ContextBar({ colors, shapes, color, shape, onColor, onSh
           <span className="bd-swatch-dot" style={{ background: c === 'none' ? 'var(--panel)' : `var(--note-${c})` }} />
         </button>
       ))}
+      {onDelete && (
+        <>
+          {(colors || shapes) && <span className="bd-context-sep" />}
+          <button type="button" className="bd-chip bd-chip--danger" aria-label={deleteCount > 1 ? `Delete ${deleteCount} items` : 'Delete'} title="Delete" onClick={onDelete}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3" /></svg>
+            <span className="bd-chip-text">Delete</span>
+          </button>
+        </>
+      )}
     </div>
   )
 }
