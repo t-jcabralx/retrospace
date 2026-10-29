@@ -1,8 +1,6 @@
 'use client'
 // The wheel's data source. EventScreen only sees the shape below.
-
-//
-//   api = { mode: 'server' | 'device', wheel, runner, owner, joined, now(), act(action), saveSetup(setup), code?, title? }
+//   api = { wheel, runner, owner, joined, now(), act(action), saveSetup(setup), code, title }
 //   act / saveSetup -> Promise<{ ok: true } | { ok: false, error }>
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { isRunner } from '../../lib/wheel.js'
@@ -33,7 +31,7 @@ export function useServerWheel(ctl) {
   }, [patchBoard])
   const joined = useMemo(() => (ctl.state?.participants ?? []).filter((p) => p.uid && p.name).map((p) => ({ uid: p.uid, name: p.name, mine: p.uid === ctl.uid })), [ctl.state?.participants, ctl.uid])
   return {
-    mode: 'server', wheel, code: ctl.code, title: ctl.board.title,
+    wheel, code: ctl.code, title: ctl.board.title,
     runner: isRunner(wheel, ctl.uid, ctl.isOwner), owner: ctl.isOwner, joined,
     now: () => ctl.clock.now(), act, saveSetup,
   }

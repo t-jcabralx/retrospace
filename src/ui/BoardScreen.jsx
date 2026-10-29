@@ -19,6 +19,7 @@ import { usePresence } from './usePresence.js'
 import { useBoard } from './useBoard.js'
 import { UndoIcon, RedoIcon, LockIcon, HomeIcon, GearIcon, SummaryIcon } from './icons.jsx'
 import ExportMenu from './ExportMenu.jsx'
+import EventBoard from './event/EventBoard.jsx'
 import RetroStage from './RetroStage.jsx'
 import { printHref } from './printLink.js'
 import ThemesPanel from './ThemesPanel.jsx'
@@ -147,10 +148,10 @@ function BoardView({ code, viewOnly }) {
         {phase === 'ready' && (
           <>
             <span className={`bd-status is-${ctl.status}`} title={status.hint} role="status"><i aria-hidden="true" /><span className="bd-status-label">{status.label}</span></span>
-            <ExportMenu ctl={ctl} title={board?.title} printHref={printHref(code)} />
-            <button type="button" className="bd-iconbtn" aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" disabled={!ctl.canUndo || ctl.readOnly} onClick={ctl.undo}><UndoIcon /></button>
-            <button type="button" className="bd-iconbtn" aria-label="Redo" title="Redo (Shift+Ctrl/Cmd+Z)" disabled={!ctl.canRedo || ctl.readOnly} onClick={ctl.redo}><RedoIcon /></button>
-            {showSummaryButton(board, ctl.isOwner) && (
+            {board?.type !== 'event' && <ExportMenu ctl={ctl} title={board?.title} printHref={printHref(code)} />}
+            {board?.type !== 'event' && <button type="button" className="bd-iconbtn" aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" disabled={!ctl.canUndo || ctl.readOnly} onClick={ctl.undo}><UndoIcon /></button>}
+            {board?.type !== 'event' && <button type="button" className="bd-iconbtn" aria-label="Redo" title="Redo (Shift+Ctrl/Cmd+Z)" disabled={!ctl.canRedo || ctl.readOnly} onClick={ctl.redo}><RedoIcon /></button>}
+            {board?.type !== 'event' && showSummaryButton(board, ctl.isOwner) && (
               <button
                 ref={summaryBtn}
                 type="button"
@@ -175,7 +176,7 @@ function BoardView({ code, viewOnly }) {
         )}
       </header>
       {phase === 'ready' && board?.type === 'retro' && board.retro && <RetroStage ctl={ctl} onOpenSettings={() => setSettingsOpen(true)} onOpenSummary={showSummaryButton(board, ctl.isOwner) ? () => setSummaryOpen(true) : undefined} />}
-      {phase === 'ready' ? board?.type === 'wall' ? <BoardErrorBoundary><WallBody ctl={ctl} code={code} presence={realtime ? presence : null} /></BoardErrorBoundary> : <BoardErrorBoundary><Board ctl={ctl} code={code} presence={realtime ? presence : null} /></BoardErrorBoundary> : <div className="bd-board bd-loading" role="status">Loading board…</div>}
+      {phase === 'ready' ? board?.type === 'event' && board.wheel ? <BoardErrorBoundary><EventBoard ctl={ctl} /></BoardErrorBoundary> : board?.type === 'wall' ? <BoardErrorBoundary><WallBody ctl={ctl} code={code} presence={realtime ? presence : null} /></BoardErrorBoundary> : <BoardErrorBoundary><Board ctl={ctl} code={code} presence={realtime ? presence : null} /></BoardErrorBoundary> : <div className="bd-board bd-loading" role="status">Loading board…</div>}
       {changing && (
         <PersonaDialog
           boardTitle={board?.title}

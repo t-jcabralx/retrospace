@@ -65,11 +65,11 @@ export default function BoardSettings({ ctl, onClose, openerRef, focusAi = false
           <ShareSection board={board} />
           <PeopleSection ctl={ctl} />
           {/* The retro workflow drives voting and the timer (the Stages section sets votes and durations). */}
-          {!(board.type === 'retro' && board.retro) && <VotingSection board={board} patchBoard={patchBoard} resetVotes={resetVotes} />}
-          {!(board.type === 'retro' && board.retro) && <TimerSection ctl={ctl} patchBoard={patchBoard} />}
-          <ThrowablesSection board={board} patchBoard={patchBoard} />
+          {board.type !== 'event' && !(board.type === 'retro' && board.retro) && <VotingSection board={board} patchBoard={patchBoard} resetVotes={resetVotes} />}
+          {board.type !== 'event' && !(board.type === 'retro' && board.retro) && <TimerSection ctl={ctl} patchBoard={patchBoard} />}
+          {board.type !== 'event' && <ThrowablesSection board={board} patchBoard={patchBoard} />}
           {board.type === 'retro' && <AnonymitySection board={board} patchBoard={patchBoard} />}
-          <AiSection board={board} patchBoard={patchBoard} info={ctl.state.viewer?.ai} focusOnMount={focusAi} />
+          {board.type !== 'event' && <AiSection board={board} patchBoard={patchBoard} info={ctl.state.viewer?.ai} focusOnMount={focusAi} />}
         </div>
       </aside>
     </>

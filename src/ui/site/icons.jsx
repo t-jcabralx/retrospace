@@ -24,5 +24,5 @@ export const LogOutIcon = I(<><path d="M9.5 4.5h-3a2 2 0 00-2 2v11a2 2 0 002 2h3
 export const CloseIcon = I(<path d="M6 6l12 12M18 6L6 18" />)
 export const HeartIcon = I(<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0112 7.4 4.3 4.3 0 0119.5 10c0 5.4-7.5 10-7.5 10z" fill="currentColor" strokeWidth="1" />)
 
-export const TYPE_ICONS = { workshop: CanvasIcon, celebration: GiftIcon, retro: LoopIcon, wall: SparkIcon }
+export const TYPE_ICONS = { workshop: CanvasIcon, celebration: GiftIcon, retro: LoopIcon, wall: SparkIcon, event: PartyIcon }
 export const typeIcon = (type) => TYPE_ICONS[type] ?? CanvasIcon
