@@ -13,6 +13,10 @@ export async function GET() {
   const set = Object.fromEntries(NAMES.map((n) => [n, envValue(n) !== '']))
   const out = { ok: true, settings: set, tidy: messyEnv(NAMES), realtime: { configured: Boolean(upstashConfig()) }, database: { configured: set.MONGODB_URI } }
 
+  // Enough to tell two configurations apart without revealing either: the host of the URL and how long the token is.
+  const up = upstashConfig()
+  if (up) { try { out.realtime.host = new URL(up.url).host } catch { out.realtime.host = 'not a valid URL' } out.realtime.tokenLength = up.token.length }
+  out.deployment = process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7) : null // which commit is running
   const redis = getRedis()
   if (redis) {
     const t = Date.now()

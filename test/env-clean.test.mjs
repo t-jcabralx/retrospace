@@ -35,4 +35,5 @@ test('the health route reports settings by name only, never a value', async () =
   assert.equal(body.settings.UPSTASH_REDIS_REST_URL, false)
   assert.deepEqual(body.tidy, ['RT_SECRET'])
   assert.ok(!text.includes('super-secret-value'))
+  assert.equal(body.realtime.configured, false)
 })
