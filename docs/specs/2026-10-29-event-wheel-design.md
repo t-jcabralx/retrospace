@@ -1,6 +1,6 @@
 # Event board and Spin to win: design
 
-Amendment F to `2026-10-28-kudo-mural-design.md`. Status: **approved** (storage choice added 2026-10-29, see below).
+Amendment F to `2026-10-28-kudo-mural-design.md`. Status: **approved**. Stored on our server like every other board (a device-only mode was considered and dropped on 2026-10-29).
 
 ## Goal
 
@@ -13,21 +13,6 @@ A new board type, **Event**, whose main screen is a two-ring prize wheel for raf
 | How does a spin work? | **Two steps.** Step 1 spins the inner ring and picks the prize. Step 2 spins the outer ring and picks who wins it. |
 | Where does it live? | A **new board type, Event**. Its screen is the wheel, not the free canvas. |
 | Who can spin? | The **owner plus helpers the owner names**. Everyone else watches. |
-| Where is it stored? | The owner chooses at creation: **our server** (shareable, live) or **this device only** (private, nothing kept by us). |
-
-## Storage: our server or this device only
-
-When creating an Event board the owner chooses where it lives:
-
-| | On our server (default) | Only on this device |
-|---|---|---|
-| Who sees it | Everyone with the code, live | Only whoever has this browser open (the host, on a projector) |
-| What we keep | The board, names, prizes, history | **Nothing.** No account, no database record, no network call for the wheel |
-| Who picks the winner | The server (`crypto.randomInt`) | The browser (`crypto.getRandomValues`), shown to the room by the host |
-| Survives closing the tab | Yes | Yes, in this browser's local storage, until the person clears it |
-| Helpers and guest watching | Yes | No (one screen). A JSON export and import moves it to another device |
-
-The same pure wheel module and the same screens run in both modes; only the place the state is read from and written to differs. A device-only board needs no sign-in, is listed on the dashboard under "Only on this device", and says so plainly on screen ("Nothing here is saved on our servers"). Clearing browser data deletes it, so the screen offers a backup export. Live shared boards that keep nothing on the server (a relay-only room, or end-to-end encryption) are possible later but are a separate project.
 
 ## The round (state machine)
 

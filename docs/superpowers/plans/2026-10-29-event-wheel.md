@@ -86,14 +86,6 @@
 **Files:** Modify `src/ui/boards/NewBoardDialog.jsx` if the type needs a custom step, `src/app/api/boards/[code]/export/route.js` (CSV of history for event boards), `src/ui/landing/BoardTypes.jsx` (a fifth card, copy about raffles), `src/ui/guide/guideData.js` (Event section), `docs/DEMO.md`; Tests extend `test/landing.test.mjs`, `test/owner-tools-csv.test.mjs`
 - [ ] Failing tests, then implement, run the whole suite, commit `Add Event to the dashboard, export, landing page and guide`.
 
-### Task 7b: Device-only mode
-
-**Files:** Create `src/ui/event/localStore.js`, `src/app/local/event/[id]/page.js`, `src/ui/event/LocalEvent.jsx`; Modify `src/ui/boards/NewBoardDialog.jsx` (storage choice for Event), `src/ui/boards/Dashboard.jsx` ("Only on this device" list); Tests `test/event-local.test.mjs`
-
-**Interfaces:** Consumes `wheel.js` (`applyAction`, `cleanSetup`) with a browser `pick`. Produces `localStore`: `list()`, `load(id)`, `save(id, wheel)`, `remove(id)`, `exportJson(id)`, `importJson(text)` (all guarded for a missing or blocked `localStorage`), a `/local/event/<id>` page that needs no sign-in and makes no API call, and an on-screen "Nothing here is saved on our servers" notice.
-- [ ] Failing tests: store round trip and the blocked-storage fallback, import validation (bad JSON, wrong shape, over limits), the page file contains no `fetch(` or `/api/` call, the dialog offers both modes for Event only.
-- [ ] Implement; run; commit `Add device-only Event boards`.
-
 ### Task 8: Live check
 
 **Files:** Create `scripts/sim-wheel.mjs`
