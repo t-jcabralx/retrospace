@@ -10,7 +10,7 @@ export const metadata = {
   description: DESCRIPTION,
   applicationName: 'Retrospace',
   openGraph: { title: TITLE, description: DESCRIPTION, siteName: 'Retrospace', type: 'website', locale: 'en_US' },
-  twitter: { card: 'summary', title: TITLE, description: DESCRIPTION },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }
 
 export const viewport = {

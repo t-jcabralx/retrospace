@@ -27,7 +27,10 @@ test('layout metadata: title template, description, Open Graph and Twitter text 
   const layout = await read('src/app/layout.js')
   assert.match(layout, /Retrospace \\u2014 retrospectives, workshops and celebrations|Retrospace — retrospectives, workshops and celebrations/)
   for (const key of ['template:', 'openGraph:', 'twitter:', 'themeColor:', 'prefers-color-scheme: light', 'prefers-color-scheme: dark']) assert.ok(layout.includes(key), key)
-  assert.doesNotMatch(layout, /images:|summary_large_image/)
+  // the share image comes from the file convention (opengraph-image / twitter-image), not from an images: list
+  assert.match(layout, /summary_large_image/)
+  assert.doesNotMatch(layout, /images:/)
+  for (const f of ['src/app/opengraph-image.jsx', 'src/app/twitter-image.jsx', 'src/app/apple-icon.jsx']) assert.match(await read(f), /ImageResponse/, f)
   assert.match(layout, /<html lang="en"/)
   assert.match(await read('src/app/icon.svg'), /<svg[\s\S]*#5b5bf0/)
 })
