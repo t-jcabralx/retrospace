@@ -1,6 +1,6 @@
 # Encrypted data in the database, with a per-record flag
 
-Amendment G to `2026-10-28-kudo-mural-design.md`. Status: **proposed, awaiting approval**.
+Amendment G to `2026-10-28-kudo-mural-design.md`. Status: **built** (option A, all listed fields, backfill only from a command). Production data is untouched until a key is set and the backfill is run by hand.
 
 ## Goal
 
@@ -22,7 +22,7 @@ Recommendation: **A now**, and keep B as a later, per-board option for the few c
 
 ## How A works
 
-- **Envelope keys.** One master key from the environment never touches the database. Each board gets its own random data key, stored in the board record wrapped (encrypted) by the master key. A leaked database therefore holds only wrapped keys and ciphertext. A board's data can be re-keyed or deleted by destroying its key.
+- **Per-board keys, derived.** One master key from the environment never touches the database. Each board (and each account) gets its own key derived from it with HKDF, so no key of any kind is stored in the database, and a key for one board opens nothing on another. (Built this way instead of storing wrapped keys: the same protection against a database leak with no extra reads and nothing to lose.)
 - **Cipher.** AES-256-GCM (Node `crypto`), a fresh 96-bit nonce for every value, and the collection, document id and field name bound in as authenticated data, so a ciphertext copied into another record or field fails to open.
 - **What is encrypted** (everything a person wrote), and what stays plain (what the app must query or order by):
 
@@ -75,3 +75,15 @@ Unit tests for seal and open (tamper, wrong key, moved ciphertext, nonce uniquen
 1. A (server-side field encryption, recommended) or B (end-to-end)?
 2. Is the list of encrypted fields right, in particular names and emails?
 3. Do you want the backfill to run only from a command you start (recommended), or automatically over time as records are read?
+
+## What was built, and what protects production
+
+- `src/lib/seal.js` (AES-256-GCM, HKDF per board, blind indexes), `src/lib/sealStore.js` (a wrapper around each collection), `src/lib/sealBackfill.js` and `scripts/encrypt-backfill.mjs`.
+- **Nothing changes on deploy.** With no `DATA_ENCRYPTION_KEY` the store writes plain exactly as before, creates no new index and rewrites no record. Old records are never touched by a deploy.
+- **Reads always accept both forms.** A field that is not a sealed string is a legacy value and is returned as it is, so old and new records can sit side by side for as long as needed. Tests run the real store over a database that holds both.
+- **A key without a backfill is safe.** New and changed records are sealed; old ones stay readable until the backfill (or until they are next written).
+- **Sealed data without the key fails loudly** ("No data encryption key"), never returns garbage and never overwrites.
+- **The backfill** is a dry run unless told `--apply --yes-i-have-a-backup`; it checks that each record opens back to exactly what it was before writing; it skips a record that changed while it ran; it can be stopped and re-run; and `--decrypt` puts everything back to plain.
+- **Uniqueness without readable values:** the account email and the participant and template names are matched by blind keys; because a legacy record still holds the plain value, the wrapper also checks for it, so a sealed name cannot collide with a legacy one unnoticed.
+- **Media limits** are counted in the app (they used to be counted inside the database, which cannot see inside a sealed record).
+- Checked against `/api/health`: `encryption.configured` says whether a key is set (never the key).

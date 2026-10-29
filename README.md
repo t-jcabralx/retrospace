@@ -85,7 +85,7 @@ When Mongo is missing, an in-memory store is used so `npm run dev` works with ze
 ## Deploying
 
 1. Node 20 or newer; `npm install && npm run build && npm start` (set `NEXT_PUBLIC_*` variables before the build, they are inlined).
-2. Set `RT_SECRET` (required in production), `MONGODB_URI`, `MONGODB_DB`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `NEXT_PUBLIC_GIPHY_API_KEY`, `ANTHROPIC_API_KEY` (and `AI_SUMMARY_MODEL` if not the default), `NEXT_PUBLIC_SITE_URL`.
+2. Set `RT_SECRET` (required in production), optionally `DATA_ENCRYPTION_KEY` (encrypts stored content; see `docs/specs/2026-10-29-encryption-at-rest-design.md` before setting it), `MONGODB_URI`, `MONGODB_DB`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `NEXT_PUBLIC_GIPHY_API_KEY`, `ANTHROPIC_API_KEY` (and `AI_SUMMARY_MODEL` if not the default), `NEXT_PUBLIC_SITE_URL`.
 3. Allow the host's outbound IPs in the MongoDB Atlas network access list.
 4. Serve over HTTPS behind a proxy that sets the client IP (see Deployment notes).
 5. Smoke test: register, create a board, join it from a second browser as a guest. The demo script is in `docs/DEMO.md`.

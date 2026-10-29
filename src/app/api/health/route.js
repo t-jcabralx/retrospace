@@ -4,14 +4,14 @@ import { json } from '../../../lib/http.js'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const NAMES = ['MONGODB_URI', 'MONGODB_DB', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'RT_SECRET', 'ANTHROPIC_API_KEY', 'NEXT_PUBLIC_GIPHY_API_KEY', 'NEXT_PUBLIC_SITE_URL']
+const NAMES = ['MONGODB_URI', 'MONGODB_DB', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'RT_SECRET', 'ANTHROPIC_API_KEY', 'NEXT_PUBLIC_GIPHY_API_KEY', 'NEXT_PUBLIC_SITE_URL', 'DATA_ENCRYPTION_KEY']
 const within = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
 
 // What is set and what answers, never a value: for checking a new deployment (open /api/health). The settings that carry
 // stray quotes or spaces are listed by name; the app strips them, but fixing them in the dashboard is cleaner.
 export async function GET() {
   const set = Object.fromEntries(NAMES.map((n) => [n, envValue(n) !== '']))
-  const out = { ok: true, settings: set, tidy: messyEnv(NAMES), realtime: { configured: Boolean(upstashConfig()) }, database: { configured: set.MONGODB_URI } }
+  const out = { ok: true, settings: set, tidy: messyEnv(NAMES), realtime: { configured: Boolean(upstashConfig()) }, database: { configured: set.MONGODB_URI }, encryption: { configured: set.DATA_ENCRYPTION_KEY } }
 
   // Enough to tell two configurations apart without revealing either: the host of the URL and how long the token is.
   const up = upstashConfig()

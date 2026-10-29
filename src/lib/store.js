@@ -2,6 +2,8 @@ import { planOps, planClearVotes, mediaSize } from './plan.js'
 import { DEFAULT_PER_PERSON } from './vote.js'
 import { getMongo, dbName, envValue } from './db.js'
 import { nameKey } from './persona.js'
+import { sealConfig } from './seal.js'
+import { wrapCollection } from './sealStore.js'
 import { planTombstones, TOMBSTONE_FIELDS, MAX_BANS, bansFullError } from './ownerTools.js'
 
 // Both stores return plain copies (no Mongo _id, nothing aliasing internal state) and share planOps for every rule.
@@ -252,6 +254,10 @@ const NO_ID = { projection: { _id: 0 } }
 
 // Bytes of data: URLs in a board's live items (their strings are ASCII, so characters = bytes).
 async function mediaBytesOf(items, code) {
+  if (items.sealing) { // the contents are encrypted in the database, so they are measured here instead of by an aggregate
+    const live = await items.find({ boardCode: code, deleted: false, kind: { $in: ['image', 'card', 'shoutout'] } }, NO_ID).toArray()
+    return live.reduce((sum, i) => sum + mediaSize(i), 0)
+  }
   const len = (path) => ({ $cond: [{ $eq: [{ $substrCP: [{ $ifNull: [path, ''] }, 0, 5] }, 'data:'] }, { $strLenCP: path }, 0] })
   const [row] = await items.aggregate([
     { $match: { boardCode: code, deleted: false, kind: { $in: ['image', 'card', 'shoutout'] } } },
@@ -281,8 +287,12 @@ async function guardedUpdate(items, code, doc, edit, floor) {
 
 // Creates the indexes once per `state`. The promise never rejects (a failed index must not break the current
 // read/write), but a failure is logged and forgotten so the next call retries.
-export function ensureIndexes(c, state) {
+export function ensureIndexes(c, state, { sealing = false } = {}) {
   state.ready ??= Promise.all([
+    ...(sealing ? [ // the lookup keys that replace readable names and emails; partial, so records that do not have them yet are not in the index
+      c.users.createIndex({ emailIdx: 1 }, { unique: true, partialFilterExpression: { emailIdx: { $exists: true } } }),
+      c.participants.createIndex({ boardCode: 1, nameKey: 1 }, { unique: true, partialFilterExpression: { nameKey: { $exists: true } } }),
+    ] : []),
     c.boards.createIndex({ code: 1 }, { unique: true }),
     c.boards.createIndex({ ownerId: 1, updatedAt: -1 }),
     c.items.createIndex({ boardCode: 1, id: 1 }, { unique: true }),
@@ -305,13 +315,14 @@ export function ensureIndexes(c, state) {
 // store call, so a failed connect is retried instead of being captured forever.
 export function createMongoStore(client, name) {
   const state = {}
+  const seal = sealConfig() // no DATA_ENCRYPTION_KEY: nothing is sealed, and what already is stays readable only with a key
   const cols = async () => {
     const resolved = await (typeof client === 'function' ? client() : client)
     if (state.client !== resolved) { state.client = resolved; state.ready = undefined } // new client after a reconnect: re-ensure indexes
     const db = resolved.db(name)
-    const c = { boards: db.collection('boards'), items: db.collection('items'), people: db.collection('people'), participants: db.collection('participants'), users: db.collection('users'), sessions: db.collection('sessions') }
-    await ensureIndexes(c, state)
-    return c
+    const raw = { boards: db.collection('boards'), items: db.collection('items'), people: db.collection('people'), participants: db.collection('participants'), users: db.collection('users'), sessions: db.collection('sessions') }
+    await ensureIndexes(raw, state, { sealing: seal.configured })
+    return { ...raw, boards: wrapCollection(seal, 'boards', raw.boards), items: wrapCollection(seal, 'items', raw.items), people: wrapCollection(seal, 'people', raw.people), participants: wrapCollection(seal, 'participants', raw.participants), users: wrapCollection(seal, 'users', raw.users) }
   }
 
   // The templates collection ensures its own indexes (once per client), apart from ensureIndexes above.
@@ -324,13 +335,14 @@ export function createMongoStore(client, name) {
         col.createIndex({ ownerId: 1, createdAt: -1 }),
         col.createIndex({ ownerId: 1, nameLower: 1 }, { unique: true }),
         col.createIndex({ id: 1 }, { unique: true }),
+        ...(seal.configured ? [col.createIndex({ ownerId: 1, nameKey: 1 }, { unique: true, partialFilterExpression: { nameKey: { $exists: true } } })] : []),
       ]).catch((err) => {
         state.tplClient = undefined
         console.error('retrospace: template index creation failed, will retry:', err?.message)
       })
     }
     await state.tplReady
-    return col
+    return wrapCollection(seal, 'templates', col)
   }
 
   return {
