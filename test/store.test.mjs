@@ -359,6 +359,14 @@ function defineSuite(label, makeStore, opts = {}) {
 
 defineSuite('memory store', () => createMemoryStore())
 
+// Tests that check the exact calls made to the database with plain data run without an encryption key (the encrypted form
+// is covered by seal-store.test.mjs and, against a real MongoDB, by seal-mongo.test.mjs).
+const unsealed = (fn) => async (...args) => {
+  const key = process.env.DATA_ENCRYPTION_KEY
+  delete process.env.DATA_ENCRYPTION_KEY
+  try { return await fn(...args) } finally { if (key !== undefined) process.env.DATA_ENCRYPTION_KEY = key }
+}
+
 test('memory stores are isolated from each other', async () => {
   const a = createMemoryStore()
   const b = createMemoryStore()
@@ -392,7 +400,7 @@ test('getStore returns one in-memory singleton when MONGODB_URI is unset', async
   }
 })
 
-test('mongo store retries index creation after a failure without failing the current call', async (t) => {
+test('mongo store retries index creation after a failure without failing the current call', unsealed(async (t) => {
   const logged = []
   t.mock.method(console, 'error', (...a) => logged.push(a.join(' ')))
   let created = 0
@@ -416,7 +424,7 @@ test('mongo store retries index creation after a failure without failing the cur
   await store.getBoard('ABCDEF')
   assert.equal(created, 22) // and cached once it succeeds
   assert.equal(logged.length, 1)
-})
+}))
 
 test('mongo store retries a failed connect on the next call via a client factory', async () => {
   const col = { createIndex: async () => {}, findOne: async () => null }
@@ -432,7 +440,7 @@ test('mongo store retries a failed connect on the next call via a client factory
   assert.equal(calls, 3)
 })
 
-test('mongo store re-ensures indexes when the resolved client changes', async () => {
+test('mongo store re-ensures indexes when the resolved client changes', unsealed(async () => {
   const made = []
   const mk = () => {
     const c = { created: 0 }
@@ -449,7 +457,7 @@ test('mongo store re-ensures indexes when the resolved client changes', async ()
   current = mk()
   await store.getBoard('ABCDEF')
   assert.equal(made[1].created, 11)
-})
+}))
 
 test('getMongo does not cache a failed connect', async () => {
   const saved = { uri: process.env.MONGODB_URI, cached: globalThis._kmMongo }
@@ -554,7 +562,7 @@ test('mongo listBoardsByOwner filters by ownerId, sorts by updatedAt descending 
   assert.deepEqual(seen, [['find', { ownerId: 'u_1' }, { projection: { _id: 0 } }], ['sort', { updatedAt: -1 }]])
 })
 
-test('mongo updateBoard bumps rev atomically with $inc (never $set), and rev is never part of the $set', async () => {
+test('mongo updateBoard bumps rev atomically with $inc (never $set), and rev is never part of the $set', unsealed(async () => {
   const calls = []
   const col = {
     createIndex: async () => {},
@@ -569,7 +577,7 @@ test('mongo updateBoard bumps rev atomically with $inc (never $set), and rev is 
   assert.ok(!('rev' in update.$set) && !('lastTs' in update.$set) && !('ownerId' in update.$set))
   assert.equal(update.$set.title, 'x')
   assert.equal(options.returnDocument, 'after')
-})
+}))
 
 test('mongo createBoard stores rev: 0', async () => {
   const inserted = []

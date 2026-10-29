@@ -180,6 +180,14 @@ function fakeMongo(handlers) {
 }
 const dup = () => Object.assign(new Error('E11000 duplicate key'), { code: 11000 })
 
+// Tests that check the exact calls made to the database with plain data run without an encryption key (the encrypted form
+// is covered by seal-store.test.mjs and, against a real MongoDB, by seal-mongo.test.mjs).
+const unsealed = (fn) => async (...args) => {
+  const key = process.env.DATA_ENCRYPTION_KEY
+  delete process.env.DATA_ENCRYPTION_KEY
+  try { return await fn(...args) } finally { if (key !== undefined) process.env.DATA_ENCRYPTION_KEY = key }
+}
+
 test('mongo indexes: unique {boardCode, uid} and unique {boardCode, nameLower} (no exemptions)', async () => {
   const { store, calls } = fakeMongo({})
   await store.getParticipant('ABCDEF', 'KM-A')
@@ -190,7 +198,7 @@ test('mongo indexes: unique {boardCode, uid} and unique {boardCode, nameLower} (
   ])
 })
 
-test('mongo joinParticipant upserts with $setOnInsert, the folded name key included, and nothing else', async () => {
+test('mongo joinParticipant upserts with $setOnInsert, the folded name key included, and nothing else', unsealed(async () => {
   const stored = { boardCode: 'ABCDEF', uid: 'KM-A', name: 'Ann' }
   const { store, calls } = fakeMongo({ 'participants.findOne': () => stored })
   assert.equal(await store.joinParticipant('ABCDEF', 'KM-A', persona('Ann')), stored)
@@ -202,7 +210,7 @@ test('mongo joinParticipant upserts with $setOnInsert, the folded name key inclu
   assert.deepEqual(options, { upsert: true })
   await store.joinParticipant('ABCDEF', 'KM-B', persona('Olive', 'account'))
   assert.equal(calls.filter((c) => c[1] === 'updateOne').at(-1)[3].$setOnInsert.nameLower, 'olive')
-})
+}))
 
 test('mongo joinParticipant: losing the upsert race for one uid returns the winner; a name clash is rethrown', async () => {
   const winner = { boardCode: 'ABCDEF', uid: 'KM-A', name: 'Ann' }
@@ -214,7 +222,7 @@ test('mongo joinParticipant: losing the upsert race for one uid returns the winn
   await assert.rejects(() => broken.store.joinParticipant('ABCDEF', 'KM-B', persona('Ann')), /network/)
 })
 
-test('mongo updateParticipant checks authored items first unless the lock is off, and sets the persona fields', async () => {
+test('mongo updateParticipant checks authored items first unless the lock is off, and sets the persona fields', unsealed(async () => {
   const locked = fakeMongo({ 'items.countDocuments': () => 1 })
   await assert.rejects(() => locked.store.updateParticipant('ABCDEF', 'KM-A', persona('Ann')), (e) => e.code === 'PERSONA_LOCKED')
   assert.equal(locked.calls.some((c) => c[1] === 'findOneAndUpdate'), false)
@@ -230,7 +238,7 @@ test('mongo updateParticipant checks authored items first unless the lock is off
   const owner = fakeMongo({ 'participants.findOneAndUpdate': () => ({ name: 'Olive' }) })
   await owner.store.updateParticipant('ABCDEF', 'KM-A', persona('Olive', 'account'), { lockWhenAuthored: false })
   assert.equal(owner.calls.some((c) => c[1] === 'countDocuments'), false, 'no lock check for the owner')
-})
+}))
 
 test('mongo participant reads hide _id, and deleteBoard clears participants', async () => {
   const { store, calls } = fakeMongo({})
