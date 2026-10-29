@@ -70,6 +70,15 @@ export function createMemoryStore(state = newMemState()) {
       b.rev = (b.rev ?? 0) + 1 // single-threaded: this is atomic
       return clone(b)
     },
+    // Writes `patch` only if the board is still at settings revision `rev` (a board written before revisions existed is at 0).
+    // -> the updated board, or null when someone else changed it first (or it is gone). Atomic: one process, no await.
+    async casBoard(code, rev, patch) {
+      const b = state.boards.get(code)
+      if (!b || (b.rev ?? 0) !== rev) return null
+      Object.assign(b, boardPatch(patch))
+      b.rev = rev + 1
+      return clone(b)
+    },
     // Takes the single "writing a summary" slot of a board. -> the updated board, or null when someone else holds the slot
     // (a flag older than staleMs no longer counts) or, for an automatic summary (`autoFor` = the closedAt it is for), when
     // the board is not closed since then or that closure already had its automatic summary. Atomic: one process, no await.
@@ -336,6 +345,10 @@ export function createMongoStore(client, name) {
     },
     async updateBoard(code, patch) {
       return (await cols()).boards.findOneAndUpdate({ code }, { $set: boardPatch(patch), $inc: { rev: 1 } }, { returnDocument: 'after', ...NO_ID }) // $inc: atomic, and creates rev on boards made before it existed
+    },
+    async casBoard(code, rev, patch) {
+      const filter = rev === 0 ? { code, $or: [{ rev: 0 }, { rev: { $exists: false } }] } : { code, rev }
+      return (await cols()).boards.findOneAndUpdate(filter, { $set: boardPatch(patch), $inc: { rev: 1 } }, { returnDocument: 'after', ...NO_ID })
     },
     async claimSummary(code, { now = Date.now(), staleMs, autoFor } = {}) {
       const filter = { code, $or: [{ summaryState: { $ne: 'generating' } }, { summaryStartedAt: { $lte: now - staleMs } }] }

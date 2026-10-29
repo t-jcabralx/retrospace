@@ -5,6 +5,7 @@ import { hashPassword } from './password.js'
 import { isSingleEmoji } from './emoji.js'
 import { ANON_MODES } from './anon.js'
 import { aiOf, cleanSummaryText, MAX_SUMMARY } from './aiBoard.js'
+import { cleanSetup } from './wheel.js'
 import { applyRetroAction, retroEffects, RetroError, RETRO_ACTION_KEYS } from './retro.js'
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
@@ -104,6 +105,8 @@ const RULES = {
     }
     return { value: out }
   },
+  // The Event wheel's setup (lists, helpers, rules). The round and the history are never taken from here: see resolvePatch.
+  wheel: (v) => (isObj(v) ? { value: v } : { error: 'wheel must be an object' }),
   // The passcode itself is never stored: only its scrypt hash, under passcodeHash. null removes the passcode.
   async passcode(v) {
     if (v === null) return { key: 'passcodeHash', value: null }
@@ -170,6 +173,13 @@ export function resolvePatch(board, value, now = Date.now()) {
       if (e instanceof RetroError) return { error: e.message }
       throw e
     }
+  }
+  if (Object.hasOwn(value, 'wheel')) {
+    if (board.type !== 'event' || !isObj(board.wheel)) return { error: 'This board has no prize wheel' }
+    if (board.wheel.round?.state !== 'idle') return { error: 'Finish or go back from the current round before changing the lists' }
+    const r = cleanSetup(value.wheel, { previous: board.wheel })
+    if (r.error) return { error: r.error }
+    out.wheel = { ...board.wheel, ...r.value } // round and history stay exactly as they were
   }
   // closedAt names a closure; it must differ from the one that last got an automatic summary even when the clock has not moved.
   if (value.status === 'closed' && (board.status !== 'closed' || !board.closedAt)) out.closedAt = Math.max(now, (Number(board.autoSummaryFor) || 0) + 1)
