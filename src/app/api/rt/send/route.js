@@ -44,7 +44,8 @@ const CLEAN = {
     for (const it of m.items) {
       if (it === null || typeof it !== 'object' || !isItemId(it.id) || !isCoord(it.x) || !isCoord(it.y)) return null
       if ((it.w !== undefined && !isDim(it.w)) || (it.h !== undefined && !isDim(it.h))) return null
-      items.push({ id: it.id, x: it.x, y: it.y, ...(it.w !== undefined && { w: it.w }), ...(it.h !== undefined && { h: it.h }) })
+      if (it.v !== undefined && !(Number.isFinite(it.v) && it.v >= 0 && it.v <= 1e15)) return null
+      items.push({ id: it.id, x: it.x, y: it.y, ...(it.v !== undefined && { v: it.v }), ...(it.w !== undefined && { w: it.w }), ...(it.h !== undefined && { h: it.h }) })
     }
     return { t: 'drag', items, ...(m.q !== undefined && { q: m.q }) }
   },

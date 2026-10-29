@@ -298,7 +298,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
       const items = []
       for (const o of coalesceUpdates([...r.liveBuf.values(), ...ops])) {
         const p = o.patch ?? {}
-        if (o.op === 'update' && Number.isFinite(p.x) && Number.isFinite(p.y)) items.push({ id: o.id, x: p.x, y: p.y, ...(Number.isFinite(p.w) && { w: p.w }), ...(Number.isFinite(p.h) && { h: p.h }) })
+        if (o.op === 'update' && Number.isFinite(p.x) && Number.isFinite(p.y)) items.push({ id: o.id, x: p.x, y: p.y, v: r.state?.items.get(o.id)?.updatedAt ?? 0, ...(Number.isFinite(p.w) && { w: p.w }), ...(Number.isFinite(p.h) && { h: p.h }) })
       }
       r.liveBuf.clear()
       if (items.length) { r.dragIds = new Set([...(r.dragIds ?? []), ...items.map((i) => i.id)]); r.sync.sendEphemeral({ t: 'drag', items: items.slice(0, 20), q: Date.now() }) }

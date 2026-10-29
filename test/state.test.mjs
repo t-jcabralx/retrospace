@@ -369,15 +369,24 @@ test('a cancelled peer drag puts the item back; a dropped one keeps the position
   assert.equal(real.drags.size, 0)
 })
 
-test('an unfinished peer drag goes back after a while; a dropped one sooner than one still in progress', () => {
+test('an unfinished peer drag goes back after a while; a dropped one waits for its write, then goes back if none comes', () => {
   const moved = reducer(dragState(), { type: 'peer-drag', items: [{ id: 'a', x: 50, y: 60 }, { id: 'b', x: 9, y: 9 }], now: 1000 })
   const mix = reducer(moved, { type: 'peer-drag-end', ids: ['b'], now: 1000 })
-  assert.equal(reducer(mix, { type: 'peer-drag-expire', now: 3000 }), mix) // nothing is old enough yet
-  const s = reducer(mix, { type: 'peer-drag-expire', now: 6000 }) // b was dropped > 4 s ago; a is still within 12 s
-  assert.deepEqual(at(s, 'b'), [0, 0, 200, 200].map((v, i) => [0, 0, s.items.get('b').w, s.items.get('b').h][i]))
+  assert.equal(reducer(mix, { type: 'peer-drag-expire', now: 5000 }), mix) // nothing is old enough yet
+  const s = reducer(mix, { type: 'peer-drag-expire', now: 12000 }) // b was dropped 11 s ago with no write; a is still within 15 s
+  assert.deepEqual(at(s, 'b'), [0, 0, 200, 200])
   assert.ok(s.drags.has('a') && !s.drags.has('b'))
   const later = reducer(s, { type: 'peer-drag-expire', now: 20000 })
   assert.deepEqual(at(later, 'a'), [10, 20, 200, 100])
+})
+
+test('a late drag step is ignored once the item has been saved again; a current one is applied', () => {
+  const s0 = initialState(snapshot([doc('a', { x: 10, y: 20, w: 200, h: 100, updatedAt: 100 })]))
+  const real = reducer(s0, { type: 'remote', items: [doc('a', { x: 300, y: 300, w: 200, h: 100, updatedAt: 200 })] }) // the real drop arrived first
+  assert.equal(reducer(real, { type: 'peer-drag', items: [{ id: 'a', x: 120, y: 130, v: 100 }], q: 5 }), real) // a step from before the drop: ignored
+  assert.deepEqual(at(real, 'a').slice(0, 2), [300, 300])
+  const live = reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 120, y: 130, v: 100 }], q: 5 }) // no newer write known yet: applied
+  assert.deepEqual(at(live, 'a').slice(0, 2), [120, 130])
 })
 
 test('a peer drag of someone else\'s named item is ignored unless the sender is the board creator', () => {

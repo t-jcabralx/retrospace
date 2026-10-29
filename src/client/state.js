@@ -152,6 +152,7 @@ function peerDrag(state, list, now = Date.now(), from, q) {
     if (!isObj(d) || typeof d.id !== 'string') continue
     const cur = (items ?? state.items).get(d.id)
     if (!cur || cur.deleted || !Number.isFinite(d.x) || !Number.isFinite(d.y) || !mayDrag(state, cur, from)) continue
+    if (Number.isFinite(d.v) && d.v < (cur.updatedAt || 0)) continue // the item was saved again since this gesture began: the real write wins over a late step
     const prior = state.drags.get(d.id)
     if (Number.isFinite(q) && Number.isFinite(prior?.q) && q < prior.q) continue // a step that arrived after a newer one
     items ??= new Map(state.items)
@@ -182,9 +183,10 @@ function peerDragEnd(state, ids, cancel, now = Date.now()) {
 }
 
 // A drag nobody has updated for `after` ms (the sender left, or the write never came) goes back to where the item was.
-function peerDragExpire(state, now = Date.now(), after = 4000) {
-  // A drop is waited for `after` ms; a drag still in progress may pause (the sender holds still), so it gets three times that.
-  const stale = [...state.drags].filter(([, h]) => now - h.at > (h.ended ? after : after * 3)).map(([id]) => id)
+function peerDragExpire(state, now = Date.now(), after = 10000) {
+  // A dropped item waits `after` ms for its real write (a slow database can take seconds); a drag still in progress may pause
+  // (the sender holds still), so it gets a little longer.
+  const stale = [...state.drags].filter(([, h]) => now - h.at > (h.ended ? after : after * 1.5)).map(([id]) => id)
   return stale.length ? peerDragEnd(state, stale, true, now) : state
 }
 
