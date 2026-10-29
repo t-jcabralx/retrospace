@@ -9,6 +9,7 @@ import { useSetting } from './settings/useSetting.js'
 import { useOwnerActions } from './useOwnerActions.js'
 import { perPerson, votesUsed, anyVotes, topVoted, excerpt } from './voteResults.js'
 import { VoteIcon, TrophyIcon } from './icons.jsx'
+import Ballot from './Ballot.jsx'
 import './settings.css'
 
 const plural = (n, one, many) => (n === 1 ? one : many)
@@ -41,6 +42,7 @@ export default function VotePanel({ ctl, onJump }) {
   const id = useId()
   const [collapsed, setCollapsed] = useState(false)
   const [manage, setManage] = useState(false)
+  const [ballot, setBallot] = useState(true) // the voter card starts open while voting is open; "My votes" folds it away
   const open = Boolean(board?.vote?.active)
   const voted = anyVotes(items)
   if (!open && !voted) return null
@@ -62,8 +64,10 @@ export default function VotePanel({ ctl, onJump }) {
               <Dots total={per} used={used} />
             </>
           )}
+          {!readOnly && <button type="button" className="bd-sbtn bd-vote-manage" aria-expanded={ballot} aria-controls={`${id}-b`} onClick={() => setBallot((b) => !b)}>My votes</button>}
           {isOwner && <button type="button" className="bd-sbtn bd-vote-manage" aria-expanded={manage} aria-controls={`${id}-m`} onClick={() => setManage((m) => !m)}>Manage</button>}
         </div>
+        {!readOnly && ballot && <div id={`${id}-b`}><Ballot ctl={ctl} onJump={onJump} /></div>}
         {isOwner && manage && <div id={`${id}-m`}><OwnerActions ctl={ctl} open per={per} onDone={() => setManage(false)} /></div>}
       </div>
     )

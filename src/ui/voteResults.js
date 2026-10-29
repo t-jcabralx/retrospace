@@ -34,3 +34,21 @@ export function excerpt(item, max = 60) {
   if (!text) return item?.kind === 'image' ? 'Image' : item?.kind === 'frame' ? 'Untitled frame' : item?.kind === 'note' ? 'Empty note' : 'Empty item'
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
 }
+
+// The notes this person has put a vote on, in the order they sit in the list.
+export const myVotes = (items, uid) => (uid ? (items ?? []).filter((i) => isVotable(i) && i.votes?.includes(uid)) : [])
+
+// How voting is going, as counts only (never who voted for what). `people` = everyone who has joined the board.
+// -> { people, voters, finished, voting }  voters: put at least one vote; finished: used every vote; voting: votes placed in all.
+export function ballotSummary(board, items, participants = []) {
+  const per = perPerson(board)
+  const counts = new Map()
+  for (const i of items ?? []) if (isVotable(i)) for (const v of i.votes ?? []) counts.set(v, (counts.get(v) ?? 0) + 1)
+  const ids = new Set([...participants.map((p) => p.uid), ...counts.keys()])
+  return {
+    people: ids.size,
+    voters: counts.size,
+    finished: [...counts.values()].filter((n) => n >= per).length,
+    voting: [...counts.values()].reduce((a, b) => a + b, 0),
+  }
+}
