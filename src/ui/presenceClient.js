@@ -14,6 +14,9 @@ export const HELLO_MS = 5000
 const FOLLOW_UP_MS = 2000 // one more hello after the first if still alone: covers the other side's stream opening a moment later
 const TICK_MS = 1000 // expiry and idle-cursor check
 const SEL_DEBOUNCE_MS = 100
+// Every pointer message is a request and a broadcast to everyone on the board, so they are rationed by how many people are here:
+// at most 4 a second with a few people, 2 with a dozen, 1 with more. The cursor on the other side glides between them.
+export const cursorGapMs = (peers) => (peers <= 4 ? 250 : peers <= 14 ? 500 : 1000)
 const MAX_SEL = 100
 const MAX_NAMES = 500
 const MAX_CURSORS = 50 // the most recently active pointers; more would only be noise
@@ -51,6 +54,9 @@ export function createPresenceClient({ selfUid, send, timers = defaultTimers(), 
   let wantSel = []
   let sentSel = null // signature of the last selection sent
   let lastCursor = ''
+  let cursorAt = 0 // when a cursor message last went out
+  let cursorTimer = null
+  let cursorPending = null // the newest pointer position that has not been sent
   let peerCount = 0
   let snap = { peers: [], cursors: [], selections: [] }
   let sigs = { peers: '', cursors: '', selections: '' }
@@ -112,6 +118,8 @@ export function createPresenceClient({ selfUid, send, timers = defaultTimers(), 
   }
   function stopSending() {
     stopHello()
+    clear(cursorTimer, timers.clearTimeout)
+    cursorTimer = cursorPending = null
     clear(replyTimer, timers.clearTimeout)
     clear(selTimer, timers.clearTimeout)
     replyTimer = selTimer = null
@@ -134,6 +142,16 @@ export function createPresenceClient({ selfUid, send, timers = defaultTimers(), 
     sayHello()
     followTimer = timers.setTimeout(() => { followTimer = null; if (live() && visible && !hasPeers()) sayHello() }, FOLLOW_UP_MS)
     helloTimer = timers.setInterval(() => { if (hasPeers()) sayHello() }, HELLO_MS)
+  }
+
+  function flushCursor() {
+    clear(cursorTimer, timers.clearTimeout)
+    cursorTimer = null
+    const pt = cursorPending
+    cursorPending = null
+    if (!pt || !live() || !visible || !hasPeers()) return
+    cursorAt = now()
+    send({ t: 'cursor', ...pt })
   }
 
   function flushSel() {
@@ -237,7 +255,10 @@ export function createPresenceClient({ selfUid, send, timers = defaultTimers(), 
       const sig = `${pt.x},${pt.y}`
       if (sig === lastCursor) return
       lastCursor = sig
-      send({ t: 'cursor', ...pt })
+      cursorPending = pt
+      const wait = cursorGapMs(peerCount) - (now() - cursorAt)
+      if (wait <= 0) flushCursor()
+      else if (cursorTimer === null) cursorTimer = timers.setTimeout(flushCursor, wait) // the newest position goes out when the gap is over
     },
 
     // Our selection (item ids), sent 100 ms after the last change.

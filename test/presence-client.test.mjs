@@ -285,7 +285,7 @@ test('hostile messages are ignored without notifying or throwing', () => {
 })
 
 test('own cursor is sent only while live, visible and somebody else is here; coordinates are rounded and repeats skipped', () => {
-  const { client, sent, hello } = make()
+  const { c, client, sent, hello } = make()
   client.cursor(1, 1)
   client.setLive(true)
   client.cursor(1, 1)
@@ -295,14 +295,17 @@ test('own cursor is sent only while live, visible and somebody else is here; coo
   client.cursor(10.4, 20.6)
   client.cursor(10.3, 20.7) // rounds to the same point
   client.cursor(11, 20)
-  assert.deepEqual(sent, [{ t: 'cursor', x: 10, y: 21 }, { t: 'cursor', x: 11, y: 20 }])
+  assert.deepEqual(sent, [{ t: 'cursor', x: 10, y: 21 }], 'the second position waits for the gap')
+  c.advance(250)
+  assert.deepEqual(sent.filter((m) => m.t === 'cursor'), [{ t: 'cursor', x: 10, y: 21 }, { t: 'cursor', x: 11, y: 20 }])
+  const before = sent.length
   client.setVisible(false)
   client.cursor(50, 50)
-  assert.equal(sent.length, 2)
+  assert.equal(sent.length, before)
   client.setLink('paused')
   client.setVisible(true)
   client.cursor(60, 60)
-  assert.equal(sent.length, 2, 'nor while the stream is down')
+  assert.equal(sent.length, before, 'nor while the stream is down')
   client.destroy()
 })
 
@@ -503,4 +506,35 @@ test('linkMode: live is live, a blip (offline / connecting) pauses, polling or l
   assert.equal(linkMode('ready', 'connecting'), 'paused')
   assert.equal(linkMode('ready', 'polling'), 'off')
   for (const phase of ['loading', 'persona', 'revoked', 'passcode', 'missing', 'error']) assert.equal(linkMode(phase, 'live'), 'off', phase)
+})
+
+test('a moving pointer sends at most 4 a second to a few people, and the last position is never lost', () => {
+  const { c, client, sent, hello } = make()
+  client.setLive(true)
+  hello(ANN, 'Ann Otter')
+  sent.length = 0
+  for (let i = 1; i <= 100; i++) { client.cursor(i, i); c.advance(10) } // a second of movement
+  const cursors = sent.filter((m) => m.t === 'cursor')
+  assert.ok(cursors.length <= 5, `a second of movement sent ${cursors.length} cursor messages`)
+  c.advance(300)
+  assert.deepEqual(sent.filter((m) => m.t === 'cursor').at(-1), { t: 'cursor', x: 100, y: 100 })
+  client.destroy()
+})
+
+test('the more people on the board, the fewer pointer messages: 4, 2 and 1 a second', async () => {
+  const { cursorGapMs } = await import('../src/ui/presenceClient.js')
+  assert.deepEqual([1, 4, 5, 14, 15, 60].map(cursorGapMs), [250, 250, 500, 500, 1000, 1000])
+})
+
+test('a pointer position still waiting is not sent after the page is closed or the stream drops', () => {
+  const { c, client, sent, hello } = make()
+  client.setLive(true)
+  hello(ANN, 'Ann Otter')
+  sent.length = 0
+  client.cursor(1, 1)
+  client.cursor(2, 2) // waits for the gap
+  client.setLink('paused')
+  c.advance(1000)
+  assert.deepEqual(sent.filter((m) => m.t === 'cursor'), [{ t: 'cursor', x: 1, y: 1 }])
+  client.destroy()
 })

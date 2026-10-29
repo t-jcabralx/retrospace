@@ -55,7 +55,7 @@
 .bd-celebrate-item[aria-checked='true'] { background: var(--bd-tint); font-weight: 650; }
 
 /* ---------- other people's cursors and selections (inside the zoomed world layer) ---------- */
-.bd-cursor { position: absolute; left: 0; top: 0; pointer-events: none; transition: transform 90ms linear; } /* no will-change: idle cursors should not each hold a compositor layer */
+.bd-cursor { position: absolute; left: 0; top: 0; pointer-events: none; transition: transform 260ms linear; } /* no will-change: idle cursors should not each hold a compositor layer */
 .bd-cursor-in { transform: scale(var(--bd-inv, 1)); transform-origin: 0 0; }
 .bd-cursor-arrow {
   display: block; fill: var(--bd-pc); stroke: var(--pa-ink); stroke-width: 1.5; stroke-linejoin: round;
