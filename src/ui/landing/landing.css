@@ -189,3 +189,24 @@
 .ls-cta-photo { z-index: -2; object-fit: cover; }
 .ls-cta-band::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 84%, transparent) 100%); } /* the plain accent keeps the text contrast this band was checked for */
 @media (prefers-reduced-motion: reduce) { .ls-float, .ls-dash, .ls-confetti span { animation: none; } }
+
+/* the Event card and the prize wheel section */
+.ls-photo--art { display: grid; place-items: center; background: var(--rs-accent-soft); }
+.ls-photo--art .ls-wheelart { height: 94%; width: auto; }
+@media (min-width: 900px) {
+  .ls-types { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .ls-types > li { grid-column: span 2; }
+  .ls-types > li:nth-child(n + 4) { grid-column: span 3; }
+}
+.ls-wheel-grid { display: grid; gap: clamp(28px, 5vw, 56px); align-items: center; }
+@media (min-width: 900px) { .ls-wheel-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); } }
+.ls-wheel-points { display: grid; gap: 14px; margin: 24px 0; padding: 0; list-style: none; }
+.ls-wheel-points li { display: grid; gap: 2px; padding-left: 16px; border-left: 3px solid var(--accent); }
+.ls-wheel-points span { color: var(--rs-muted); line-height: 1.6; }
+.ls-wheel-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.ls-wheel-art { display: grid; place-items: center; }
+.ls-wheelart { width: min(100%, 420px); height: auto; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.25)); }
+.ls-wheelart-outer, .ls-wheelart-inner { transform-box: view-box; transform-origin: 120px 120px; animation: ls-spin 28s linear infinite; }
+.ls-wheelart-inner { animation-direction: reverse; animation-duration: 20s; }
+@keyframes ls-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ls-wheelart-outer, .ls-wheelart-inner { animation: none; } }

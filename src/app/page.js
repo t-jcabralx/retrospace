@@ -1,6 +1,7 @@
 import PageShell from '../ui/site/PageShell.jsx'
 import Hero from '../ui/landing/Hero.jsx'
 import BoardTypes from '../ui/landing/BoardTypes.jsx'
+import WheelShowcase from '../ui/landing/WheelShowcase.jsx'
 import Features from '../ui/landing/Features.jsx'
 import HowItWorks from '../ui/landing/HowItWorks.jsx'
 import ClosingCta from '../ui/landing/ClosingCta.jsx'
@@ -14,6 +15,7 @@ export default function Home() {
     <PageShell landing>
       <Hero />
       <BoardTypes />
+      <WheelShowcase />
       <Features />
       <HowItWorks />
       <ClosingCta />

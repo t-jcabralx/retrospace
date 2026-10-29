@@ -77,3 +77,31 @@ export function HeroConfetti() {
     </div>
   )
 }
+
+// A two-ring prize wheel, turning slowly (outer ring one way, inner ring the other). Decorative.
+const SOFT = ['#cecbf6', '#9fe1cb', '#f5c4b3', '#f4c0d1', '#b5d4f4', '#c0dd97', '#fac775', '#d3d1c7']
+const GIFTS = [['#7f77dd', '🎁'], ['#1d9e75', '☕'], ['#d85a30', '🎧'], ['#d4537e', '🏖️'], ['#378add', '⌨️'], ['#639922', '🍕']]
+const W = 120
+const at = (r, deg) => [W + r * Math.sin((deg * Math.PI) / 180), W - r * Math.cos((deg * Math.PI) / 180)]
+const wedge = (r1, r2, a0, a1) => { const [x1, y1] = at(r2, a0); const [x2, y2] = at(r2, a1); const [x3, y3] = at(r1, a1); const [x4, y4] = at(r1, a0); return `M${x1} ${y1} A${r2} ${r2} 0 0 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 0 0 ${x4} ${y4}Z` }
+
+export function WheelArt() {
+  return (
+    <svg className="ls-wheelart" viewBox="0 0 240 250" role="img" aria-label="A prize wheel with people on the outer ring and prizes on the inner ring" focusable="false">
+      <circle cx={W} cy={W + 8} r="114" fill="var(--panel)" stroke="var(--rs-line)" />
+      <g transform="translate(0 8)">
+        <g className="ls-wheelart-outer">
+          {SOFT.map((c, i) => <path key={c} d={wedge(76, 108, i * 45, (i + 1) * 45)} fill={c} stroke="var(--panel)" strokeWidth="1.2" />)}
+          {SOFT.map((c, i) => { const [x, y] = at(92, i * 45 + 22.5); return <circle key={`d${c}`} cx={x} cy={y} r="3.2" fill="#2c2c2a" opacity="0.45" /> })}
+        </g>
+        <g className="ls-wheelart-inner">
+          {GIFTS.map(([c, e], i) => <path key={c} d={wedge(34, 72, i * 60, (i + 1) * 60)} fill={c} stroke="var(--panel)" strokeWidth="1.2" />)}
+          {GIFTS.map(([c, e], i) => { const [x, y] = at(54, i * 60 + 30); return <text key={`t${c}`} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize="15">{e}</text> })}
+        </g>
+        <circle cx={W} cy={W} r="26" fill="var(--accent)" />
+        <text x={W} y={W} textAnchor="middle" dominantBaseline="central" fontSize="11" fontWeight="700" fill="var(--rs-on-accent)" letterSpacing="1">SPIN</text>
+      </g>
+      <path d={`M${W} 26 L${W - 11} 3 L${W + 11} 3Z`} fill="var(--accent)" stroke="var(--panel)" strokeWidth="2.5" strokeLinejoin="round" />
+    </svg>
+  )
+}

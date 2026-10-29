@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { BOARD_TEMPLATES } from '../../lib/templates.js'
-import { CanvasIcon, GiftIcon, LoopIcon, SparkIcon } from '../site/icons.jsx'
+import { CanvasIcon, GiftIcon, LoopIcon, SparkIcon, PartyIcon } from '../site/icons.jsx'
+import { WheelArt } from './Illustrations.jsx'
 
 const labels = (type, keys) => keys.map((k) => BOARD_TEMPLATES[type][k].label)
 
@@ -21,6 +22,11 @@ const TYPES = [
     templates: ['Went Well / Could Be Improved / Blockers / Ideas', 'Start / Stop / Continue', 'Mad / Sad / Glad'],
   },
   {
+    key: 'event', art: 'wheel', Icon: PartyIcon, title: 'Event raffle',
+    text: 'A two-ring prize wheel for raffles and give-aways: people on the outer ring, prizes on the inner ring, a two-step draw everyone watches live, with your own winner celebration.',
+    templates: ['Raffle day', 'Helpers can run the draw', 'Giphy winner GIFs'],
+  },
+  {
     key: 'wall', photo: '/photos/wall.jpg', Icon: SparkIcon, title: 'Team wall',
     text: 'A recognition feed that stays open: give shout-outs with badges, @mention a teammate, add a GIF and react with emoji. Birthdays and work anniversaries show up as a banner on the day.',
     templates: labels('wall', ['team']),
@@ -37,10 +43,10 @@ export default function BoardTypes() {
           <p className="ls-lede">Pick the kind of board that fits the moment. Every board works the same way to join.</p>
         </header>
         <ul className="ls-types">
-          {TYPES.map(({ key, photo, Icon, title, text, templates }) => (
+          {TYPES.map(({ key, photo, art, Icon, title, text, templates }) => (
             <li key={key} className="rs-card ls-type">
-              <div className="ls-photo">
-                <Image src={photo} alt="" fill sizes="(min-width: 900px) 33vw, 100vw" />
+              <div className={`ls-photo${art ? ' ls-photo--art' : ''}`}>
+                {art ? <WheelArt /> : <Image src={photo} alt="" fill sizes="(min-width: 900px) 33vw, 100vw" />}
               </div>
               <div className="ls-type-top">
                 <span className="ls-tile"><Icon /></span>

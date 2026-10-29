@@ -1,10 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { TOC, BOARD_TYPES, OWNER_STEPS, GUEST_STEPS, TOOLS, TIPS, STAGES, AI_STEPS, HELP } from './guideData.js'
+import { TOC, BOARD_TYPES, OWNER_STEPS, GUEST_STEPS, TOOLS, TIPS, STAGES, WHEEL_STEPS, WHEEL_TIPS, AI_STEPS, HELP } from './guideData.js'
 import CreateBoardLink from '../landing/CreateBoardLink.jsx'
 import { ArrowIcon } from '../site/icons.jsx'
 import { STAGE_ICONS } from './StageIcons.jsx'
-import { CreateIllustration, ShareIllustration, CollabIllustration } from '../landing/Illustrations.jsx'
+import { CreateIllustration, ShareIllustration, CollabIllustration, WheelArt } from '../landing/Illustrations.jsx'
 import '../landing/landing.css' // the illustrations' own styles (ls-ill, ls-float)
 import './guide.css'
 
@@ -49,7 +49,7 @@ export default function Guide() {
         <ul className="gd-types">
           {BOARD_TYPES.map(([name, text]) => (
             <li key={name}>
-              <div className="gd-photo"><Image src={`/photos/${PHOTO[name]}.jpg`} alt="" fill sizes="(min-width: 720px) 430px, 100vw" /></div>
+              <div className={`gd-photo${PHOTO[name] ? '' : ' gd-photo--art'}`}>{PHOTO[name] ? <Image src={`/photos/${PHOTO[name]}.jpg`} alt="" fill sizes="(min-width: 720px) 430px, 100vw" /> : <WheelArt />}</div>
               <strong>{name}</strong><span>{text}</span>
             </li>
           ))}
@@ -85,6 +85,12 @@ export default function Guide() {
           ))}
         </ol>
         <p className="gd-small">Timers are suggestions and can be changed or switched off in Settings, Stages. You can also skip a stage by switching it off there.</p>
+      </Section>
+
+      <Section id="wheel" eyebrow="Event boards" title="Run a prize wheel">
+        <p className="gd-intro">An Event board is a raffle. People are on the outer ring, prizes on the inner ring, and each draw has two steps: first the prize, then who wins it. Everyone with the code watches the same spin live.</p>
+        <Split art={<WheelArt />}><Steps items={WHEEL_STEPS} /></Split>
+        <ul className="gd-tips">{WHEEL_TIPS.map((t) => <li key={t}>{t}</li>)}</ul>
       </Section>
 
       <Section id="anonymous" eyebrow="Privacy" title="Anonymous notes">

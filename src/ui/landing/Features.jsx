@@ -7,6 +7,7 @@ const FEATURES = [
   { Icon: KeyIcon, title: 'Join by code', text: 'Share a six-character code, with an optional passcode. Close or revoke access whenever you like.' },
   { Icon: PartyIcon, title: 'Celebration reveal', text: 'Reveal everything at once on the recipient page, with confetti and GIFs.' },
   { Icon: SmileIcon, title: 'Throwable emoji', text: 'Let the room toss a banana or a rose at an idea. Off until the owner turns it on.' },
+  { Icon: PartyIcon, title: 'Prize wheel', text: 'Run a raffle with a live two-step draw, helpers who can spin, and your own GIF or effect for winners.' },
   { Icon: SparkIcon, title: 'AI summary', text: 'Optionally draft a summary of the session. The owner reviews it before it is shared.' },
   { Icon: LayoutIcon, title: 'Ready-made templates', text: 'Start from a retrospective, brainstorm or SWOT layout, or one of eight celebration occasions.' },
 ]

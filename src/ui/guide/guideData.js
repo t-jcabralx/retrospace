@@ -6,6 +6,7 @@ export const TOC = [
   ['guest', 'If you join a board'],
   ['board', 'Working on a board'],
   ['stages', 'The Retro stages'],
+  ['wheel', 'Prize wheel'],
   ['anonymous', 'Anonymous notes'],
   ['ai', 'AI summary'],
   ['help', 'Problems'],
@@ -15,6 +16,7 @@ export const BOARD_TYPES = [
   ['Workshop', 'Brainstorms and planning on a free canvas: sticky notes, text, shapes, connectors, frames and images.'],
   ['Celebration', 'Cards for someone special, with GIFs, a reveal time and a private reveal page for the recipient.'],
   ['Retro', 'A team retrospective that walks everyone through seven stages. Explained step by step below.'],
+  ['Event raffle', 'A two-ring prize wheel for raffles and give-aways. Explained below.'],
   ['Team wall', 'A long-lived wall of shout-outs, reactions, birthdays and milestones.'],
 ]
 
@@ -102,6 +104,22 @@ export const STAGES = [
     guests: 'Read the shared summary.',
     tip: 'Guests only see a summary you choose to share.',
   },
+]
+
+export const WHEEL_STEPS = [
+  ['Create an Event board', 'New board, Event raffle. The board opens on its Setup tab. Guests join with the code just like any other board.'],
+  ['Add people and prizes', 'Paste names (one per line or separated by commas), or press Add everyone who joined. Add prizes with an emoji and how many there are, then Save changes. People are on the outer ring and prizes on the inner ring.'],
+  ['Choose the celebration', 'Pick an effect for winners (confetti, fireworks, balloons, stars or sparkles), or choose a Giphy GIF for every winner. A prize can have its own effect or GIF: use the ☆ on the prize.'],
+  ['Spin for the prize', 'Press the SPIN button in the middle of the wheel, the big button, or the space bar. The inner ring turns and stops on the prize.'],
+  ['Spin for the winner', 'Press it again. The outer ring turns and stops on the winner, and everyone sees the same spin and the celebration.'],
+  ['Accept, skip or spin again', 'Accept winner records the result and takes the winner off the wheel. Not here, skip spins again for the same prize. Spin the winner again goes back one step. Undo the last draw takes back an accepted result.'],
+]
+
+export const WHEEL_TIPS = [
+  'Helpers: in Setup you can tick people who joined to let them run the draw too. Only you change the lists.',
+  'Present puts a bigger wheel on screen for a projector. Esc leaves it. The speaker button adds a tick and a fanfare (off until you turn it on).',
+  'History lists every accepted draw, newest first, and downloads as a CSV file.',
+  'The server picks every result. Guests only watch, and nobody can change what comes up.',
 ]
 
 export const AI_STEPS = [

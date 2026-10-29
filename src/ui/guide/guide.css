@@ -68,3 +68,6 @@
 .gd-step-no { display: block; margin-bottom: 1px; color: var(--rs-muted); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .gd-stage-head h3 { line-height: 1.15; }
 @media (prefers-reduced-motion: reduce) { .gd-art .ls-float, .gd-art .ls-dash { animation: none; } }
+
+.gd-photo--art { display: grid; place-items: center; } .gd-photo--art .ls-wheelart { height: 92%; width: auto; filter: none; }
+.gd-art .ls-wheelart { max-width: 300px; }
