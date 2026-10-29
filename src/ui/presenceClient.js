@@ -14,9 +14,10 @@ export const HELLO_MS = 5000
 const FOLLOW_UP_MS = 2000 // one more hello after the first if still alone: covers the other side's stream opening a moment later
 const TICK_MS = 1000 // expiry and idle-cursor check
 const SEL_DEBOUNCE_MS = 100
-// Every pointer message is a request and a broadcast to everyone on the board, so they are rationed by how many people are here:
-// at most 4 a second with a few people, 2 with a dozen, 1 with more. The cursor on the other side glides between them.
-export const cursorGapMs = (peers) => (peers <= 4 ? 250 : peers <= 14 ? 500 : 1000)
+// Every pointer message is a request and a broadcast to everyone on the board, so the time between them grows with the room: the
+// whole room sends about 16 a second however many people move (a pair of people: 8 a second each, ten: under 2 each), never
+// faster than every 100 ms nor slower than every 1.5 s. The cursor on the other side glides between the messages.
+export const cursorGapMs = (others) => Math.min(1500, Math.max(100, 60 * (others + 1)))
 const MAX_SEL = 100
 const MAX_NAMES = 500
 const MAX_CURSORS = 50 // the most recently active pointers; more would only be noise

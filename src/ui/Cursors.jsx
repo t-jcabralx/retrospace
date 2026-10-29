@@ -5,6 +5,7 @@
 import { useSyncExternalStore } from 'react'
 import { personColor } from './personColor.js'
 import { NO_PRESENCE } from './noPresence.js'
+import { cursorGapMs } from './presenceClient.js'
 
 const EMPTY = []
 
@@ -12,10 +13,11 @@ export default function Cursors({ presence }) {
   const store = presence ?? NO_PRESENCE
   const list = useSyncExternalStore(store.subscribe, store.getCursors, () => EMPTY)
   if (!list.length) return null
+  const glide = `${cursorGapMs(new Set(list.map((c) => c.id)).size)}ms` // as long as the gap between the messages, so it moves smoothly without lagging
   return list.map((c) => (
     // The outer element moves (and eases between positions); the inner one only undoes the board's zoom, so a pointer
     // keeps its size and never lags behind while zooming.
-    <div key={`${c.id}:${c.key}`} className="bd-cursor" aria-hidden="true" style={{ transform: `translate(${c.x}px, ${c.y}px)`, '--bd-pc': personColor(c.avatar) }}>
+    <div key={`${c.id}:${c.key}`} className="bd-cursor" aria-hidden="true" style={{ transform: `translate(${c.x}px, ${c.y}px)`, transitionDuration: glide, '--bd-pc': personColor(c.avatar) }}>
       <div className="bd-cursor-in">
         <svg className="bd-cursor-arrow" width="18" height="22" viewBox="0 0 18 22" focusable="false">
           <path d="M2 2V18.5L6.6 14.2L9.9 21L13.2 19.5L9.9 12.8L16 12.6Z" />

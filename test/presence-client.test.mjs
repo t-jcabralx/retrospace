@@ -508,22 +508,23 @@ test('linkMode: live is live, a blip (offline / connecting) pauses, polling or l
   for (const phase of ['loading', 'persona', 'revoked', 'passcode', 'missing', 'error']) assert.equal(linkMode(phase, 'live'), 'off', phase)
 })
 
-test('a moving pointer sends at most 4 a second to a few people, and the last position is never lost', () => {
+test('a moving pointer to one other person sends about 8 a second, and the last position is never lost', () => {
   const { c, client, sent, hello } = make()
   client.setLive(true)
   hello(ANN, 'Ann Otter')
   sent.length = 0
   for (let i = 1; i <= 100; i++) { client.cursor(i, i); c.advance(10) } // a second of movement
   const cursors = sent.filter((m) => m.t === 'cursor')
-  assert.ok(cursors.length <= 5, `a second of movement sent ${cursors.length} cursor messages`)
+  assert.ok(cursors.length >= 7 && cursors.length <= 10, `a second of movement sent ${cursors.length} cursor messages`)
   c.advance(300)
   assert.deepEqual(sent.filter((m) => m.t === 'cursor').at(-1), { t: 'cursor', x: 100, y: 100 })
   client.destroy()
 })
 
-test('the more people on the board, the fewer pointer messages: 4, 2 and 1 a second', async () => {
+test('the more people on the board, the longer the gap, so the whole room stays near 16 messages a second', async () => {
   const { cursorGapMs } = await import('../src/ui/presenceClient.js')
-  assert.deepEqual([1, 4, 5, 14, 15, 60].map(cursorGapMs), [250, 250, 500, 500, 1000, 1000])
+  assert.deepEqual([0, 1, 2, 4, 9, 24, 60].map(cursorGapMs), [100, 120, 180, 300, 600, 1500, 1500])
+  for (const others of [1, 4, 9, 14]) assert.ok(((others + 1) * 1000) / cursorGapMs(others) <= 17, `${others + 1} people`)
 })
 
 test('a pointer position still waiting is not sent after the page is closed or the stream drops', () => {
