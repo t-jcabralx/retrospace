@@ -5,7 +5,7 @@ export const runtime = 'nodejs'
 // A browser telling us, in one short line, that something it had saved was put back (a write refused, a temporary position that
 // expired). Nothing a person wrote is ever sent: only the kind, the server's own refusal text, and a few small facts. It goes to
 // the server log and nowhere else, so the cause of a "it went back" report can be read from the Vercel logs.
-const KINDS = ['rejected', 'drag-expired']
+const KINDS = ['rejected', 'drag-expired', 'reverted']
 const FIELDS = { error: 80, board: 12, role: 12, stage: 16, status: 12, op: 12, kind: 12 }
 
 export async function POST(req) {

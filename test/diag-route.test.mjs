@@ -26,3 +26,10 @@ test('unknown kinds, oversized bodies and control characters are refused or clea
   assert.ok(!line.includes('<script>') && !line.includes('\\n'), line)
   assert.ok(!line.includes('"n"'), 'a count out of range is dropped')
 })
+
+test('a "your change was put back" report is accepted with only the kind and a few small facts', async () => {
+  const r = await call(POST, 'POST', '/api/diag', { body: { k: 'reverted', kind: 'remote', board: 'workshop', role: 'guest', status: 'polling', text: 'a private note' } })
+  assert.equal(r.status, 200)
+  const line = logged.at(-1)
+  assert.ok(line.includes('"k":"reverted"') && line.includes('"kind":"remote"') && !line.includes('private'), line)
+})

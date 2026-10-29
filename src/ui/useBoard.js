@@ -7,6 +7,7 @@ import { initialState, reducer, undo as undoStep, redo as redoStep, ordered, fre
 import { createSync } from '../client/sync.js'
 import { reportDiag } from './diag.js'
 import { withoutPending } from './pendingGuard.js'
+import { revertedBy, frameOf } from './revertWatch.js'
 import { fixLinks, coalesceUpdates, dropBuffered } from './ops.js'
 import { createClock } from './timer.js'
 import { votesLeft } from './voteResults.js'
@@ -76,28 +77,33 @@ export function useBoard(code, { viewOnly = false } = {}) {
   const [toast, setToast] = useState(null)
   const [lockedByServer, setLockedByServer] = useState(false)
   const [attempt, setAttempt] = useState(0)
-  const ref = useRef({ state: null, sync: null, pending: new Map(), sentAt: new Map(), merge: null, toastTimer: null, out: 0, liveBuf: new Map(), liveTimer: null, authored: false, eph: new Set() })
+  const ref = useRef({ state: null, sync: null, pending: new Map(), sentAt: new Map(), recent: new Map(), merge: null, toastTimer: null, out: 0, liveBuf: new Map(), liveTimer: null, authored: false, eph: new Set() })
   if (!ref.current.clock) ref.current.clock = createClock()
 
   const put = useCallback((next) => {
     ref.current.state = next
     setState(next)
   }, [])
-  const dispatch = useCallback((action) => {
-    const cur = ref.current.state
-    if (action.type === 'load') return put(initialState(action.snapshot))
-    if (!cur) return
-    const next = reducer(cur, action)
-    // A peer's temporary position that never got its real write is put back after 10 s: say so, it is one reason a change "goes back".
-    if (action.type === 'peer-drag-expire' && next.drags.size < cur.drags.size) reportDiag('drag-expired', { n: cur.drags.size - next.drags.size, board: cur.board?.type, role: cur.viewer?.role })
-    put(next)
-  }, [put])
-
   const notify = useCallback((message, ms = 3500) => {
     clearTimeout(ref.current.toastTimer)
     setToast({ message, id: Date.now() })
     ref.current.toastTimer = setTimeout(() => setToast(null), ms)
   }, [])
+  const dispatch = useCallback((action) => {
+    const cur = ref.current.state
+    if (!cur) return action.type === 'load' ? put(initialState(action.snapshot)) : undefined
+    const next = action.type === 'load' ? initialState(action.snapshot) : reducer(cur, action)
+    // Something other than the viewer put back an item they had just moved or resized: say what did it, on the screen and in the log.
+    for (const hit of revertedBy(action.type, cur.items, next.items, ref.current.recent)) {
+      ref.current.recent.delete(hit.id)
+      notify(`Your change was put back by ${hit.cause}`, 8000)
+      reportDiag('reverted', { kind: hit.type, board: cur.board?.type, role: cur.viewer?.role, status: ref.current.sync?.status?.() })
+    }
+    // A peer's temporary position that never got its real write is put back after 10 s: say so, it is one reason a change "goes back".
+    if (action.type === 'peer-drag-expire' && next.drags.size < cur.drags.size) reportDiag('drag-expired', { n: cur.drags.size - next.drags.size, board: cur.board?.type, role: cur.viewer?.role })
+    put(next)
+  }, [put, notify])
+
 
   // Every sent op is counted per item; an ack only reaches the state once the item has no newer op in flight,
   // so a late ack for an earlier drag step cannot yank the item back for a moment.
@@ -113,6 +119,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
     const r = ref.current
     r.pending = new Map()
     r.sentAt = new Map()
+    r.recent = new Map()
     r.out = 0
     r.liveBuf = new Map()
     r.sync = null
@@ -342,6 +349,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
     if (!ops.length) return
     put(reducer(reducer(cur, { type: 'local', ops: restore.filter(exists), track: false }), { type: 'local', ops }))
     ref.current.merge = null
+    for (const o of ops) { const it = ref.current.state.items.get(o.id); if (it) ref.current.recent.set(o.id, { at: Date.now(), ...frameOf(it) }) } // where they were left, to notice if something puts them back
     send(ops)
   }, [readOnly, put, send])
 
