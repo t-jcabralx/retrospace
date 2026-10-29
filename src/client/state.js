@@ -31,6 +31,7 @@ const BOARD_FIELDS = {
   summaryState: (v) => v === 'idle' || v === 'generating' || v === 'failed',
   retro: (v) => v === null || isObj(v), // the staged Retro workflow (stage bar, timers)
   anonymousNotes: (v) => v === 'optional' || v === 'always' || v === 'never',
+  wheel: isObj, // the Event board's prize wheel (lists, current round, history)
   hasPasscode: isBool, // whether a passcode is set (the hash itself never reaches a client)
 }
 

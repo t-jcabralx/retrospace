@@ -7,6 +7,7 @@ export const BOARD_TYPES = [
   { key: 'workshop', label: 'Workshop canvas', short: 'Workshop', blurb: 'A free canvas for retros, brainstorms and planning sessions.' },
   { key: 'celebration', label: 'Celebration board', short: 'Celebration', blurb: 'Gather cards, messages and GIFs for someone’s big moment.', needsRecipient: true },
   { key: 'retro', label: 'Retro board', short: 'Retro', blurb: 'Column templates for a team retrospective, with voting and an optional AI-written summary.' },
+  { key: 'event', label: 'Event raffle', short: 'Event', blurb: 'A two-ring prize wheel for raffles and give-aways: people on the outer ring, prizes on the inner ring.' },
   { key: 'wall', label: 'Team wall', short: 'Team wall', blurb: 'A long-lived feed of shout-outs with badges and reactions, plus birthdays and work anniversaries.' },
 ]
 

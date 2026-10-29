@@ -253,8 +253,8 @@ export function validateBoardInput(body) {
   if (!isStr(type) || !isStr(template) || !getTemplate(type, template)) return err('unknown type or template')
   const t = validateTitle(body.title)
   if (!t.ok) return t
-  // A retro board is not for anyone in particular: a recipient sent with it is ignored, not stored.
-  const r = type === 'retro' ? { ok: true, value: null } : validateRecipient(body.recipient)
+  // Retro and Event boards are not for anyone in particular: a recipient sent with them is ignored, not stored.
+  const r = type === 'retro' || type === 'event' ? { ok: true, value: null } : validateRecipient(body.recipient)
   if (!r.ok) return r
   const title = t.value
   const recipient = r.value

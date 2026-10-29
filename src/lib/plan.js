@@ -15,6 +15,7 @@ export const ALLOWED_KINDS = {
   retro: [...CANVAS_KINDS, 'action', 'theme', 'topic'],
   celebration: [...CANVAS_KINDS, 'card'],
   wall: ['shoutout', 'note', 'text'],
+  event: [], // the wheel is the whole board: nothing is drawn on a canvas
 }
 export const allowedKinds = (type) => ALLOWED_KINDS[type] ?? CANVAS_KINDS
 

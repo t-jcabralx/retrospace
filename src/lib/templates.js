@@ -70,6 +70,14 @@ export const BOARD_TEMPLATES = {
     'retro-ssc': retro('retro-ssc', 'Start / Stop / Continue', '🚦', '#4f6df5', PRESET_TITLES['retro-ssc']),
     'retro-msg': retro('retro-msg', 'Mad / Sad / Glad', '🎭', '#e0568a', PRESET_TITLES['retro-msg']),
   },
+  event: {
+    raffle: {
+      key: 'raffle', label: 'Raffle day', emoji: '🎡',
+      theme: { bg: '#f6f3ff', pattern: 'dots', accent: '#6d5ae6', effect: 'confetti' },
+      title: () => 'Raffle day',
+      starterItems: () => [], // an Event board has no canvas: its screen is the prize wheel
+    },
+  },
   wall: {
     team: {
       key: 'team', label: 'Team wall', emoji: '🌟',
