@@ -1,0 +1,27 @@
+# Runs the tests and a production build on every push and pull request, so a broken change is seen before it is deployed.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # No database, Redis or AI key in CI: the tests use the in-memory store and a stand-in for MongoDB.
+      - run: npm test
+        env:
+          MONGODB_URI: ''
+          UPSTASH_REDIS_REST_URL: ''
+          UPSTASH_REDIS_REST_TOKEN: ''
+          ANTHROPIC_API_KEY: ''
+      - run: npm run build
+        env:
+          RT_SECRET: ci-only-secret
