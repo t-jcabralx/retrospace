@@ -173,7 +173,7 @@ export default function ThemesPanel({ ctl, openerRef, onClose, onOpenSettings })
           <h3 className="bd-set-label">Make a theme by hand</h3>
           <form onSubmit={addMine}>
             <label className="bd-set-label" htmlFor={`${id}-t`}>Title</label>
-            <input id={`${id}-t`} className="bd-sinput" value={mine.title} maxLength={60} onChange={(e) => setMine((m) => ({ ...m, title: e.target.value }))} />
+            <input id={`${id}-t`} className="bd-sinput" placeholder="Name this theme" value={mine.title} maxLength={60} onChange={(e) => setMine((m) => ({ ...m, title: e.target.value }))} />
             {liveNotes.length > 0 && (
               <ul className="bd-th-notes" aria-label="Notes to link">
                 {liveNotes.slice(0, 200).map((n) => (

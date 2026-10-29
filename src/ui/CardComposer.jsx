@@ -139,6 +139,7 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
                     type="text"
                     maxLength={MAX_SIGNER}
                     autoComplete="off"
+                    placeholder="Your name, shown on the card"
                     value={signer}
                     aria-invalid={errors.signer ? 'true' : undefined}
                     aria-describedby={`${id}-sh ${id}-se`}

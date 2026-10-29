@@ -37,11 +37,11 @@ export default function ActionComposer({ ctl, initial = null, onDone, atLimit = 
   return (
     <form className="rt-form" onSubmit={submit} aria-label={initial ? 'Edit action' : 'New action'}>
       <label htmlFor={`${id}a`} className="rt-label">What will we do?</label>
-      <textarea id={`${id}a`} className="bd-sinput" rows={2} maxLength={200} value={f.action} onChange={set('action')} />
+      <textarea id={`${id}a`} className="bd-sinput" rows={2} maxLength={200} placeholder="e.g. Add a retry to the deploy script" value={f.action} onChange={set('action')} />
       <div className="rt-row">
         <div>
           <label htmlFor={`${id}o`} className="rt-label">Owner</label>
-          <input id={`${id}o`} className="bd-sinput" maxLength={60} value={f.owner} onChange={set('owner')} />
+          <input id={`${id}o`} className="bd-sinput" maxLength={60} placeholder="Who will do it?" value={f.owner} onChange={set('owner')} />
         </div>
         <div>
           <label htmlFor={`${id}d`} className="rt-label">Due date</label>
@@ -49,7 +49,7 @@ export default function ActionComposer({ ctl, initial = null, onDone, atLimit = 
         </div>
       </div>
       <label htmlFor={`${id}m`} className="rt-label">How will we know it worked?</label>
-      <input id={`${id}m`} className="bd-sinput" maxLength={200} value={f.measure} onChange={set('measure')} />
+      <input id={`${id}m`} className="bd-sinput" maxLength={200} placeholder="e.g. No failed deploys for two weeks" value={f.measure} onChange={set('measure')} />
       <div className="rt-row">
         <div>
           <label htmlFor={`${id}p`} className="rt-label">Priority</label>

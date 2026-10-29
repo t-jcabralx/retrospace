@@ -108,6 +108,7 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
                     aria-invalid={errors.toName ? 'true' : undefined}
                     aria-describedby={`${id}-th ${id}-te`}
                     maxLength={MAX_TO_NAME}
+                    placeholder="Name of the person to thank"
                     autoComplete="off"
                     value={toName}
                     data-autofocus
