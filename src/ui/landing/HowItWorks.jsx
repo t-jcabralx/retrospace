@@ -1,3 +1,6 @@
+import Link from 'next/link'
+import { ArrowIcon } from '../site/icons.jsx'
+
 const STEPS = [
   { title: 'Create a board', text: 'Sign up, choose a workshop, retro or celebration template and give your board a name.' },
   { title: 'Share the access code', text: 'Every board has its own six-character code and link. Add a passcode if you want one more lock.' },
@@ -21,6 +24,13 @@ export default function HowItWorks() {
             </li>
           ))}
         </ol>
+        <div className="ls-guide">
+          <div>
+            <h3>New to Retrospace?</h3>
+            <p>A step-by-step guide for owners and guests: creating a board, joining, the seven Retro stages explained, and the AI summary.</p>
+          </div>
+          <Link className="rs-btn rs-btn--secondary" href="/guide">Read the user guide<ArrowIcon /></Link>
+        </div>
       </div>
     </section>
   )

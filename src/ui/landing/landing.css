@@ -157,3 +157,8 @@
 .ls-cta-band p { margin: 0 auto 28px; max-width: 46ch; text-wrap: balance; font-size: 1.0625rem; line-height: 1.6; }
 .ls-cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 @media (max-width: 520px) { .ls-cta-actions .rs-btn { width: 100%; } }
+
+/* the user guide download under How it works */
+.ls-guide { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin-top: 48px; padding: 22px 24px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
+.ls-guide h3 { margin: 0 0 4px; font-size: 18px; }
+.ls-guide p { margin: 0; max-width: 56ch; color: var(--rs-muted); font-size: 15px; line-height: 1.55; }

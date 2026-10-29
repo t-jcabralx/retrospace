@@ -39,6 +39,7 @@ export default function SiteHeader({ landing = false }) {
           <nav className="rs-nav" aria-label="Page sections">
             <a href="#features">Features</a>
             <a href="#how-it-works">How it works</a>
+            <Link href="/guide">Guide</Link>
           </nav>
         )}
         <div className="rs-actions">

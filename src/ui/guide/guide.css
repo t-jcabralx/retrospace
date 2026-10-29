@@ -1,0 +1,55 @@
+/* The user guide page. Colours come from the site tokens, so light and dark both work. Every class is prefixed gd-. */
+.gd { padding-block: clamp(32px, 6vw, 72px); max-width: 880px; }
+.gd-hero { margin-bottom: clamp(32px, 6vw, 64px); }
+.gd-eyebrow { margin: 0 0 10px; color: var(--rs-accent-ink); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.gd h1 { margin: 0 0 16px; font-size: clamp(2rem, 1.4rem + 2.6vw, 3.1rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; }
+.gd h2 { margin: 0 0 18px; font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; scroll-margin-top: 84px; }
+.gd h3 { margin: 0 0 6px; font-size: 17px; font-weight: 650; }
+.gd :where(p) { margin: 0; line-height: 1.65; }
+.gd-lede { max-width: 62ch; color: var(--rs-muted); font-size: 18px; }
+.gd-cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 28px; }
+.gd-toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.gd-toc a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 1px solid var(--rs-line); border-radius: 999px; color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; }
+.gd-toc a:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.gd-types { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.gd-types li { display: grid; gap: 4px; padding: 14px 18px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
+.gd-types span { color: var(--rs-muted); font-size: 15px; line-height: 1.55; }
+@media (min-width: 720px) { .gd-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.gd-section { margin-top: clamp(40px, 7vw, 80px); }
+.gd-intro { max-width: 68ch; margin-bottom: 20px; color: var(--ink); }
+.gd-small { margin-top: 16px; color: var(--rs-muted); font-size: 14px; }
+
+.gd-steps { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.gd-steps li { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
+.gd-steps p { color: var(--rs-muted); font-size: 15px; }
+.gd-num { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--rs-on-accent); font-size: 14px; font-weight: 700; }
+
+.gd-grid { display: grid; gap: 12px; margin-bottom: 22px; }
+@media (min-width: 640px) { .gd-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.gd-card { padding: 14px 16px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
+.gd-card p { color: var(--rs-muted); font-size: 15px; }
+.gd-tips, .gd-list { display: grid; gap: 10px; margin: 0; padding-left: 22px; }
+.gd-tips li, .gd-list li { line-height: 1.6; padding-left: 4px; }
+.gd-tips li::marker, .gd-list li::marker { color: var(--accent); font-weight: 700; }
+
+.gd-flow { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; padding: 0; list-style: none; }
+.gd-flow li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border: 1px solid var(--rs-line); border-radius: 999px; font-size: 14px; font-weight: 600; }
+.gd-flow li span { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, var(--panel)); font-size: 12px; font-weight: 700; }
+.gd-stages { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.gd-stage { padding: 18px 20px; border: 1px solid var(--rs-line); border-left: 4px solid var(--accent); border-radius: var(--rs-r); background: var(--panel); }
+.gd-stage-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.gd-stage-head h3 { margin: 0; font-size: 19px; }
+.gd-time { margin-left: auto; padding: 3px 10px; border: 1px solid var(--rs-line); border-radius: 999px; color: var(--rs-muted); font-size: 13px; white-space: nowrap; }
+.gd-what { margin-bottom: 12px; font-size: 16px; }
+.gd-stage dl { display: grid; gap: 10px; margin: 0 0 12px; }
+@media (min-width: 720px) { .gd-stage dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.gd-stage dt { margin-bottom: 2px; color: var(--rs-muted); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.gd-stage dd { margin: 0; font-size: 15px; line-height: 1.55; }
+.gd-tip { padding: 10px 12px; border-radius: var(--rs-r-sm); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); font-size: 14px; }
+
+.gd-help { display: grid; gap: 10px; margin: 0; }
+.gd-help > div { padding: 14px 18px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
+.gd-help dt { margin-bottom: 4px; font-weight: 650; }
+.gd-help dd { margin: 0; color: var(--rs-muted); font-size: 15px; line-height: 1.55; }
+.gd-end { margin-top: 32px; }

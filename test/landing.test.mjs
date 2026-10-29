@@ -64,8 +64,9 @@ test('the Retro card is live and claims only what exists: templates, voting, tim
   const readme = await read('README.md')
   // landing files only: the README's Status section lists the not-yet-built features on purpose
   const all = (await Promise.all((await landingFiles()).map((f) => read(`src/ui/landing/${f}`)))).join('\n')
-  // nothing that is not built: AI grouping or clustering, action tracking, exports
-  assert.doesNotMatch(all, /\bcluster|action (items|tracking)|track actions|\bcsv\b|\bpdf\b|\bexport(s|ed)? (the|your|to)|AI (theme )?grouping (is|are|available)/i)
+  // nothing that is not built: clustering, automatic action tracking (PNG, CSV and PDF export, AI themes and the user guide now exist)
+  assert.doesNotMatch(all, /\bcluster|action tracking|track actions|AI (theme )?grouping (is|are|available)/i)
+  assert.match(all, /href="\/guide"/) // the guide page is linked from the landing page
   assert.doesNotMatch(readme, /export the result as a PNG|team walls/)
 })
 

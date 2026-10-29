@@ -8,6 +8,7 @@ export default function FooterNav() {
   return (
     <nav className="rs-footer-nav" aria-label="Footer">
       <Link href="/join">Join a board</Link>
+      <Link href="/guide">User guide</Link>
       {auth.status === 'in' ? <Link href="/boards">My boards</Link> : <Link href="/login">Sign in</Link>}
     </nav>
   )
