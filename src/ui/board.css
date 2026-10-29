@@ -291,3 +291,7 @@
 .bd-chip--danger:hover { background: color-mix(in srgb, var(--bd-bad, #d64545) 12%, transparent); }
 .bd-chip-text { font-size: 13px; font-weight: 600; }
 @media (max-width: 480px) { .bd-chip.bd-chip--danger { width: 44px; height: 44px; padding: 0; justify-content: center; } .bd-chip-text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+
+/* A peer's live drag arrives about 15 times a second: glide between the steps so it looks continuous */
+.bd-item.is-peer-moving { transition: transform 90ms linear, width 90ms linear, height 90ms linear; }
+@media (prefers-reduced-motion: reduce) { .bd-item.is-peer-moving { transition: none; } }

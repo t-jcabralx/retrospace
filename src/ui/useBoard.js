@@ -173,7 +173,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
         onClock: (serverNow, sentAt, receivedAt) => r.clock.sample(serverNow, sentAt, receivedAt),
         onEphemeral: (msg, from, cid) => {
           if (msg?.t === 'drag') { // a peer is moving items: a temporary position, no history
-            dispatch(msg.end === true ? { type: 'peer-drag-end', ids: msg.ids, cancel: msg.cancel === true, now: Date.now() } : { type: 'peer-drag', items: msg.items, from, now: Date.now() })
+            dispatch(msg.end === true ? { type: 'peer-drag-end', ids: msg.ids, cancel: msg.cancel === true, now: Date.now() } : { type: 'peer-drag', items: msg.items, from, q: msg.q, now: Date.now() })
             return
           }
           for (const fn of [...r.eph]) fn(msg, from, cid)
@@ -301,7 +301,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
         if (o.op === 'update' && Number.isFinite(p.x) && Number.isFinite(p.y)) items.push({ id: o.id, x: p.x, y: p.y, ...(Number.isFinite(p.w) && { w: p.w }), ...(Number.isFinite(p.h) && { h: p.h }) })
       }
       r.liveBuf.clear()
-      if (items.length) { r.dragIds = new Set([...(r.dragIds ?? []), ...items.map((i) => i.id)]); r.sync.sendEphemeral({ t: 'drag', items: items.slice(0, 20) }) }
+      if (items.length) { r.dragIds = new Set([...(r.dragIds ?? []), ...items.map((i) => i.id)]); r.sync.sendEphemeral({ t: 'drag', items: items.slice(0, 20), q: Date.now() }) }
       return
     }
     for (const o of coalesceUpdates([...r.liveBuf.values(), ...ops])) r.liveBuf.set(o.id, o)

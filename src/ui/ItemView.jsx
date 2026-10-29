@@ -29,7 +29,7 @@ const DOUBLE_TAP_MS = 350
 // button: voting is open and the viewer may vote) and onVote().
 // Accessibility: each item is a focusable role="group" with an aria-label; the selected one carries
 // aria-current="true" (aria-selected/pressed are not valid on a group).
-function ItemView({ item, selected, editable, onChange, onSelect, handles = false, onResizeStart, autoEdit = false, onEditEnd, linking = false, label, onFocus, votes = 0, voted = false, voting = false, onVote }) {
+function ItemView({ item, selected, editable, peerMoving = false, onChange, onSelect, handles = false, onResizeStart, autoEdit = false, onEditEnd, linking = false, label, onFocus, votes = 0, voted = false, voting = false, onVote }) {
   const field = FIELD[item.kind]
   const canEdit = editable && Boolean(field)
   const [editing, setEditing] = useState(autoEdit && canEdit) // a just-created item opens in its first render
@@ -58,7 +58,7 @@ function ItemView({ item, selected, editable, onChange, onSelect, handles = fals
     if (now - lastTap.current < DOUBLE_TAP_MS) { lastTap.current = 0; setEditing(true) } else lastTap.current = now
   }
 
-  const cls = ['bd-item', `bd-k-${item.kind}`, selected && 'is-selected', linking && 'is-linking', !editable && 'is-locked'].filter(Boolean).join(' ')
+  const cls = ['bd-item', `bd-k-${item.kind}`, selected && 'is-selected', linking && 'is-linking', !editable && 'is-locked', peerMoving && 'is-peer-moving'].filter(Boolean).join(' ')
   const style = {
     width: item.w,
     height: item.h,
@@ -152,7 +152,7 @@ function Editor({ kind, field, value, onCommit, onCancel }) {
 
 // Positions change on every pointer move while dragging, so an item whose own props are unchanged skips the render.
 // The callbacks are deliberately not compared: the canvas builds them to read its latest state at call time.
-const same = (a, b) => a.item === b.item && a.selected === b.selected && a.editable === b.editable
+const same = (a, b) => a.item === b.item && a.selected === b.selected && a.editable === b.editable && a.peerMoving === b.peerMoving
   && a.handles === b.handles && a.autoEdit === b.autoEdit && a.linking === b.linking && a.label === b.label
   && a.votes === b.votes && a.voted === b.voted && a.voting === b.voting
 export default memo(ItemView, same)

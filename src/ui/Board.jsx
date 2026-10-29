@@ -244,6 +244,7 @@ export default function Board({ ctl, code, presence = null }) {
               item={item}
               selected={selection.has(item.id)}
               editable={ctl.canEdit(item)}
+              peerMoving={ctl.state?.drags?.has(item.id) === true}
               handles={tool === 'select' && single?.id === item.id}
               linking={g.linkFrom === item.id}
               label={itemLabel(item)}

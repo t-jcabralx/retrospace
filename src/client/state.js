@@ -144,7 +144,7 @@ function mayDrag(state, item, from) {
   return state.participants.some((p) => p.uid === from && p.kind === 'account')
 }
 
-function peerDrag(state, list, now = Date.now(), from) {
+function peerDrag(state, list, now = Date.now(), from, q) {
   if (!Array.isArray(list) || !list.length) return state
   let items = null
   let drags = null
@@ -152,10 +152,12 @@ function peerDrag(state, list, now = Date.now(), from) {
     if (!isObj(d) || typeof d.id !== 'string') continue
     const cur = (items ?? state.items).get(d.id)
     if (!cur || cur.deleted || !Number.isFinite(d.x) || !Number.isFinite(d.y) || !mayDrag(state, cur, from)) continue
+    const prior = state.drags.get(d.id)
+    if (Number.isFinite(q) && Number.isFinite(prior?.q) && q < prior.q) continue // a step that arrived after a newer one
     items ??= new Map(state.items)
     drags ??= new Map(state.drags)
     const held = drags.get(d.id)
-    drags.set(d.id, { base: held?.base ?? pick(cur), at: now, ended: false })
+    drags.set(d.id, { base: held?.base ?? pick(cur), at: now, ended: false, ...(Number.isFinite(q) && { q }) })
     items.set(d.id, { ...cur, x: d.x, y: d.y, ...(Number.isFinite(d.w) && d.w > 0 && { w: d.w }), ...(Number.isFinite(d.h) && d.h > 0 && { h: d.h }) })
   }
   return items ? { ...state, items, drags } : state
@@ -240,7 +242,7 @@ export function reducer(state, action) {
       for (const [id, item] of state.items) items.set(id, item.votes?.length ? { ...item, votes: [] } : item)
       return { ...state, items }
     }
-    case 'peer-drag': return peerDrag(state, action.items, action.now, action.from)
+    case 'peer-drag': return peerDrag(state, action.items, action.now, action.from, action.q)
     case 'peer-drag-end': return peerDragEnd(state, action.ids, action.cancel === true, action.now)
     case 'peer-drag-expire': return peerDragExpire(state, action.now, action.after)
     case 'remote':

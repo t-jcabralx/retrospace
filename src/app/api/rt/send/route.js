@@ -39,13 +39,14 @@ const CLEAN = {
         ? { t: 'drag', end: true, ...(m.cancel === true && { cancel: true }), ids: [...m.ids] } : null
     }
     if (!Array.isArray(m.items) || m.items.length === 0 || m.items.length > MAX_DRAG_ITEMS) return null
+    if (m.q !== undefined && !(Number.isFinite(m.q) && m.q >= 0 && m.q <= 1e15)) return null
     const items = []
     for (const it of m.items) {
       if (it === null || typeof it !== 'object' || !isItemId(it.id) || !isCoord(it.x) || !isCoord(it.y)) return null
       if ((it.w !== undefined && !isDim(it.w)) || (it.h !== undefined && !isDim(it.h))) return null
       items.push({ id: it.id, x: it.x, y: it.y, ...(it.w !== undefined && { w: it.w }), ...(it.h !== undefined && { h: it.h }) })
     }
-    return { t: 'drag', items }
+    return { t: 'drag', items, ...(m.q !== undefined && { q: m.q }) }
   },
   celebrate: (m) => (EFFECTS.has(m.effect) ? { t: 'celebrate', effect: m.effect } : null),
   // The board's own rules (is throwing on, is this emoji in its list) are checked by the handler.

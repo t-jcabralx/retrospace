@@ -386,3 +386,10 @@ test('a peer drag of someone else\'s named item is ignored unless the sender is 
   assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 1, y: 1 }], from: 'KM-AUTH-0000-0000' }).items.get('a').x, 1)
   assert.equal(reducer(s0, { type: 'peer-drag', items: [{ id: 'a', x: 2, y: 2 }], from: 'KM-OWNR-0000-0000' }).items.get('a').x, 2)
 })
+
+test('a peer drag step that arrives after a newer one is ignored', () => {
+  const s1 = reducer(dragState(), { type: 'peer-drag', items: [{ id: 'a', x: 50, y: 60 }], q: 200, now: 1000 })
+  const s2 = reducer(s1, { type: 'peer-drag', items: [{ id: 'a', x: 40, y: 40 }], q: 150, now: 1010 })
+  assert.equal(s2, s1)
+  assert.deepEqual(at(reducer(s1, { type: 'peer-drag', items: [{ id: 'a', x: 70, y: 80 }], q: 250, now: 1020 }), 'a').slice(0, 2), [70, 80])
+})
