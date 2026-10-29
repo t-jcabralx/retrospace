@@ -15,7 +15,7 @@ export default function SiteFooter() {
         </div>
         <FooterNav />
       </div>
-      <p className="rs-footer-legal">© 2026 Jason Cabral. All rights reserved. Partners with Veehk Corps.</p>
+      <p className="rs-footer-legal">© 2026 Jason Cabral. All rights reserved. Partners with Veehk Corps. Photos from <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a>.</p>
     </footer>
   )
 }

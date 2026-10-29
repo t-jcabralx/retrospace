@@ -162,3 +162,14 @@
 .ls-guide { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin-top: 48px; padding: 22px 24px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
 .ls-guide h3 { margin: 0 0 4px; font-size: 18px; }
 .ls-guide p { margin: 0; max-width: 56ch; color: var(--rs-muted); font-size: 15px; line-height: 1.55; }
+
+/* photos on the board-type cards, and a little motion */
+.ls-type { position: relative; overflow: hidden; transition: transform 200ms ease, box-shadow 200ms ease; }
+.ls-photo { position: relative; aspect-ratio: 3 / 2; margin: -28px -28px 22px; overflow: hidden; background: var(--rs-accent-soft); }
+.ls-photo img { object-fit: cover; transition: transform 500ms ease; }
+.ls-type:hover { transform: translateY(-4px); box-shadow: var(--rs-shadow-md, 0 12px 30px rgba(0, 0, 0, 0.18)); }
+.ls-type:hover .ls-photo img { transform: scale(1.06); }
+@keyframes ls-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.ls-types > li { animation: ls-rise 600ms ease both; }
+.ls-types > li:nth-child(2) { animation-delay: 80ms; } .ls-types > li:nth-child(3) { animation-delay: 160ms; } .ls-types > li:nth-child(4) { animation-delay: 240ms; }
+@media (prefers-reduced-motion: reduce) { .ls-types > li { animation: none; } .ls-type, .ls-photo img { transition: none; } .ls-type:hover { transform: none; } .ls-type:hover .ls-photo img { transform: none; } }

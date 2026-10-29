@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { BOARD_TEMPLATES } from '../../lib/templates.js'
 import { CanvasIcon, GiftIcon, LoopIcon, SparkIcon } from '../site/icons.jsx'
 
@@ -5,22 +6,22 @@ const labels = (type, keys) => keys.map((k) => BOARD_TEMPLATES[type][k].label)
 
 const TYPES = [
   {
-    key: 'workshop', Icon: CanvasIcon, title: 'Workshop canvas',
+    key: 'workshop', photo: '/photos/workshop.jpg', Icon: CanvasIcon, title: 'Workshop canvas',
     text: 'An open canvas for planning, brainstorming and mapping ideas together. Drop in notes, text, shapes, images and connectors.',
     templates: labels('workshop', ['blank', 'retro', 'brainstorm', 'swot']),
   },
   {
-    key: 'celebration', Icon: GiftIcon, title: 'Celebration board',
+    key: 'celebration', photo: '/photos/celebration.jpg', Icon: GiftIcon, title: 'Celebration board',
     text: 'Collect cards, messages and GIFs for a birthday, promotion or farewell, then reveal them all at once with confetti.',
     templates: labels('celebration', ['birthday', 'promotion', 'farewell', 'welcome']).concat('and more'),
   },
   {
-    key: 'retro', Icon: LoopIcon, title: 'Retro board',
+    key: 'retro', photo: '/photos/retro.jpg', Icon: LoopIcon, title: 'Retro board',
     text: 'Went Well / Could Be Improved / Blockers / Ideas, Start / Stop / Continue and Mad / Sad / Glad templates, voting, a shared timer and an optional AI-written summary you review before sharing.',
     templates: ['Went Well / Could Be Improved / Blockers / Ideas', 'Start / Stop / Continue', 'Mad / Sad / Glad'],
   },
   {
-    key: 'wall', Icon: SparkIcon, title: 'Team wall',
+    key: 'wall', photo: '/photos/wall.jpg', Icon: SparkIcon, title: 'Team wall',
     text: 'A recognition feed that stays open: give shout-outs with badges, @mention a teammate, add a GIF and react with emoji. Birthdays and work anniversaries show up as a banner on the day.',
     templates: labels('wall', ['team']),
   },
@@ -36,8 +37,11 @@ export default function BoardTypes() {
           <p className="ls-lede">Pick the kind of board that fits the moment. Every board works the same way to join.</p>
         </header>
         <ul className="ls-types">
-          {TYPES.map(({ key, Icon, title, text, templates }) => (
+          {TYPES.map(({ key, photo, Icon, title, text, templates }) => (
             <li key={key} className="rs-card ls-type">
+              <div className="ls-photo">
+                <Image src={photo} alt="" fill sizes="(min-width: 900px) 33vw, 100vw" />
+              </div>
               <div className="ls-type-top">
                 <span className="ls-tile"><Icon /></span>
               </div>
