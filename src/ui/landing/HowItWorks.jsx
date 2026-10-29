@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { ArrowIcon } from '../site/icons.jsx'
+import { CreateIllustration, ShareIllustration, CollabIllustration } from './Illustrations.jsx'
 
 const STEPS = [
-  { title: 'Create a board', text: 'Sign up, choose a workshop, retro or celebration template and give your board a name.' },
-  { title: 'Share the access code', text: 'Every board has its own six-character code and link. Add a passcode if you want one more lock.' },
-  { title: 'Collaborate live', text: 'Guests enter the code, pick a name and avatar, and start adding to the board together.' },
+  { Art: CreateIllustration, title: 'Create a board', text: 'Sign up, choose a workshop, retro or celebration template and give your board a name.' },
+  { Art: ShareIllustration, title: 'Share the access code', text: 'Every board has its own six-character code and link. Add a passcode if you want one more lock.' },
+  { Art: CollabIllustration, title: 'Collaborate live', text: 'Guests enter the code, pick a name and avatar, and start adding to the board together.' },
 ]
 
 export default function HowItWorks() {
@@ -16,8 +17,9 @@ export default function HowItWorks() {
           <h2 id="how-title" className="ls-h2">From idea to live board in three steps</h2>
         </header>
         <ol className="ls-steps">
-          {STEPS.map(({ title, text }, i) => (
+          {STEPS.map(({ Art, title, text }, i) => (
             <li key={title} className="ls-step">
+              <Art />
               <span className="ls-num" aria-hidden="true">{i + 1}</span>
               <h3>{title}</h3>
               <p>{text}</p>

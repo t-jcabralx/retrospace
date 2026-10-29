@@ -173,3 +173,19 @@
 .ls-types > li { animation: ls-rise 600ms ease both; }
 .ls-types > li:nth-child(2) { animation-delay: 80ms; } .ls-types > li:nth-child(3) { animation-delay: 160ms; } .ls-types > li:nth-child(4) { animation-delay: 240ms; }
 @media (prefers-reduced-motion: reduce) { .ls-types > li { animation: none; } .ls-type, .ls-photo img { transition: none; } .ls-type:hover { transform: none; } .ls-type:hover .ls-photo img { transform: none; } }
+
+/* illustrations, drifting confetti and the photo behind the closing band */
+.ls-step .ls-ill { display: block; width: 100%; max-width: 300px; height: auto; margin-bottom: 18px; }
+.ls-float { animation: ls-bob 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.ls-float--b { animation-delay: -1.4s; } .ls-float--c { animation-delay: -2.8s; }
+@keyframes ls-bob { 50% { transform: translateY(-3px); } }
+.ls-dash { animation: ls-flow 1.2s linear infinite; }
+@keyframes ls-flow { to { stroke-dashoffset: -20; } }
+.ls-confetti { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.ls-confetti span { position: absolute; opacity: 0.55; animation: ls-drift 7s ease-in-out infinite; }
+@keyframes ls-drift { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-16px) rotate(35deg); } }
+.ls-hero-grid { position: relative; z-index: 1; }
+.ls-cta-band { position: relative; overflow: hidden; isolation: isolate; }
+.ls-cta-photo { z-index: -2; object-fit: cover; }
+.ls-cta-band::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 84%, transparent) 100%); } /* the plain accent keeps the text contrast this band was checked for */
+@media (prefers-reduced-motion: reduce) { .ls-float, .ls-dash, .ls-confetti span { animation: none; } }

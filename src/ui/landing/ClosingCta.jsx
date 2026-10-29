@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import CreateBoardLink from './CreateBoardLink.jsx'
 import { ArrowIcon } from '../site/icons.jsx'
@@ -7,6 +8,7 @@ export default function ClosingCta() {
     <section className="ls-section ls-section--end" aria-labelledby="cta-title">
       <div className="rs-wrap">
         <div className="ls-cta-band">
+          <Image className="ls-cta-photo" src="/photos/team.jpg" alt="" fill sizes="(min-width: 1100px) 1100px, 100vw" />
           <h2 id="cta-title">Ready to run your next session?</h2>
           <p>Create a board in a minute, or join one with the code you were sent.</p>
           <div className="ls-cta-actions">

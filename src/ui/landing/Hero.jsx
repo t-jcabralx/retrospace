@@ -2,11 +2,13 @@ import JoinBox from './JoinBox.jsx'
 import BoardPreview from './BoardPreview.jsx'
 import CreateBoardLink from './CreateBoardLink.jsx'
 import { ArrowIcon } from '../site/icons.jsx'
+import { HeroConfetti } from './Illustrations.jsx'
 
 export default function Hero() {
   return (
     <section className="ls-hero" aria-labelledby="hero-title">
       <div className="ls-hero-bg" aria-hidden="true" />
+      <HeroConfetti />
       <div className="rs-wrap ls-hero-grid">
         <div className="ls-hero-copy">
           <h1 id="hero-title">Retrospectives, workshops and celebrations your whole team can join in seconds</h1>
