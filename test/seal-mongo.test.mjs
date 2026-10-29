@@ -19,7 +19,7 @@ test('real MongoDB: legacy records stay readable, new ones are sealed, backfill 
   const mk = (key) => withKey(key, () => createMongoStore(client, DB))
   const note = (id, text) => validateOp({ op: 'add', item: { id, kind: 'note', x: 1, y: 2, w: 200, h: 120, data: { text } } }).op
   const actor = (uid) => ({ uid, name: 'Real Mongo Person', avatar: { bg: 1, body: 2, eyes: 3, mouth: 4, extra: 5 }, isOwner: true })
-  const board = { code: 'SEAL01', type: 'event', template: 'raffle', title: 'Confidential roadmap', recipient: null, ownerId: 'u1', createdBy: 'u1', theme: { bg: '#fff' }, vote: { active: false, perPerson: 3 }, wheel: { participants: [{ name: 'Maria Quiet' }] } }
+  const board = { code: 'SEAL01', type: 'workshop', template: 'blank', title: 'Confidential roadmap', recipient: null, ownerId: 'u1', createdBy: 'u1', theme: { bg: '#fff' }, vote: { active: false, perPerson: 3 }, wheel: { participants: [{ name: 'Maria Quiet' }] } }
   const dump = async () => JSON.stringify(await Promise.all(['boards', 'items', 'participants', 'users', 'templates'].map((c) => client.db(DB).collection(c).find({}).toArray())))
   try {
     // 1. the app as it is in production now: no key, plain records

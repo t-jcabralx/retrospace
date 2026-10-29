@@ -34,7 +34,7 @@ Recommendation: **A now**, and keep B as a later, per-board option for the few c
 | users | name, email | id, password hash, timestamps |
 | templates | name, columns | owner id, id |
 
-- **Blind indexes** keep the unique rules working without exposing the values: the account email and each board's participant names are indexed by a keyed hash (`HMAC-SHA-256` of the normalised value with a separate key derived from the master), so "this email already exists" and "that name is taken on this board" still work, and the database holds no readable email or name.
+- **Blind indexes** keep the unique rules working without exposing the values. The participant and template name key (`nameLower`) stays in place but holds the keyed hash instead of the name, so the existing unique indexes work unchanged (a missing field would count as one shared empty value, which a real MongoDB run showed). The account email is indexed by a keyed hash (`emailIdx`, a partial unique index). Both are an HMAC (`HMAC-SHA-256` of the normalised value with a separate key derived from the master), so "this email already exists" and "that name is taken on this board" still work, and the database holds no readable email or name.
 - **One place in the code.** The change lives in the store layer (`src/lib/store.js` and a new `src/lib/seal.js`): every write seals, every read opens. Routes, rules and screens do not change.
 
 ## The flag

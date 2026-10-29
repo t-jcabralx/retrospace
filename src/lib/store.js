@@ -303,9 +303,8 @@ async function guardedUpdate(items, code, doc, edit, floor) {
 // read/write), but a failure is logged and forgotten so the next call retries.
 export function ensureIndexes(c, state, { sealing = false } = {}) {
   state.ready ??= Promise.all([
-    ...(sealing ? [ // the lookup keys that replace readable names and emails; partial, so records that do not have them yet are not in the index
+    ...(sealing ? [ // the lookup key that stands in for the readable email; partial, so records that do not have it yet are not in the index
       c.users.createIndex({ emailIdx: 1 }, { unique: true, partialFilterExpression: { emailIdx: { $exists: true } } }),
-      c.participants.createIndex({ boardCode: 1, nameKey: 1 }, { unique: true, partialFilterExpression: { nameKey: { $exists: true } } }),
     ] : []),
     c.boards.createIndex({ code: 1 }, { unique: true }),
     c.boards.createIndex({ ownerId: 1, updatedAt: -1 }),
@@ -349,7 +348,6 @@ export function createMongoStore(client, name) {
         col.createIndex({ ownerId: 1, createdAt: -1 }),
         col.createIndex({ ownerId: 1, nameLower: 1 }, { unique: true }),
         col.createIndex({ id: 1 }, { unique: true }),
-        ...(seal.configured ? [col.createIndex({ ownerId: 1, nameKey: 1 }, { unique: true, partialFilterExpression: { nameKey: { $exists: true } } })] : []),
       ]).catch((err) => {
         state.tplClient = undefined
         console.error('retrospace: template index creation failed, will retry:', err?.message)

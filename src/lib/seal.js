@@ -76,14 +76,16 @@ export function openValue(cfg, scope, aad, text) {
 export const blind = (cfg, scope, value) => createHmac('sha256', keyFor(cfg, cfg.kid, scope, 'blind')).update(String(value)).digest('base64url').slice(0, 32)
 
 // What each collection seals. `scope` picks the key (a board, or an account); `id` is bound into every ciphertext.
-// `blind`: a lookup key that replaces a readable field (`from` is hashed into `to`, and `drop` is removed).
+// `blind`: a lookup key written into `to` in place of the readable value (`from` is hashed). The existing unique indexes keep
+// working because the field stays present (a missing field would count as one shared "empty" value). `restore` rebuilds the
+// readable form when a record is opened; without it the helper field is removed.
 const S = {
   boards: { scope: (d) => d.code, id: (d) => d.code, seal: ['title', 'recipient', 'summary', 'wheel', 'themeSuggestions'] },
   items: { scope: (d) => d.boardCode, id: (d) => `${d.boardCode}/${d.id}`, seal: ['data', 'authorName', 'authorAvatar'] },
-  participants: { scope: (d) => d.boardCode, id: (d) => `${d.boardCode}/${d.uid}`, seal: ['name', 'avatar'], blind: { from: (d) => nameKey(d.name), to: 'nameKey', drop: 'nameLower', needs: 'name' } },
+  participants: { scope: (d) => d.boardCode, id: (d) => `${d.boardCode}/${d.uid}`, seal: ['name', 'avatar'], blind: { from: (d) => nameKey(d.name), to: 'nameLower', needs: 'name', restore: (d) => nameKey(d.name) } },
   people: { scope: (d) => d.boardCode, id: (d) => `${d.boardCode}/${d.id}`, plain: ['_id', 'boardCode', 'id', 'createdAt', 'updatedAt'] },
   users: { scope: (d) => `user:${d.id}`, id: (d) => d.id, seal: ['name', 'email'], blind: { from: (d) => String(d.email).trim().toLowerCase(), to: 'emailIdx', needs: 'email', scope: () => 'users-email' } },
-  templates: { scope: (d) => `user:${d.ownerId}`, id: (d) => d.id, seal: ['name', 'columns', 'header'], blind: { from: (d) => String(d.name).toLowerCase(), to: 'nameKey', drop: 'nameLower', needs: 'name' } },
+  templates: { scope: (d) => `user:${d.ownerId}`, id: (d) => d.id, seal: ['name', 'columns', 'header'], blind: { from: (d) => String(d.name).toLowerCase(), to: 'nameLower', needs: 'name', restore: (d) => String(d.name).toLowerCase() } },
 }
 export const SEALED_COLLECTIONS = Object.keys(S)
 const fieldsOf = (spec, doc) => (spec.seal ? spec.seal : Object.keys(doc).filter((k) => !spec.plain.includes(k) && k !== 'enc'))
@@ -98,9 +100,8 @@ export function sealDoc(cfg, collection, doc) {
     if (!Object.hasOwn(out, f) || isSealed(out[f])) continue
     out[f] = sealValue(cfg, scope, aadBase + f, out[f])
   }
-  if (spec.blind && Object.hasOwn(doc, spec.blind.needs)) {
-    if (!out[spec.blind.to]) out[spec.blind.to] = blind(cfg, spec.blind.scope ? spec.blind.scope(doc) : scope, spec.blind.from(isSealed(doc[spec.blind.needs]) ? openDoc(cfg, collection, doc) : doc))
-    if (spec.blind.drop) delete out[spec.blind.drop]
+  if (spec.blind && Object.hasOwn(doc, spec.blind.needs) && !isSealed(doc[spec.blind.needs])) { // an already sealed record keeps its key
+    out[spec.blind.to] = blind(cfg, spec.blind.scope ? spec.blind.scope(doc) : scope, spec.blind.from(doc))
   }
   out.enc = { v: 1, kid: cfg.kid }
   return out
@@ -116,9 +117,9 @@ export function openDoc(cfg, collection, doc) {
   const scope = spec.scope(doc)
   const aadBase = `${collection}:${spec.id(doc)}:`
   for (const f of sealed) out[f] = openValue(cfg, scope, aadBase + f, out[f])
-  if (spec.blind) {
-    if (spec.blind.to in out && spec.blind.drop && out[spec.blind.needs] !== undefined) out[spec.blind.drop] = collection === 'participants' ? nameKey(out.name) : String(out.name).toLowerCase()
-    delete out[spec.blind.to]
+  if (spec.blind && out[spec.blind.needs] !== undefined) {
+    if (spec.blind.restore) out[spec.blind.to] = spec.blind.restore(out)
+    else delete out[spec.blind.to]
   }
   delete out.enc
   return out
@@ -165,7 +166,6 @@ export function sealUpdate(cfg, collection, filter, update) {
     if (needsBlind) {
       const plain = { ...update[op] }
       set[spec.blind.to] = blind(cfg, spec.blind.scope ? spec.blind.scope(d) : scope, spec.blind.from(plain))
-      if (spec.blind.drop) { delete set[spec.blind.drop]; out.$unset = { ...(out.$unset ?? {}), [spec.blind.drop]: '' } }
     }
     out[op] = set
     touched = true

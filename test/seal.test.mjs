@@ -85,12 +85,14 @@ test('participants: the name is sealed, a blind key replaces nameLower, and open
   const c = cfg()
   const p = { boardCode: 'ABC234', uid: 'KM-AAAA', kind: 'custom', name: 'Maria Santos', nameLower: 'maria santos', avatar: { bg: 1 }, joinedAt: 5 }
   const s = sealDoc(c, 'participants', p)
-  assert.ok(isSealed(s.name) && isSealed(s.avatar) && s.nameKey && !('nameLower' in s))
+  assert.ok(isSealed(s.name) && isSealed(s.avatar))
+  assert.ok(s.nameLower && s.nameLower !== 'maria santos' && !s.nameLower.includes('maria')) // the field stays (the unique index needs it) but holds a key, not the name
   assert.ok(!JSON.stringify(s).toLowerCase().includes('maria'))
   assert.deepEqual(openDoc(c, 'participants', s), p)
   const same = sealDoc(c, 'participants', { ...p, uid: 'KM-BBBB', name: 'MARIA  SANTOS', nameLower: 'maria santos' })
-  assert.equal(same.nameKey, s.nameKey) // the same name on the same board collides, as before
-  assert.notEqual(sealDoc(c, 'participants', { ...p, boardCode: 'ZZZZ99' }).nameKey, s.nameKey)
+  assert.equal(same.nameLower, s.nameLower) // the same name on the same board collides, as before
+  assert.notEqual(sealDoc(c, 'participants', { ...p, uid: 'KM-CCCC', name: 'John', nameLower: 'john' }).nameLower, s.nameLower) // different names never do
+  assert.notEqual(sealDoc(c, 'participants', { ...p, boardCode: 'ZZZZ99' }).nameLower, s.nameLower)
 })
 
 test('users: name and email are sealed, the email blind key is global so a login can find the account', () => {
@@ -123,11 +125,11 @@ test('updates: $set of content fields is sealed using the identity in the filter
   assert.throws(() => sealUpdate(c, 'items', { id: 'n1' }, { $set: { data: { text: 'x' } } }), /identity/)
 })
 
-test('an update of a participant name replaces the readable lookup key and removes the old one', () => {
+test('an update of a participant name replaces the readable lookup key with a blind one', () => {
   const c = cfg()
   const u = sealUpdate(c, 'participants', { boardCode: 'ABC234', uid: 'KM-AAAA' }, { $set: { name: 'Maria', nameLower: 'maria', avatar: { bg: 2 }, updatedAt: 3 } })
-  assert.ok(isSealed(u.$set.name) && u.$set.nameKey && !('nameLower' in u.$set))
-  assert.deepEqual(u.$unset, { nameLower: '' })
+  assert.ok(isSealed(u.$set.name) && u.$set.nameLower && u.$set.nameLower !== 'maria')
+  assert.equal(u.$unset, undefined)
 })
 
 test('sealState counts what is still readable, for the backfill report', () => {

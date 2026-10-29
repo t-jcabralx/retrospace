@@ -39,8 +39,8 @@ export class FakeCollection {
   checkUnique(doc, skip) {
     for (const u of this.unique) {
       if (u.partial && !matches(doc, u.partial)) continue
-      if (!u.keys.every((k) => doc[k] !== undefined)) continue
-      if (this.docs.some((d) => d !== skip && u.keys.every((k) => eq(d[k], doc[k])))) throw Object.assign(new Error('E11000 duplicate key'), { code: 11000 })
+      // like the real thing, a missing field is the value null in a unique index (only a partial index leaves such records out)
+      if (this.docs.some((d) => d !== skip && (!u.partial || matches(d, u.partial)) && u.keys.every((k) => eq(d[k] ?? null, doc[k] ?? null)))) throw Object.assign(new Error('E11000 duplicate key'), { code: 11000 })
     }
   }
   async insertOne(doc) { const d = clone(doc); d._id ??= `id${++this.n}`; this.checkUnique(d); this.docs.push(d); doc._id = d._id; return { insertedId: d._id } }
