@@ -6,6 +6,9 @@ import Features from '../ui/landing/Features.jsx'
 import HowItWorks from '../ui/landing/HowItWorks.jsx'
 import ClosingCta from '../ui/landing/ClosingCta.jsx'
 import '../ui/landing/landing.css'
+import { siteUrl } from '../lib/meta.js'
+import { structuredData, jsonLd } from '../lib/seo.js'
+import { SITE_NAME, SITE_DESCRIPTION } from '../lib/siteText.js'
 
 export const metadata = { alternates: { canonical: '/' } }
 
@@ -13,6 +16,7 @@ export const metadata = { alternates: { canonical: '/' } }
 export default function Home() {
   return (
     <PageShell landing>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structuredData(siteUrl().origin, { name: SITE_NAME, description: SITE_DESCRIPTION })) }} />
       <Hero />
       <BoardTypes />
       <WheelShowcase />

@@ -1,14 +1,15 @@
 import './globals.css'
 import { siteUrl } from '../lib/meta.js'
-
-const TITLE = 'Retrospace — retrospectives, workshops and celebrations'
-const DESCRIPTION = 'Run live retrospectives, workshops and celebration boards. Share a six-character code and your whole team can join in seconds, no account needed for guests.'
+import { verificationFrom } from '../lib/seo.js'
+import { SITE_TITLE as TITLE, SITE_DESCRIPTION as DESCRIPTION } from '../lib/siteText.js'
 
 export const metadata = {
   metadataBase: siteUrl(),
   title: { default: TITLE, template: '%s · Retrospace' },
   description: DESCRIPTION,
   applicationName: 'Retrospace',
+  authors: [{ name: 'Jason Cabral' }],
+  verification: verificationFrom(),
   openGraph: { title: TITLE, description: DESCRIPTION, siteName: 'Retrospace', type: 'website', locale: 'en_US' },
   twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 }

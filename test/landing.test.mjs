@@ -25,7 +25,8 @@ test('the landing page is a static server component built from separate section 
 
 test('layout metadata: title template, description, Open Graph and Twitter text tags, light and dark theme colours', async () => {
   const layout = await read('src/app/layout.js')
-  assert.match(layout, /Retrospace \\u2014 retrospectives, workshops and celebrations|Retrospace — retrospectives, workshops and celebrations/)
+  assert.match(await read('src/lib/siteText.js'), /Retrospace \\u2014 retrospectives, workshops and celebrations|Retrospace — retrospectives, workshops and celebrations/)
+  assert.match(layout, /siteText\.js/, 'the layout takes its title and description from the shared text')
   for (const key of ['template:', 'openGraph:', 'twitter:', 'themeColor:', 'prefers-color-scheme: light', 'prefers-color-scheme: dark']) assert.ok(layout.includes(key), key)
   // the share image comes from the file convention (opengraph-image / twitter-image), not from an images: list
   assert.match(layout, /summary_large_image/)
