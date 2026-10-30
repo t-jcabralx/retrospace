@@ -11,9 +11,9 @@ test('a drag inside the window moves the panel by exactly the distance dragged',
   assert.deepEqual(clampOffset(rect, base, -20, 100, VW, VH), { x: -20, y: 100 })
 })
 
-test('the panel can never be dragged out of reach: 56 px of it always stays inside the window', () => {
+test('the panel can never be dragged out of reach: its left edge stays inside, and 56 px of it on the right', () => {
   assert.deepEqual(clampOffset(rect, base, 5000, 5000, VW, VH), { x: 1000 - 56 - 100, y: 700 - 56 - 50 })
-  assert.deepEqual(clampOffset(rect, base, -5000, -5000, VW, VH), { x: 56 - 300 - 100, y: -50 }, 'left edge may leave the window, but the top may not')
+  assert.deepEqual(clampOffset(rect, base, -5000, -5000, VW, VH), { x: -100, y: -50 }, 'the left edge (where the grip is) and the top never leave the window')
 })
 
 test('an existing offset is kept: the new offset is the old one plus how far the panel actually moved', () => {

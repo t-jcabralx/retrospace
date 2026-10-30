@@ -198,3 +198,10 @@
   .bd-hud .bd-context { position: fixed; z-index: 14; left: 8px; right: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 128px); top: auto; margin-inline: auto; }
   .bd-context .bd-vote-grip { display: grid; width: 28px; height: 40px; }
 }
+
+/* The "post anonymously" toggle and the anonymous-notes notice float over the board: they can be moved too. */
+.bd-anon-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; touch-action: none; cursor: grab; }
+.bd-anon-wrap.is-dragging, .bd-anon-wrap.is-dragging * { cursor: grabbing; }
+.bd-anon-wrap .bd-vote-grip { width: 22px; height: 30px; margin: 0; }
+.bd-anon-wrap .bd-anon-locked { cursor: inherit; }
+@media (pointer: coarse) { .bd-anon-wrap .bd-vote-grip { width: 32px; height: 40px; } }

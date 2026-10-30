@@ -2,7 +2,7 @@
 // A floating panel that can be dragged out of the way: by its grip at once, or by pressing anywhere else on the card and moving
 // (buttons, links, fields and lists that scroll keep working: a tap on them is a tap, and a list still scrolls), by pointer or touch;
 // the arrow keys on the grip move it too, and Home or a double tap on the grip puts it back. The offset is kept for the tab (sessionStorage) and the panel is always left
-// at least KEEP px inside the window, so it cannot be lost off screen.
+// at least KEEP px inside the window (its left edge, where the grip is, never leaves it), so it cannot be lost off screen.
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const KEEP = 56
@@ -13,7 +13,7 @@ const ZERO = { x: 0, y: 0 }
 
 // -> the offset that moves a panel at `rect` by (dx, dy) without leaving KEEP px of it inside a window of size vw x vh.
 export function clampOffset(rect, base, dx, dy, vw, vh) {
-  const left = Math.min(Math.max(rect.left + dx, KEEP - rect.width), vw - KEEP)
+  const left = Math.min(Math.max(rect.left + dx, Math.min(0, vw - rect.width)), vw - KEEP) // the grip is at the left edge: that edge stays in the window
   const top = Math.min(Math.max(rect.top + dy, 0), vh - KEEP)
   return { x: Math.round(base.x + (left - rect.left)), y: Math.round(base.y + (top - rect.top)) }
 }
@@ -37,12 +37,23 @@ export function useDragPanel(storageKey) {
   const posRef = useRef(ZERO)
   posRef.current = pos
 
-  useEffect(() => { setPos(read(storageKey)) }, [storageKey]) // after mount: the server and the first render agree
   const move = useCallback((dx, dy) => {
     const el = panel.current
     if (!el) return
     setPos(clampOffset(el.getBoundingClientRect(), posRef.current, dx, dy, window.innerWidth, window.innerHeight))
   }, [])
+  // After mount (so the server and the first render agree) take the remembered place.
+  useEffect(() => { setPos(read(storageKey)) }, [storageKey])
+  // The first time the panel is actually on the page, make sure that place still fits this window: it may have been saved in a
+  // different one (a rotated phone, a zoomed page). Some panels only appear later (voting opens), hence a check on every render.
+  const fitted = useRef(false)
+  const fitFrame = useRef(null)
+  useEffect(() => {
+    if (fitted.current || !panel.current || !(pos.x || pos.y)) return // nothing remembered yet (or nothing to fit): look again next render
+    fitted.current = true
+    fitFrame.current = setTimeout(() => move(0, 0), 0) // a timer, not an animation frame: a hidden page gets no frames
+  })
+  useEffect(() => () => clearTimeout(fitFrame.current), []) // only when the panel goes away: a re-render must not cancel the check
   // The window got smaller: bring the panel back inside it.
   useEffect(() => {
     const fit = () => { if (posRef.current.x || posRef.current.y) move(0, 0) }
