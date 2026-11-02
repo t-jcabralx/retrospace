@@ -133,12 +133,12 @@ test('without an address, nothing changes: the plain stream and requests are use
   sync.close()
 })
 
-test('if the realtime server cannot be reached, this page falls back to the plain stream', async () => {
+test('if the realtime server cannot be reached, this page falls back to the plain stream at once, without retrying', async () => {
   reset()
   FakeWS.plan = Array.from({ length: 10 }, () => ({ closeWith: 1006 }))
   const { sync, calls } = harness()
-  await wait(150)
-  assert.ok(FakeWS.made.length >= 1 + MAX_QUICK_RETRIES, 'it tried')
+  await wait(80)
+  assert.equal(FakeWS.made.length, 1, 'one failed try, no retries: it never worked')
   assert.equal(FakeES.made.length, 1, 'then the plain stream opened')
   assert.equal(calls.filter((c) => c.url === '/api/rt/join').length >= 2, true, 'with a fresh ticket')
   sync.close()
