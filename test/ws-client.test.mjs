@@ -39,7 +39,7 @@ function harness({ ws = 'wss://rt.example/ws' } = {}) {
   const fetchImpl = async (url, o) => {
     calls.push({ url, body: o?.body ? JSON.parse(o.body) : undefined })
     const ok = (data) => ({ ok: true, status: 200, headers: { get: () => null }, json: async () => data })
-    if (url === '/api/rt/join') return ok({ tok: 'TICKET', live: true, ...(ws && { ws }) })
+    if (url === '/api/rt/join') return ok({ tok: 'TICKET', live: true, ...(ws && { ws, wsTok: 'WSTICKET' }), ...(ws === 'no-ticket' && { ws: 'wss://rt.example/ws', wsTok: undefined }) })
     if (url === '/api/rt/send') return ok({ ok: true })
     return ok({ items: [], now: Date.now() })
   }
@@ -91,7 +91,7 @@ test('with an address from the website, the page connects to the realtime server
   assert.equal(FakeES.made.length, 0, 'the plain stream is not used')
   const url = new URL(FakeWS.made[0].url)
   assert.deepEqual([url.origin, url.pathname], ['wss://rt.example', '/ws'])
-  assert.deepEqual([url.searchParams.get('code'), url.searchParams.get('uid'), url.searchParams.get('tok'), url.searchParams.get('cid')], ['ABC234', 'KM-AAAA-BBBB-CCCC', 'TICKET', 'tab-1'])
+  assert.deepEqual([url.searchParams.get('code'), url.searchParams.get('uid'), url.searchParams.get('tok'), url.searchParams.get('cid')], ['ABC234', 'KM-AAAA-BBBB-CCCC', 'WSTICKET', 'tab-1'], 'the ticket made for the realtime server, not the ordinary one')
   assert.equal(sync.status(), 'live')
   FakeWS.made[0].push({ t: 'ops', from: 'KM-OTHER', cid: 'tab-9', ops: [{ id: 'a', updatedAt: 5 }] })
   FakeWS.made[0].push({ t: 'ops', from: 'KM-AAAA-BBBB-CCCC', cid: 'tab-1', ops: [{ id: 'mine', updatedAt: 6 }] })
@@ -154,5 +154,14 @@ test('when the server says "reconnect" (the connection reached its age limit) th
   assert.equal(calls.filter((c) => c.url === '/api/rt/join').length, 2)
   assert.equal(FakeWS.made.length, first + 1)
   assert.equal(FakeES.made.length, 0, 'still the realtime server: it had worked')
+  sync.close()
+})
+
+test('an address without a ticket for it is not used: the plain stream', async () => {
+  reset()
+  const { sync } = harness({ ws: 'no-ticket' })
+  await wait(30)
+  assert.equal(FakeWS.made.length, 0)
+  assert.equal(FakeES.made.length, 1)
   sync.close()
 })

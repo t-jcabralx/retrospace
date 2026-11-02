@@ -4,7 +4,7 @@ import { getRedis, envValue } from './db.js'
 
 export const chan = (code) => `kb:${code}`
 
-// One secret, four HMAC namespaces. Every MAC input starts with its own tag, and no tag is a prefix of another, so a
+// One secret, four HMAC namespaces (plus a fifth, 'wstok:' and 'rtauth:', under a SEPARATE secret, REALTIME_SECRET: see realtimeSecret below). Every MAC input starts with its own tag, and no tag is a prefix of another, so a
 // value signed for one purpose can never verify for another:
 //   'tok:<code>:<boardId>:<exp>'   membership token (this file)
 //   'access:<code>:<passcodeHash>' passcode access cookie (access.js)
@@ -76,4 +76,19 @@ export async function rateOk(redis, uid, perSecond = 30) {
   const n = await redis.incr(k)
   if (n === 1) await redis.expire(k, 3)
   return n <= perSecond
+}
+
+// The realtime (WebSocket) backend's own secret. It is deliberately NOT RT_SECRET: the backend host never learns the secret that signs guest
+// cookies and per-board ids, so a break-in there cannot forge a guest. It signs two things only, in their own namespaces: the ticket for the
+// WebSocket ('wstok:<code>:<uid>:<exp>', returned by /api/rt/join as `wsTok`) and the backend's questions to /api/rt/authorize ('rtauth:', see
+// rtAuthorize.js). Unset or shorter than 16 characters -> null: the realtime backend is off and nothing is signed with a weak value.
+export function realtimeSecret(env = process.env) {
+  const s = envValue('REALTIME_SECRET', env)
+  return s.length >= 16 ? s : null
+}
+const wsMac = (secret, code, uid, exp) => createHmac('sha256', secret).update(`wstok:${code}:${uid}:${exp}`).digest('hex').slice(0, 32)
+export const signWsTicket = (code, uid, now = Date.now(), ttlMs = TOK_TTL_MS, secret = realtimeSecret()) => {
+  if (!secret) return null
+  const exp = now + ttlMs
+  return `${exp}.${wsMac(secret, code, uid, exp)}`
 }

@@ -99,7 +99,8 @@ export function createSync({
   let closed = false
   let tok = null
   const WsStream = createWsStream({ WebSocketImpl, timers })
-  let wsUrl = null // the realtime server's address, when the website handed one out with the ticket
+  let wsUrl = null // the realtime server's address, when the website handed one out
+  let wsTicket = null // and the ticket that server accepts (not the same as `tok`: the realtime server has its own secret)
   let wsBroken = false // it could not be reached: this page uses the plain stream from now on
   let live = false // realtime stream in use (as opposed to polling)
   let linkUp = false // stream open / last poll succeeded
@@ -284,7 +285,7 @@ export function createSync({
   function openStream(token) {
     const q = `code=${encodeURIComponent(code)}&uid=${encodeURIComponent(identity.uid)}&tok=${encodeURIComponent(token)}`
     // Prefer the realtime (WebSocket) server when the website gave an address for it; otherwise, or when it cannot be reached, the plain stream.
-    es = wsUrl && !wsBroken && typeof WebSocketImpl === 'function' ? new WsStream(`${wsUrl}${wsUrl.includes('?') ? '&' : '?'}${q}&cid=${encodeURIComponent(cid)}`) : new EventSourceImpl(`/api/rt/stream?${q}`)
+    es = wsUrl && !wsBroken && typeof WebSocketImpl === 'function' ? new WsStream(`${wsUrl}${wsUrl.includes('?') ? '&' : '?'}code=${encodeURIComponent(code)}&uid=${encodeURIComponent(identity.uid)}&tok=${encodeURIComponent(wsTicket)}&cid=${encodeURIComponent(cid)}`) : new EventSourceImpl(`/api/rt/stream?${q}`)
     live = true
     es.addEventListener('open', () => {
       rejoinBudget = 1
@@ -350,7 +351,7 @@ export function createSync({
 
   const canStream = (r) => {
     const ok = !!(r?.data?.tok && r.data.live && typeof EventSourceImpl === 'function')
-    if (ok) wsUrl = typeof r.data.ws === 'string' ? r.data.ws : null
+    if (ok) { wsUrl = typeof r.data.ws === 'string' && typeof r.data.wsTok === 'string' ? r.data.ws : null; wsTicket = wsUrl ? r.data.wsTok : null }
     return ok
   }
 

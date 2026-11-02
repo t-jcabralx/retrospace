@@ -1,6 +1,6 @@
 import { getStore } from '../../../../lib/store.js'
 import { getRedis, envValue } from '../../../../lib/db.js'
-import { signTok } from '../../../../lib/rt.js'
+import { signTok, signWsTicket } from '../../../../lib/rt.js'
 import { authorize, HttpError, missBlocked, recordMiss } from '../../../../lib/access.js'
 import { boardId } from '../../../../lib/guest.js'
 import { resolvePersona } from '../../../../lib/participants.js'
@@ -45,8 +45,11 @@ async function handle(req) {
   if ((await windowHit(`joinid:${uid}`, 60_000)) > ID_PER_MIN) return tooMany(retryAfterSecs(60_000))
   if (!(await resolvePersona(store, body.code, uid, viewer))) return fail(409, 'Choose a name first')
   // The address of the realtime (WebSocket) server, when one is set up: the browser prefers it and falls back to the plain stream.
+  // It needs the backend's own secret as well (REALTIME_SECRET): `wsTok` is a ticket only that backend accepts, signed with it. Without both
+  // settings no address is given and everybody uses the plain stream.
   const ws = realtimeWsUrl()
-  return json({ tok: signTok(body.code, uid), live: !!getRedis(), ...(ws && getRedis() && { ws }) })
+  const wsTok = ws && getRedis() ? signWsTicket(body.code, uid) : null
+  return json({ tok: signTok(body.code, uid), live: !!getRedis(), ...(wsTok && { ws, wsTok }) })
 }
 
 export async function POST(req) {

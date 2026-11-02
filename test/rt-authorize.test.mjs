@@ -1,24 +1,25 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 process.env.RT_SECRET = 'test-secret'
+process.env.REALTIME_SECRET = 'test-realtime-secret-0123456789' // the realtime backend's own secret: not RT_SECRET
 import { call, routes } from './helpers/routes.mjs'
 
 const { signUp, newGuest, newBoard } = await routes()
 const { POST } = await import('../src/app/api/rt/authorize/route.js')
 const { authorizeSignature, verifyAuthorize, AUTH_WINDOW_MS } = await import('../src/lib/rtAuthorize.js')
-const { signTok } = await import('../src/lib/rt.js')
+const { signTok, signWsTicket, realtimeSecret } = await import('../src/lib/rt.js')
 const { getStore } = await import('../src/lib/store.js')
 
 // Known answers, copied into the realtime project's tests: if one side's signing ever changes, both suites fail.
 const CODE = 'ABC234'
 const UID = 'KM-AAAA-BBBB-CCCC'
 const VECTORS = {
-  ticket: signTok(CODE, UID, 1_700_000_000_000), // expires 1_700_001_800_000
+  ticket: signWsTicket(CODE, UID, 1_700_000_000_000), // expires 1_700_001_800_000
   authorize: authorizeSignature(1_700_000_000_000, CODE, UID),
 }
-test('signing known answers (shared with the realtime project)', () => {
-  assert.equal(VECTORS.ticket, '1700001800000.e959cb9c10caf67817c313f4058aa6df')
-  assert.equal(VECTORS.authorize, '715045da2f6274b02215d3fdad94f4ac9317bfbcb43f11a05b78d5e464aa0bf4')
+test('signing known answers (shared with the realtime project), made with REALTIME_SECRET', () => {
+  assert.equal(VECTORS.ticket, '1700001800000.495d7e8993079c415aa9fb004ce17bf8')
+  assert.equal(VECTORS.authorize, 'd7b844a376b42e1531e4f1e95fed632960f4c74655fb16bf633bc86a0ed09be3')
 })
 
 const owner = await signUp('olive')
@@ -73,4 +74,16 @@ test('verifyAuthorize: the window, the namespace and the secret', () => {
   assert.equal(verifyAuthorize({ ts, sig, code: CODE, uid: UID }, ts - 61_000), false)
   assert.equal(verifyAuthorize({ ts, sig, code: CODE, uid: UID }, ts, 'another-secret'), false)
   assert.notEqual(sig, signTok(CODE, UID, ts).split('.')[1], 'a ticket can never be used as a signature')
+  assert.notEqual(signWsTicket(CODE, UID, ts), signTok(CODE, UID, ts), 'the websocket ticket differs from the ordinary one')
+})
+
+test('RT_SECRET plays no part: a question signed with it is refused, and without REALTIME_SECRET nothing verifies', async () => {
+  const ts = Date.now()
+  const withRt = authorizeSignature(ts, code, ann.uid, 'test-secret')
+  assert.equal((await ask(ann, { ts, sig: withRt })).status, 403, 'signed with RT_SECRET')
+  assert.equal(verifyAuthorize({ ts, sig: authorizeSignature(ts, code, ann.uid), code, uid: ann.uid }, ts, null), false, 'no secret configured')
+  assert.equal(realtimeSecret({}), null)
+  assert.equal(realtimeSecret({ REALTIME_SECRET: 'too short' }), null, 'a weak secret is the same as none')
+  assert.equal(realtimeSecret({ REALTIME_SECRET: ' "test-realtime-secret-0123456789" ' }), 'test-realtime-secret-0123456789', 'pasted quotes are removed')
+  assert.equal(signWsTicket(code, ann.uid, Date.now(), undefined, null), null)
 })

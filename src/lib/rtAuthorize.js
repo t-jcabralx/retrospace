@@ -1,18 +1,18 @@
 // What the separate realtime server may ask the website, and how the website knows the question came from it. The realtime server holds no
 // database credentials; for each person who connects it asks "who is this, and what may they do on this board?" here, signed with
-// RT_SECRET (the same secret that signs tickets, in its own namespace). Pure helpers; the route is app/api/rt/authorize.
+// REALTIME_SECRET (the realtime backend's own secret, never RT_SECRET). Pure helpers; the route is app/api/rt/authorize.
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { rtSecret } from './rt.js'
+import { realtimeSecret } from './rt.js'
 import { publicIdForUser } from './guest.js'
 
 export const AUTH_WINDOW_MS = 60_000
 
-// Namespace 'rtauth:' : a value signed for this can never verify as a ticket ('tok:'), an access cookie ('access:') or anything else.
-export const authorizeSignature = (ts, code, uid, secret = rtSecret()) => createHmac('sha256', secret).update(`rtauth:${ts}:${code}:${uid}`).digest('hex')
+// Namespace 'rtauth:' : and under a different secret from every other signature on the site.
+export const authorizeSignature = (ts, code, uid, secret = realtimeSecret()) => createHmac('sha256', secret).update(`rtauth:${ts}:${code}:${uid}`).digest('hex')
 
-export function verifyAuthorize({ ts, sig, code, uid }, now = Date.now(), secret = rtSecret()) {
+export function verifyAuthorize({ ts, sig, code, uid }, now = Date.now(), secret = realtimeSecret()) {
   const t = Number(ts)
-  if (!Number.isSafeInteger(t) || Math.abs(now - t) > AUTH_WINDOW_MS || typeof sig !== 'string' || !/^[0-9a-f]{64}$/.test(sig)) return false
+  if (!secret || !Number.isSafeInteger(t) || Math.abs(now - t) > AUTH_WINDOW_MS || typeof sig !== 'string' || !/^[0-9a-f]{64}$/.test(sig)) return false
   const a = Buffer.from(authorizeSignature(t, code, uid, secret))
   const b = Buffer.from(sig)
   return a.length === b.length && timingSafeEqual(a, b)
