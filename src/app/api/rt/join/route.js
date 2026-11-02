@@ -1,5 +1,5 @@
 import { getStore } from '../../../../lib/store.js'
-import { getRedis } from '../../../../lib/db.js'
+import { getRedis, envValue } from '../../../../lib/db.js'
 import { signTok } from '../../../../lib/rt.js'
 import { authorize, HttpError, missBlocked, recordMiss } from '../../../../lib/access.js'
 import { boardId } from '../../../../lib/guest.js'
@@ -44,9 +44,17 @@ async function handle(req) {
   if (!uid) return fail(401, 'Join the board first')
   if ((await windowHit(`joinid:${uid}`, 60_000)) > ID_PER_MIN) return tooMany(retryAfterSecs(60_000))
   if (!(await resolvePersona(store, body.code, uid, viewer))) return fail(409, 'Choose a name first')
-  return json({ tok: signTok(body.code, uid), live: !!getRedis() })
+  // The address of the realtime (WebSocket) server, when one is set up: the browser prefers it and falls back to the plain stream.
+  const ws = realtimeWsUrl()
+  return json({ tok: signTok(body.code, uid), live: !!getRedis(), ...(ws && getRedis() && { ws }) })
 }
 
 export async function POST(req) {
   return noStore(await handle(req))
+}
+
+// REALTIME_WS_URL, e.g. wss://realtime.example.com/ws : only a ws:// or wss:// address is ever handed to a browser.
+function realtimeWsUrl() {
+  const v = envValue('REALTIME_WS_URL')
+  return /^wss?:\/\/[^\s"'<>]{3,300}$/i.test(v) ? v : null
 }

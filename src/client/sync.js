@@ -1,6 +1,8 @@
 // Client transport: batched writes, SSE with a polling fallback, throttled ephemeral messages.
 // Browser globals (EventSource, fetch, timers) are only touched inside functions so this imports cleanly in node.
 
+import { createWsStream } from './wsStream.js'
+
 const POLL_MS = 3000
 const BATCH_MS = 50
 const MAX_BATCH = 50 // the ops route accepts at most 50 per call
@@ -8,6 +10,7 @@ const RETRY_MS = [500, 1500, 4000]
 const OUTAGE_FIRST_MS = 5000 // once those are used up: ask again after 5 s, then 10, 20, 30 and every 30 s
 const OUTAGE_MAX_MS = 30000
 const EPH_GAP_MS = 67 // ~15 per second
+const WS_GAP_MS = 40 // over an open WebSocket a live message costs no request, so they may follow each other a little faster
 const TOK_REFRESH_MS = 20 * 60_000 // the server's membership token lives 30 minutes
 const SEND_REJOIN_COOLDOWN_MS = 30_000
 const MAX_QUEUE = 1000 // unsent ops kept while the link is down; past this, repeated updates of one item are merged
@@ -89,11 +92,15 @@ export function createSync({
   sinceOverlapMs = SINCE_OVERLAP_MS,
   fetchImpl = globalThis.fetch,
   EventSourceImpl = globalThis.EventSource,
+  WebSocketImpl = globalThis.WebSocket,
   timers = defaultTimers(),
   pageEvents = typeof globalThis.addEventListener === 'function' ? globalThis : null, // window: online / pagehide / visibilitychange
 }) {
   let closed = false
   let tok = null
+  const WsStream = createWsStream({ WebSocketImpl, timers })
+  let wsUrl = null // the realtime server's address, when the website handed one out with the ticket
+  let wsBroken = false // it could not be reached: this page uses the plain stream from now on
   let live = false // realtime stream in use (as opposed to polling)
   let linkUp = false // stream open / last poll succeeded
   let sendFailed = false
@@ -276,7 +283,8 @@ export function createSync({
   // --- stream ---
   function openStream(token) {
     const q = `code=${encodeURIComponent(code)}&uid=${encodeURIComponent(identity.uid)}&tok=${encodeURIComponent(token)}`
-    es = new EventSourceImpl(`/api/rt/stream?${q}`)
+    // Prefer the realtime (WebSocket) server when the website gave an address for it; otherwise, or when it cannot be reached, the plain stream.
+    es = wsUrl && !wsBroken && typeof WebSocketImpl === 'function' ? new WsStream(`${wsUrl}${wsUrl.includes('?') ? '&' : '?'}${q}&cid=${encodeURIComponent(cid)}`) : new EventSourceImpl(`/api/rt/stream?${q}`)
     live = true
     es.addEventListener('open', () => {
       rejoinBudget = 1
@@ -289,6 +297,7 @@ export function createSync({
     es.addEventListener('error', () => {
       if (closed) return
       if (es.readyState === 2) { // the browser gave up (e.g. 403 after a revoke, an expired token, 503)
+        if (es.isWebSocket && !es.everOpened) wsBroken = true // the realtime server never answered: the plain stream takes over
         es.close()
         es = null
         linkUp = false
@@ -339,7 +348,11 @@ export function createSync({
     timers.setTimeout(() => { if (!closed && !denied && es === null) rejoin() }, r.retryMs)
   }
 
-  const canStream = (r) => !!(r?.data?.tok && r.data.live && typeof EventSourceImpl === 'function')
+  const canStream = (r) => {
+    const ok = !!(r?.data?.tok && r.data.live && typeof EventSourceImpl === 'function')
+    if (ok) wsUrl = typeof r.data.ws === 'string' ? r.data.ws : null
+    return ok
+  }
 
   function stopRefresh() {
     if (refreshTimer !== null) timers.clearInterval(refreshTimer)
@@ -494,6 +507,12 @@ export function createSync({
     const { msg, done } = pending.get(key)
     pending.delete(key)
     cooling = true
+    // Over an open WebSocket the message is just written to it. A message that wants an answer (throw, celebrate: the sender is told
+    // "slow down") still goes as a request, which can say so.
+    if (!done && es?.isWebSocket && es.send(JSON.stringify({ t: 'eph', msg }))) {
+      timers.setTimeout(() => { cooling = false; pumpEphemeral() }, WS_GAP_MS)
+      return
+    }
     const sentTok = tok
     post('/api/rt/send', { code, uid: identity.uid, cid, tok, msg })
       .then(async (res) => {
