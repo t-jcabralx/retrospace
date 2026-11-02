@@ -134,6 +134,9 @@ textarea.ev-input { margin-bottom: 8px; resize: vertical; }
 .ev-gifrow .ev-grow p { margin: 2px 0 0; }
 .ev-gifrow .ev-btn { flex: 0 0 auto; min-height: 40px; }
 .ev-gifthumb { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.ev-gifbtn { flex: none; min-width: 40px; height: 36px; padding: 0 8px; border: 1px dashed var(--line); border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .04em; cursor: pointer; } .ev-gifbtn:hover { color: var(--ink); border-color: var(--accent); }
+.ev-gifbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ev-gifbtn.has-gif { padding: 0; width: 36px; min-width: 36px; border-style: solid; overflow: hidden; } .ev-gifbtn img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ev-more { margin: 4px 0 2px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; display: grid; gap: 8px; }
 .ev-more select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
 .ev-list li.has-more { flex-wrap: wrap; }

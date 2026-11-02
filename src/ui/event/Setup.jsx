@@ -143,6 +143,14 @@ export default function Setup({ api, onPreview }) {
                   <output aria-label={`${z.qty} left`}>{z.qty}</output>
                   <button type="button" aria-label={`One more ${z.name}`} onClick={() => setPrizes(prizes.map((q) => (q.id === z.id ? { ...q, qty: Math.min(LIMITS.qty, q.qty + 1) } : q)))}>+</button>
                 </span>
+                {z.gif ? (
+                  <button type="button" className="ev-gifbtn has-gif" aria-label={`Change the GIF for ${z.name}`} title="This prize's own GIF. Click to change it." onClick={() => setPicking(z.id)}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- a GIF chosen by the host */}
+                    <img src={z.gif} alt="" referrerPolicy="no-referrer" />
+                  </button>
+                ) : (
+                  <button type="button" className="ev-gifbtn" aria-label={`Add a GIF for ${z.name}`} title="Show a GIF when this prize is won" onClick={() => setPicking(z.id)}>GIF</button>
+                )}
                 <button type="button" className="ev-x" aria-label={`Celebration for ${z.name}`} aria-expanded={open === z.id} title="Choose the celebration for this prize" onClick={() => setOpen(open === z.id ? null : z.id)}>{z.gif || z.effect ? '✨' : '☆'}</button>
                 <button type="button" className="ev-x" aria-label={`Remove ${z.name}`} onClick={() => setPrizes(prizes.filter((q) => q.id !== z.id))}>×</button>
                 {open === z.id && (
@@ -180,12 +188,12 @@ export default function Setup({ api, onPreview }) {
           <div className="ev-gifrow">
             {/* eslint-disable-next-line @next/next/no-img-element -- a GIF chosen by the host */}
             <img className="ev-gifthumb" src={gif} alt="" referrerPolicy="no-referrer" />
-            <div className="ev-grow"><strong>GIF for every winner</strong><p className="ev-hint">It replaces the effect. A prize can have its own GIF.</p></div>
+            <div className="ev-grow"><strong>Default GIF</strong><p className="ev-hint">Shown for any prize that has no GIF of its own. Give a prize its own with the GIF button on its row.</p></div>
             <button type="button" className="ev-btn" onClick={() => setPicking('wheel')}>Change</button>
             <button type="button" className="ev-btn ev-btn--quiet" onClick={() => setGif(null)}>Remove</button>
           </div>
-        ) : <button type="button" className="ev-btn" onClick={() => setPicking('wheel')}>Show a GIF when someone wins</button>}
-        <p className="ev-hint">No GIF? The effect above plays. You can also set a different celebration for each prize (the ☆ on a prize).</p>
+        ) : <button type="button" className="ev-btn" onClick={() => setPicking('wheel')}>Choose a default GIF for all prizes</button>}
+        <p className="ev-hint">Each prize can have its own GIF (the GIF button on its row, under Prizes), for example a coffee GIF for the coffee voucher. A prize without one uses the default GIF, and with no GIF at all the effect above plays.</p>
       </fieldset>
 
       <fieldset disabled={locked} className="ev-fs">

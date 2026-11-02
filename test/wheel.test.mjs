@@ -262,3 +262,16 @@ test('a plain name pick needs someone on the wheel and an idle round', () => {
   assert.match(run(chosen, 'spin-name', { now: NOW + 99999 }).error, /current round/)
   assert.ok(run(setup(['A'], [['Mug', 1]]), 'spin-name').wheel) // allowed even when prizes exist
 })
+
+test('ten prizes can each have their own GIF: each winner gets that prize\'s GIF, and a prize without one gets the default', () => {
+  let n = 0
+  const names = ['Starbucks', 'Pizza', 'Movie', 'Spa', 'Book', 'Mug', 'Plant', 'Lunch', 'Cinema', 'Gift card']
+  const gifOf = (name) => `https://media.giphy.com/media/${name.toLowerCase().replace(/\W/g, '')}/giphy.gif`
+  const prizes = names.map((name, i) => ({ name, qty: 1, ...(i < 9 && { gif: gifOf(name) }) })) // the tenth has none
+  const r = cleanSetup({ participants: [], prizes, rules: { removeWinners: true, gif: 'https://media.giphy.com/media/default/giphy.gif' } }, { genId: () => `p${++n}` })
+  assert.ok(!r.error, r.error)
+  const w = { ...defaultWheel(), ...r.value }
+  assert.equal(w.prizes.length, 10)
+  for (const z of w.prizes.slice(0, 9)) assert.equal(celebrationFor(w, z).gif, gifOf(z.name), z.name)
+  assert.equal(celebrationFor(w, w.prizes[9]).gif, 'https://media.giphy.com/media/default/giphy.gif')
+})
