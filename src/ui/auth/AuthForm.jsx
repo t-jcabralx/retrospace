@@ -121,6 +121,7 @@ export default function AuthForm({ mode, next }) {
           <PasswordField inputRef={refs.password} autoComplete={register ? 'new-password' : 'current-password'} {...field('password')} />
           {register && <p className="rs-hint" id={`${id}-password-hint`}>{RULE_TEXT.password}</p>}
           {error('password')}
+          {!register && <p className="rs-hint"><Link className="rs-link" href="/forgot">Forgot your password?</Link></p>}
         </div>
         <button type="submit" className="rs-btn rs-btn--primary rs-btn--lg rs-btn--block" disabled={busy}>
           {busy ? <><span className="rs-spin" aria-hidden="true" />{copy.busy}</> : copy.submit}

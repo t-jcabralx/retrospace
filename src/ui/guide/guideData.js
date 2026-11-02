@@ -109,7 +109,7 @@ export const STAGES = [
 export const WHEEL_STEPS = [
   ['Create an Event board', 'New board, Event raffle. The board opens on its Setup tab. Guests join with the code just like any other board.'],
   ['Add people and prizes', 'Paste names (one per line or separated by commas), or press Add everyone who joined. Add prizes with an emoji and how many there are, then Save changes. People are on the outer ring and prizes on the inner ring.'],
-  ['Choose the celebration', 'Pick an effect for winners (confetti, fireworks, balloons, stars or sparkles), or choose a Giphy GIF for every winner. A prize can have its own effect or GIF: use the ☆ on the prize.'],
+  ['Choose the celebration', 'Pick an effect for winners (confetti, fireworks, balloons, stars or sparkles), or choose a default Giphy GIF. Each prize can have its own GIF (the GIF button on its row under Prizes) and its own effect (the ☆), so a coffee voucher can show a coffee GIF. A prize without its own GIF uses the default.'],
   ['Spin for the prize', 'Press the SPIN button in the middle of the wheel, the big button, or the space bar. The inner ring turns and stops on the prize.'],
   ['Spin for the winner', 'Press it again. The outer ring turns and stops on the winner, and everyone sees the same spin and the celebration.'],
   ['Accept, skip or spin again', 'Accept winner records the result and takes the winner off the wheel. Not here, skip spins again for the same prize. Spin the winner again goes back one step. Undo the last draw takes back an accepted result.'],
@@ -138,5 +138,5 @@ export const HELP = [
   ['A text box I made disappeared', 'An empty text box is removed when you click away. Type something first.'],
   ['The emoji row or live movement is missing', 'The live connection is down. Check your internet and reload. If it happens for everyone, the host should check realtime.'],
   ['Wrong passcode', 'Attempts are limited. Wait a minute and try again, or ask the owner.'],
-  ['I forgot my password', 'Password reset is not available yet. Ask the host for help.'],
+  ['I forgot my password', 'On the sign-in page choose “Forgot your password?”, enter your email and open the link we send. It works once, for 30 minutes. Guests have no password: they just rejoin with the board code.'],
 ]

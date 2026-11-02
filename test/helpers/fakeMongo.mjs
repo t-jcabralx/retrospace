@@ -93,6 +93,7 @@ export class FakeCollection {
       else this.docs.push(next)
     }
   }
+  async findOneAndDelete(f, o) { const i = this.docs.findIndex((d) => matches(d, f)); if (i < 0) return null; const [d] = this.docs.splice(i, 1); return project(d, o) } // the driver's default answer: the document, or null
   async deleteOne(f) { const i = this.docs.findIndex((d) => matches(d, f)); if (i >= 0) this.docs.splice(i, 1); return { deletedCount: i >= 0 ? 1 : 0 } }
   async deleteMany(f) { const keep = this.docs.filter((d) => !matches(d, f)); const n = this.docs.length - keep.length; this.docs = keep; return { deletedCount: n } }
 }

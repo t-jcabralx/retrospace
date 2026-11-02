@@ -49,6 +49,7 @@ export function createMemoryStore(state = newMemState()) {
   state.usersById ??= new Map()
   state.sessions ??= new Map() // keyed by tokenHash
   state.templates ??= new Map() // keyed by id: the owners' saved column templates
+  state.resets ??= new Map() // keyed by tokenHash: one-time password reset links
   const itemsOf = (code) => state.items.get(code) ?? new Map()
   const peopleOf = (code) => state.participants.get(code) ?? new Map()
   const nameTaken = (code, uid, p) => [...peopleOf(code).values()].some((r) => r.uid !== uid && r.nameLower === nameKey(p.name))
@@ -214,6 +215,26 @@ export function createMemoryStore(state = newMemState()) {
       const u = state.usersById.get(id)
       return u ? clone(u) : null
     },
+    async updateUserPassword(id, passwordHash, now = Date.now()) {
+      const u = state.usersById.get(id) // the same object as in state.users
+      if (!u) return false
+      u.passwordHash = passwordHash
+      u.passwordChangedAt = now
+      return true
+    },
+    // Password reset links (see passwordReset.js). takeReset uses a link up: it answers once, then never again.
+    async createReset(reset) {
+      state.resets.set(reset.tokenHash, clone(reset))
+    },
+    async takeReset(tokenHash, now = Date.now()) {
+      const r = state.resets.get(tokenHash)
+      if (!r) return null
+      state.resets.delete(tokenHash)
+      return r.expiresAt > now ? clone(r) : null
+    },
+    async deleteResetsByUser(userId) {
+      for (const [h, r] of state.resets) if (r.userId === userId) state.resets.delete(h)
+    },
     // Saved column templates (see columns.js). Unique per owner by nameLower; a duplicate throws code 11000.
     async createTemplate(tpl) {
       const doc = { ...clone(tpl), nameLower: tpl.name.toLowerCase() }
@@ -355,6 +376,25 @@ export function createMongoStore(client, name) {
     }
     await state.tplReady
     return wrapCollection(seal, 'templates', col)
+  }
+
+  // Password reset links: no personal data (a user id and a hash), so never sealed. Mongo deletes them once expired.
+  const resetCol = async () => {
+    const resolved = await (typeof client === 'function' ? client() : client)
+    const col = resolved.db(name).collection('resets')
+    if (state.resetClient !== resolved) {
+      state.resetClient = resolved
+      state.resetReady = Promise.all([
+        col.createIndex({ tokenHash: 1 }, { unique: true }),
+        col.createIndex({ userId: 1 }),
+        col.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+      ]).catch((err) => {
+        state.resetClient = undefined
+        console.error('retrospace: reset index creation failed, will retry:', err?.message)
+      })
+    }
+    await state.resetReady
+    return col
   }
 
   return {
@@ -539,6 +579,23 @@ export function createMongoStore(client, name) {
     },
     async getUserById(id) {
       return (await cols()).users.findOne({ id }, NO_ID)
+    },
+    async updateUserPassword(id, passwordHash, now = Date.now()) {
+      const res = await (await cols()).users.updateOne({ id }, { $set: { passwordHash, passwordChangedAt: now } })
+      return (res.matchedCount ?? 0) > 0
+    },
+    async createReset(reset) {
+      await (await resetCol()).insertOne({ ...reset, expiresAt: new Date(reset.expiresAt) })
+    },
+    // Atomic: two people using the same link at once cannot both get it.
+    async takeReset(tokenHash, now = Date.now()) {
+      const col = await resetCol()
+      const r = await col.findOneAndDelete({ tokenHash }, NO_ID)
+      const doc = r && 'value' in r ? r.value : r // the driver answers the document itself, or { value } in older versions
+      return doc && doc.expiresAt.getTime() > now ? { ...doc, expiresAt: doc.expiresAt.getTime() } : null
+    },
+    async deleteResetsByUser(userId) {
+      await (await resetCol()).deleteMany({ userId })
     },
     // expiresAt is a Date in Mongo (a TTL index only works on dates); callers always see milliseconds.
     async createTemplate(tpl) {

@@ -15,6 +15,7 @@ export async function deleteAccount(store, user, { announce = true } = {}) {
   }
   await store.deleteTemplatesByOwner(user.id)
   await store.deleteSessionsByUser(user.id)
+  await store.deleteResetsByUser(user.id)
   await store.deleteUser(user.id)
   return { boards: boards.length }
 }
