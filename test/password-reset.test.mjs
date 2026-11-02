@@ -9,7 +9,7 @@ process.env.NEXT_PUBLIC_SITE_URL = 'https://retro.example'
 
 const { createMemoryStore, createMongoStore } = await import('../src/lib/store.js')
 const { fakeClient } = await import('./helpers/fakeMongo.mjs')
-const { mailConfig, mailConfigured, sendMail } = await import('../src/lib/mailer.js')
+const { mailConfig, mailConfigured, sendMail, parseFrom } = await import('../src/lib/mailer.js')
 const { issueReset, redeemReset, resetOrigin, resetEmail, RESET_TTL_MS } = await import('../src/lib/passwordReset.js')
 const { hashPassword, verifyPassword } = await import('../src/lib/password.js')
 const { setBackgroundRunner } = await import('../src/lib/background.js')
@@ -204,4 +204,25 @@ test('the Mongo store: a link is used up by exactly one of two simultaneous trie
   await issueReset(store, 'u_m')
   await store.deleteResetsByUser('u_m')
   assert.equal(client.cols.get('resets').docs.length, 0)
+})
+
+test('mailer: Brevo works with a single sender address and no domain, and Resend wins when both keys are set', async () => {
+  const brevo = mailConfig({ BREVO_API_KEY: 'xkeysib-1', MAIL_FROM: 'Retrospace <me@gmail.com>' })
+  assert.deepEqual(brevo, { provider: 'brevo', apiKey: 'xkeysib-1', from: 'Retrospace <me@gmail.com>' })
+  assert.equal(mailConfig({ BREVO_API_KEY: 'k' }), null, 'the sender is needed too')
+  assert.equal(mailConfig({ RESEND_API_KEY: 'r', BREVO_API_KEY: 'b', MAIL_FROM: 'a@b.co' }).provider, 'resend')
+
+  assert.deepEqual(await sendMail({ to: 'a@example.com', subject: 'Hi', text: 't', html: '<p>t</p>' }, { config: brevo }), { ok: true })
+  const call = sent.at(-1)
+  assert.equal(call.url, 'https://api.brevo.com/v3/smtp/email')
+  assert.equal(call.init.headers['api-key'], 'xkeysib-1')
+  assert.deepEqual(call.body.sender, { name: 'Retrospace', email: 'me@gmail.com' })
+  assert.deepEqual(call.body.to, [{ email: 'a@example.com' }])
+  assert.equal(call.body.textContent, 't')
+  assert.equal(call.body.htmlContent, '<p>t</p>')
+
+  assert.deepEqual(parseFrom('Retrospace <no-reply@example.com>'), { name: 'Retrospace', email: 'no-reply@example.com' })
+  assert.deepEqual(parseFrom('"Retro Space" <a@b.co>'), { name: 'Retro Space', email: 'a@b.co' })
+  assert.deepEqual(parseFrom('a@b.co'), { email: 'a@b.co' })
+  assert.deepEqual(parseFrom('<a@b.co>'), { email: 'a@b.co' })
 })

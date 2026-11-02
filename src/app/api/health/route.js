@@ -5,7 +5,7 @@ import { sealConfigForSite } from '../../../lib/seal.js'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const NAMES = ['MONGODB_URI', 'MONGODB_DB', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'RT_SECRET', 'ANTHROPIC_API_KEY', 'NEXT_PUBLIC_GIPHY_API_KEY', 'NEXT_PUBLIC_SITE_URL', 'DATA_ENCRYPTION_KEY', 'DATA_ENCRYPTION_WRITE', 'REALTIME_WS_URL', 'REALTIME_SECRET', 'RESEND_API_KEY', 'MAIL_FROM', 'ERROR_WEBHOOK_URL']
+const NAMES = ['MONGODB_URI', 'MONGODB_DB', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'RT_SECRET', 'ANTHROPIC_API_KEY', 'NEXT_PUBLIC_GIPHY_API_KEY', 'NEXT_PUBLIC_SITE_URL', 'DATA_ENCRYPTION_KEY', 'DATA_ENCRYPTION_WRITE', 'REALTIME_WS_URL', 'REALTIME_SECRET', 'RESEND_API_KEY', 'BREVO_API_KEY', 'MAIL_FROM', 'ERROR_WEBHOOK_URL']
 const within = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
 
 // reading: a usable key is present; writing: new records are sealed too; error: a key is set but cannot be used (never its value).
