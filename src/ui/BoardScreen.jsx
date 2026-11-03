@@ -14,6 +14,8 @@ import Timer from './Timer.jsx'
 import BoardSettings from './BoardSettings.jsx'
 import SummaryPanel from './SummaryPanel.jsx'
 import HighlightsPanel from './HighlightsPanel.jsx'
+import SupportModal from './SupportModal.jsx'
+import { useSupportPrompt } from './useSupportPrompt.js'
 import { showSummaryButton } from './summaryApi.js'
 import { EffectsProvider } from './Effects.jsx'
 import { usePresence } from './usePresence.js'
@@ -64,6 +66,7 @@ function BoardView({ code, viewOnly }) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen] = useState(false)
+  const support = useSupportPrompt(board, code, phase === 'ready')
   const [focusAi, setFocusAi] = useState(false) // the Summary panel's "turn on AI" link opens the settings at that switch
   const [themesOpen, setThemesOpen] = useState(false)
   const themesBtn = useRef(null)
@@ -213,6 +216,7 @@ function BoardView({ code, viewOnly }) {
       )}
       {shareOpen && ctl.isOwner && <ShareDialog code={code} title={board?.title} openerRef={shareBtn} onClose={() => setShareOpen(false)} />}
       {settingsOpen && ctl.isOwner && <BoardSettings ctl={ctl} openerRef={settingsBtn} focusAi={focusAi} onClose={() => { setSettingsOpen(false); setFocusAi(false) }} />}
+      {support.open && <SupportModal onClose={support.close} onNever={support.never} />}
       {highlightsOpen && ctl.isOwner && <HighlightsPanel ctl={ctl} code={code} openerRef={highlightsBtn} printHref={printHref(code)} onClose={() => setHighlightsOpen(false)} onOpenSettings={() => { setHighlightsOpen(false); setFocusAi(true); setSettingsOpen(true) }} />}
       {summaryOpen && ( // stays open when the owner withdraws the summary under a guest who is reading it: the panel then says so
         <SummaryPanel ctl={ctl} openerRef={summaryBtn} onClose={() => setSummaryOpen(false)} onOpenSettings={() => { setSummaryOpen(false); setFocusAi(true); setSettingsOpen(true) }} />
