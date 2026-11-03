@@ -3,6 +3,7 @@ import { getTemplate } from './templates.js'
 import { validateColumns, validateHeader } from './columns.js'
 import { ANON_KINDS } from './anon.js'
 import { checkStrokeData } from './stroke.js'
+import { normalizeMarks } from './marks.js'
 
 export const KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'card', 'shoutout', 'theme', 'action', 'stroke']
 export const REACTIONS = ['🎉', '❤️', '👏', '😂', '🙌', '🔥']
@@ -115,7 +116,7 @@ function checkShoutout(d) {
 
 // Minimal required shape per kind; returns an error string or null.
 const KIND_CHECKS = {
-  note: (d) => (isStr(d.text) && optStr(d, 'color') ? null : 'note needs text'),
+  note: (d) => (isStr(d.text) && optStr(d, 'color') ? (d.marks === undefined || Array.isArray(d.marks) ? null : 'note marks must be a list') : 'note needs text'),
   text: (d) => (isStr(d.text) ? null : 'text needs text'),
   shape: (d) => (SHAPES.includes(d.shape) && optStr(d, 'text') && optStr(d, 'color') ? null : 'shape needs rect|ellipse|diamond'),
   connector: (d) => (isId(d.from) && isId(d.to) ? null : 'connector needs from and to'),
@@ -179,6 +180,11 @@ export function validateItem(input) {
   const dataErr = checkData(input.data, LARGE_KEYS[input.kind] || []) || KIND_CHECKS[input.kind](input.data)
   if (dataErr) return err(dataErr)
   item.data = input.kind === 'action' ? actionData(input.data) : { ...input.data }
+  if (input.kind === 'note' && item.data.marks !== undefined) { // highlighted words: fitted to the text, never refused for not fitting
+    const marks = normalizeMarks(item.data.text, item.data.marks)
+    if (marks.length) item.data.marks = marks
+    else delete item.data.marks
+  }
   // `anon` is a flag, true or absent (false is normalised away), and only for kinds that carry an author's words.
   if (input.anon !== undefined) {
     if (typeof input.anon !== 'boolean') return err('anon must be a boolean')

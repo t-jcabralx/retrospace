@@ -13,6 +13,7 @@ import Stroke from './items/Stroke.jsx'
 import { noteColor } from './ops.js'
 import { MAX_CARD_MESSAGE } from '../lib/validate.js'
 import { VoteIcon } from './icons.jsx'
+import { MARK_COLORS, normalizeMarks, rebaseMarks, applyMark, segments, charLength, toCharIndex } from '../lib/marks.js'
 
 const BODY = { note: Note, text: Text, shape: Shape, frame: Frame, image: Image, card: Card, shoutout: Shoutout, theme: Theme, action: ActionCard, stroke: Stroke }
 // Which data field the double-click editor changes.
@@ -48,13 +49,15 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onDr
     if (viaKey) setTimeout(() => box.current?.focus({ preventScroll: true }), 0)
   }
   const needsText = item.kind === 'card' || item.kind === 'action'
-  const commit = (value, viaKey) => {
+  const marksOf = (m) => JSON.stringify(m ?? [])
+  const commit = (value, viaKey, marks) => {
     // A card needs a message: an emptied editor keeps the old one rather than sending an update the server would refuse.
-    if (value !== (item.data[field] ?? '') && !(needsText && !value.trim())) onChange({ data: { [field]: value } })
+    const changed = value !== (item.data[field] ?? '') || (marks !== undefined && marksOf(marks) !== marksOf(item.data.marks))
+    if (changed && !(needsText && !value.trim())) onChange({ data: { [field]: value, ...(marks !== undefined && { marks }) } })
     done(viaKey, value)
   }
   // Text is saved while it is typed, so a reload, a crash or a restart of the server in the middle of a sentence does not lose it.
-  const saveDraft = onDraft && ((value) => { if (!(needsText && !value.trim())) onDraft({ data: { [field]: value } }) })
+  const saveDraft = onDraft && ((value, marks) => { if (!(needsText && !value.trim())) onDraft({ data: { [field]: value, ...(marks !== undefined && { marks }) } }) })
 
   const onPointerUp = (e) => { // double-tap: dblclick is not reliable for touch
     if (e.pointerType !== 'touch' || !canEdit) return
@@ -106,7 +109,7 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onDr
       ) : votes > 0 && (
         <span className="bd-vote-badge" aria-hidden="true"><VoteIcon width={14} height={14} />{votes}</span>
       )}
-      {editing && <Editor kind={item.kind} field={field} value={item.data[field] ?? ''} onCommit={commit} onCancel={() => done(true)} onDraft={saveDraft} />}
+      {editing && <Editor kind={item.kind} field={field} value={item.data[field] ?? ''} marks={item.kind === 'note' ? normalizeMarks(item.data.text, item.data.marks) : undefined} onCommit={commit} onCancel={() => done(true)} onDraft={saveDraft} />}
       {handles && editable && list.map((h) => (
         <span key={h} aria-hidden="true" className={`bd-handle bd-h-${h}`} onPointerDown={(e) => onResizeStart?.(e, h)} />
       ))}
@@ -120,21 +123,40 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onDr
 const DRAFT_IDLE_MS = 3000
 const DRAFT_MAX_MS = 15000
 
-function Editor({ kind, field, value, onCommit, onCancel, onDraft }) {
+function Editor({ kind, field, value, marks: initialMarks, onCommit, onCancel, onDraft }) {
+  const markable = initialMarks !== undefined // notes: words in the box can be highlighted
   const [text, setText] = useState(value)
+  const [marks, setMarks] = useState(initialMarks ?? [])
+  const [sel, setSel] = useState(null) // the selected stretch, in characters, while there is one
   const el = useRef(null)
+  const back = useRef(null)
   const original = useRef(value) // what the editor opened with: the item's own value changes once a draft is sent
+  const originalMarks = useRef(initialMarks)
   const latest = useRef(value) // what is in the box now
+  const latestMarks = useRef(initialMarks)
   const saved = useRef(value) // what was last sent (the value the editor opened with, until a draft goes out)
+  const savedMarks = useRef(initialMarks)
   const timer = useRef(null)
   const dirtySince = useRef(null) // when the text first differed from what was last sent
   const draft = useRef(onDraft)
   draft.current = onDraft
+  const same = (a, b) => JSON.stringify(a ?? []) === JSON.stringify(b ?? [])
   const flush = () => {
     clearTimeout(timer.current)
     timer.current = null
     dirtySince.current = null
-    if (draft.current && latest.current !== saved.current) { saved.current = latest.current; draft.current(latest.current) }
+    if (draft.current && (latest.current !== saved.current || !same(latestMarks.current, savedMarks.current))) {
+      saved.current = latest.current
+      savedMarks.current = latestMarks.current
+      draft.current(latest.current, latestMarks.current)
+    }
+  }
+  const queueDraft = () => {
+    if (!draft.current) return
+    const now = Date.now()
+    dirtySince.current ??= now
+    clearTimeout(timer.current)
+    timer.current = setTimeout(flush, Math.max(0, Math.min(DRAFT_IDLE_MS, dirtySince.current + DRAFT_MAX_MS - now)))
   }
   useEffect(() => {
     const hide = () => { if (document.visibilityState === 'hidden') flush() } // leaving the tab: send it now
@@ -152,41 +174,71 @@ function Editor({ kind, field, value, onCommit, onCancel, onDraft }) {
     t.setSelectionRange(field === 'title' ? 0 : t.value.length, t.value.length)
   }, [])
   const stop = (e) => e.stopPropagation()
+  // Puts a colour on the selected words, or takes the highlight off (null, or the same colour again). The words keep their
+  // selection so another colour can follow.
+  const mark = (color) => {
+    if (!sel) return
+    const next = applyMark(latestMarks.current, sel.s, sel.e, color, charLength(latest.current))
+    latestMarks.current = next
+    setMarks(next)
+    queueDraft()
+    el.current?.focus()
+  }
   return (
-    <textarea
-      ref={el}
-      className={`bd-editor bd-editor-${kind}`}
-      value={text}
-      maxLength={MAX_LEN[field] ?? 2000}
-      aria-label={EDITOR_LABEL[field] ?? 'Item text'}
-      spellCheck={false}
-      onChange={(e) => {
-        setText(e.target.value)
-        latest.current = e.target.value
-        if (draft.current) {
-          const now = Date.now()
-          dirtySince.current ??= now
+    <>
+      {markable && (
+        // The highlights drawn behind the (see-through) box: the same text in the same place, its own colour hidden.
+        <div ref={back} className={`bd-editor bd-editor-${kind} bd-editor-back`} aria-hidden="true">
+          {segments(text, marks).map((s, i) => (s.color ? <mark key={i} className={`bd-mark bd-mark-${s.color}`}>{s.text}</mark> : s.text))}
+        </div>
+      )}
+      <textarea
+        ref={el}
+        className={`bd-editor bd-editor-${kind}${markable ? ' has-marks' : ''}`}
+        value={text}
+        maxLength={MAX_LEN[field] ?? 2000}
+        aria-label={EDITOR_LABEL[field] ?? 'Item text'}
+        spellCheck={false}
+        onChange={(e) => {
+          const v = e.target.value
+          if (markable) { const next = rebaseMarks(latest.current, v, latestMarks.current); latestMarks.current = next; setMarks(next) }
+          setText(v)
+          latest.current = v
+          queueDraft()
+        }}
+        onSelect={markable ? (e) => {
+          const t = e.currentTarget
+          const s = toCharIndex(t.value, t.selectionStart)
+          const en = toCharIndex(t.value, t.selectionEnd)
+          setSel(en > s ? { s, e: en } : null)
+        } : undefined}
+        onScroll={markable ? (e) => { if (back.current) back.current.scrollTop = e.currentTarget.scrollTop } : undefined}
+        onPointerDown={stop}
+        onDoubleClick={stop}
+        onKeyDown={(e) => {
+          e.stopPropagation()
+          if (e.key === 'Escape') { cancelled.current = true; clearTimeout(timer.current); timer.current = null; if (draft.current && (saved.current !== original.current || !same(savedMarks.current, originalMarks.current))) draft.current(original.current, originalMarks.current); onCancel() } // Esc puts back
+          else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || field === 'title')) { e.preventDefault(); asked.current = true; e.currentTarget.blur() }
+        }}
+        onBlur={() => {
+          if (cancelled.current) return
+          // The click that created the item still has its own focus change to deliver (touch sends it late):
+          // taking focus back is better than closing the editor the moment it opens.
+          if (!asked.current && Date.now() - openedAt.current < 350) { setTimeout(() => el.current?.focus(), 0); return }
           clearTimeout(timer.current)
-          timer.current = setTimeout(flush, Math.max(0, Math.min(DRAFT_IDLE_MS, dirtySince.current + DRAFT_MAX_MS - now)))
-        }
-      }}
-      onPointerDown={stop}
-      onDoubleClick={stop}
-      onKeyDown={(e) => {
-        e.stopPropagation()
-        if (e.key === 'Escape') { cancelled.current = true; clearTimeout(timer.current); timer.current = null; if (draft.current && saved.current !== original.current) draft.current(original.current); onCancel() } // Esc puts back what the editor opened with, even if a draft went out
-        else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || field === 'title')) { e.preventDefault(); asked.current = true; e.currentTarget.blur() }
-      }}
-      onBlur={() => {
-        if (cancelled.current) return
-        // The click that created the item still has its own focus change to deliver (touch sends it late):
-        // taking focus back is better than closing the editor the moment it opens.
-        if (!asked.current && Date.now() - openedAt.current < 350) { setTimeout(() => el.current?.focus(), 0); return }
-        clearTimeout(timer.current)
-        timer.current = null
-        onCommit(text, asked.current)
-      }}
-    />
+          timer.current = null
+          onCommit(text, asked.current, markable ? latestMarks.current : undefined)
+        }}
+      />
+      {markable && sel && (
+        <div className="bd-markbar" role="toolbar" aria-label="Highlight the selected words" onPointerDown={(e) => { e.preventDefault(); e.stopPropagation() }} onDoubleClick={stop}>
+          {MARK_COLORS.map((c) => (
+            <button key={c} type="button" className={`bd-markbtn bd-mark-${c}`} aria-label={`Highlight in ${c}`} title={`Highlight in ${c}`} onClick={() => mark(c)} />
+          ))}
+          <button type="button" className="bd-markbtn bd-markbtn--clear" aria-label="Remove the highlight" title="Remove the highlight" onClick={() => mark(null)}>×</button>
+        </div>
+      )}
+    </>
   )
 }
 

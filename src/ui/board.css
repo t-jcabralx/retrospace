@@ -326,3 +326,22 @@
 .bd-canvas.bd-tool-highlighter .bd-stroke path { pointer-events: none; }
 .bd-canvas.bd-tool-highlighter { cursor: crosshair; }
 .bd-stroke-draft { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; opacity: 0.5; }
+
+/* Highlighted words in a note. The strong colours are for words (a note's own colour is soft, so a mark on it must stand out). */
+.bd-mark { padding: 0 1px; border-radius: 3px; color: #1b1b1f; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.bd-mark-yellow { background: #ffe14d; }
+.bd-mark-green { background: #7ee787; }
+.bd-mark-pink { background: #ff9bd2; }
+.bd-mark-blue { background: #7cc4ff; }
+/* While editing, the marks sit behind the see-through text box, in the same place: same box, same text, only the colour of the letters hidden. */
+.bd-editor-back { z-index: 0; overflow-y: auto; scrollbar-width: none; white-space: pre-wrap; overflow-wrap: anywhere; color: transparent; outline: none; pointer-events: none; }
+.bd-editor.has-marks { z-index: 1; overflow-y: auto; scrollbar-width: none; }
+.bd-editor-back .bd-mark { color: transparent; }
+.bd-markbar {
+  position: absolute; left: 0; top: calc(-46px * var(--bd-inv, 1)); z-index: 3; display: inline-flex; gap: 6px; padding: 6px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--panel); box-shadow: var(--bd-shadow); transform-origin: 0 100%; transform: scale(var(--bd-inv, 1));
+}
+.bd-markbtn { width: 28px; height: 28px; padding: 0; border: 2px solid color-mix(in srgb, var(--ink) 25%, transparent); border-radius: 50%; cursor: pointer; font: inherit; line-height: 1; }
+.bd-markbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bd-markbtn--clear { display: inline-grid; place-items: center; background: transparent; color: var(--ink); font-size: 16px; }
+@media (pointer: coarse) { .bd-markbtn { width: 40px; height: 40px; } .bd-markbar { top: calc(-60px * var(--bd-inv, 1)); } }

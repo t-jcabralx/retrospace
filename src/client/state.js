@@ -83,7 +83,11 @@ function applyOp(items, op) {
       if (isObj(op.patch.data)) {
         const data = {}
         // A key the item did not have cannot be un-set by a patch, so it is left out of the inverse.
-        for (const k of Object.keys(op.patch.data)) if (cur.data && k in cur.data) data[k] = structuredClone(cur.data[k])
+        // ...except highlighted words, which have an empty form (none), so undoing their first use takes them away.
+        for (const k of Object.keys(op.patch.data)) {
+          if (cur.data && k in cur.data) data[k] = structuredClone(cur.data[k])
+          else if (k === 'marks') data[k] = []
+        }
         if (Object.keys(data).length) patch.data = data
         next.data = { ...cur.data, ...op.patch.data }
       }

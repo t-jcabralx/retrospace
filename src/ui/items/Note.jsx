@@ -7,10 +7,16 @@ import { createPortal } from 'react-dom'
 import { noteColor } from '../ops.js'
 import { useModal } from '../boards/useModal.js'
 import { copyText } from '../boards/CopyButton.jsx'
+import { segments } from '../../lib/marks.js'
 
 const BEHIND = '.bd-top, .bd-board, .bd-panel-screen, .bd-zoom, .ev, .bd-wall, .bd-retro'
 
-function Reader({ text, author, openerRef, onClose }) {
+// The text with its highlighted words drawn; plain text when there are none.
+export function Marked({ text, marks }) {
+  return segments(text, marks).map((s, i) => (s.color ? <mark key={i} className={`bd-mark bd-mark-${s.color}`}>{s.text}</mark> : s.text))
+}
+
+function Reader({ text, marks, author, openerRef, onClose }) {
   const root = useRef(null)
   const id = useId()
   const [copied, setCopied] = useState(null)
@@ -23,7 +29,7 @@ function Reader({ text, author, openerRef, onClose }) {
           <h2 id={id}>{author ? `Note by ${author}` : 'Note'}</h2>
           <button type="button" className="bd-sbtn" data-autofocus onClick={onClose}>Close</button>
         </header>
-        <div className="bd-reader-text" tabIndex={0}>{text}</div>
+        <div className="bd-reader-text" tabIndex={0}><Marked text={text} marks={marks} /></div>
         <div className="bd-reader-foot">
           <button type="button" className="bd-sbtn" onClick={async () => { setCopied(await copyText(text)); setTimeout(() => setCopied(null), 2000) }}>{copied === true ? 'Copied' : copied === false ? 'Copy failed' : 'Copy the text'}</button>
         </div>
@@ -55,7 +61,7 @@ export default function Note({ item, editing, readOnly }) {
   return (
     <div className="bd-note-wrap">
       <div ref={box} className={`bd-note${over || item.anon ? ' has-foot' : ''}`} style={{ background: noteColor(item.data.color) }}>
-        {!editing && (text ? <p className="bd-body-text">{text}</p> : !readOnly && <p className="bd-placeholder">Double-click to write</p>)}
+        {!editing && (text ? <p className="bd-body-text"><Marked text={text} marks={item.data.marks} /></p> : !readOnly && <p className="bd-placeholder">Double-click to write</p>)}
       </div>
       {over && !editing && (
         <button
@@ -64,7 +70,7 @@ export default function Note({ item, editing, readOnly }) {
           onClick={(e) => { e.stopPropagation(); setOpen(true) }}
         >Read all</button>
       )}
-      {open && <Reader text={text} author={item.anon ? '' : item.authorName} openerRef={btn} onClose={() => setOpen(false)} />}
+      {open && <Reader text={text} marks={item.data.marks} author={item.anon ? '' : item.authorName} openerRef={btn} onClose={() => setOpen(false)} />}
     </div>
   )
 }
