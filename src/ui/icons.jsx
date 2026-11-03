@@ -10,6 +10,7 @@ export const ConnectorIcon = I(<><circle cx="5" cy="18" r="2.2" /><circle cx="19
 export const FrameIcon = I(<><path d="M7 3v18M17 3v18M3 7h18M3 17h18" /></>)
 export const ImageIcon = I(<><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="M21 16l-5-5-8 9" /></>)
 export const StarIcon = I(<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9L3.5 9.7l5.9-.8z" />)
+export const HighlighterIcon = I(<><path d="M4 20h6" /><path d="M14.5 4.5l5 5L9 20l-5-1 1-5z" /><path d="M12 7l5 5" /></>)
 export const UndoIcon = I(<><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 010 12h-3" /></>)
 export const RedoIcon = I(<><path d="M15 14l5-5-5-5" /><path d="M20 9H10a6 6 0 000 12h3" /></>)
 export const MinusIcon = I(<path d="M5 12h14" />)

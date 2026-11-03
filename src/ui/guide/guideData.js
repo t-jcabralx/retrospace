@@ -42,6 +42,7 @@ export const TOOLS = [
   ['Connector', 'Click one item, then another, to join them with a line.'],
   ['Frame', 'A named area that groups what is inside it.'],
   ['Image', 'Add a picture. On cards, search Giphy or paste a GIF link.'],
+  ['Highlighter pen (M)', 'Draw see-through colour strokes over notes or the canvas to point things out. Pick a colour on the bar. Press V, then click a stroke to select it, recolour it, resize it or delete it.'],
   ['Highlight (H)', 'Select a note and press the star, or H, to give it a gold ring and star everyone sees. The host and the note\u2019s author can do it. The host\u2019s Highlights button lists the starred notes, the most-voted ones and the action items, ready to copy or print.'],
 ]
 

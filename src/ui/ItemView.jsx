@@ -9,11 +9,12 @@ import Card from './items/Card.jsx'
 import Shoutout from './items/Shoutout.jsx'
 import Theme from './items/Theme.jsx'
 import ActionCard from './items/ActionCard.jsx'
+import Stroke from './items/Stroke.jsx'
 import { noteColor } from './ops.js'
 import { MAX_CARD_MESSAGE } from '../lib/validate.js'
 import { VoteIcon } from './icons.jsx'
 
-const BODY = { note: Note, text: Text, shape: Shape, frame: Frame, image: Image, card: Card, shoutout: Shoutout, theme: Theme, action: ActionCard }
+const BODY = { note: Note, text: Text, shape: Shape, frame: Frame, image: Image, card: Card, shoutout: Shoutout, theme: Theme, action: ActionCard, stroke: Stroke }
 // Which data field the double-click editor changes.
 const FIELD = { note: 'text', text: 'text', shape: 'text', frame: 'title', card: 'message', action: 'action' }
 const MAX_LEN = { text: 2000, title: 80, message: MAX_CARD_MESSAGE, action: 200 }

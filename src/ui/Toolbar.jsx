@@ -1,6 +1,6 @@
 'use client'
 import { toolAllowed, NOTES_CLOSED } from '../lib/clientRules.js'
-import { SelectIcon, NoteIcon, TextIcon, ShapeIcon, ConnectorIcon, FrameIcon, ImageIcon } from './icons.jsx'
+import { SelectIcon, NoteIcon, TextIcon, ShapeIcon, ConnectorIcon, FrameIcon, ImageIcon, HighlighterIcon } from './icons.jsx'
 
 export const TOOLS = [
   { id: 'select', label: 'Select', key: 'V', Icon: SelectIcon },
@@ -10,6 +10,7 @@ export const TOOLS = [
   { id: 'connector', label: 'Connector', key: 'C', Icon: ConnectorIcon },
   { id: 'frame', label: 'Frame', key: 'F', Icon: FrameIcon },
   { id: 'image', label: 'Image', key: 'I', Icon: ImageIcon },
+  { id: 'highlighter', label: 'Highlighter pen', key: 'M', Icon: HighlighterIcon },
 ]
 
 // Left rail on desktop, bottom bar on phones (CSS). `disabled` leaves only Select usable (locked boards); `closed` does

@@ -11,6 +11,8 @@ import Cursors from './Cursors.jsx'
 import PeerSelections from './PeerSelections.jsx'
 import { selectionForPresence } from '../lib/anon.js'
 import { isHighlightable, isHighlighted } from '../lib/highlight.js'
+import { STROKE_WIDTH } from '../lib/stroke.js'
+import { noteColor } from './ops.js'
 import VotePanel from './VotePanel.jsx'
 import ThrowLayer from './ThrowLayer.jsx'
 import ThrowTray from './ThrowTray.jsx'
@@ -41,7 +43,7 @@ export default function Board({ ctl, code, presence = null }) {
   const [picked, setSelection] = useState(() => new Set())
   const [editing, setEditing] = useState(null)
   const [space, setSpace] = useState(false)
-  const [style, setStyleState] = useState({ note: 'yellow', shape: 'blue', shapeKind: 'rect', anon: false })
+  const [style, setStyleState] = useState({ note: 'yellow', shape: 'blue', mark: 'yellow', shapeKind: 'rect', anon: false })
   const fileRef = useRef(null)
 
   // Items other people delete drop out of the selection.
@@ -137,9 +139,10 @@ export default function Board({ ctl, code, presence = null }) {
   const deletable = ctl.readOnly ? [] : [...selection].map((id) => byId.get(id)).filter((i) => i && ctl.canEdit(i))
   const highlightable = ctl.readOnly ? [] : sel.filter((i) => ctl.canEdit(i) && isHighlightable(i))
   const allHighlighted = highlightable.length > 0 && highlightable.every(isHighlighted)
-  const showColors = !ctl.readOnly && (tool === 'note' || tool === 'shape' || hasKind('note') || hasKind('shape'))
+  const showColors = !ctl.readOnly && (tool === 'note' || tool === 'shape' || tool === 'highlighter' || hasKind('note') || hasKind('shape') || hasKind('stroke'))
   const showShapes = !ctl.readOnly && (tool === 'shape' || hasKind('shape'))
-  const ctxColor = single && (single.kind === 'note' || single.kind === 'shape') ? single.data.color : tool === 'shape' || (!hasKind('note') && hasKind('shape')) ? style.shape : style.note
+  const penColors = tool === 'highlighter' || (!hasKind('note') && !hasKind('shape') && hasKind('stroke')) // the swatches are for the pen
+  const ctxColor = single && (single.kind === 'note' || single.kind === 'shape' || single.kind === 'stroke') ? single.data.color : penColors ? style.mark : tool === 'shape' || (!hasKind('note') && hasKind('shape')) ? style.shape : style.note
   const ctxShape = single?.kind === 'shape' ? single.data.shape : style.shapeKind
 
   const worldOf = (e) => {
@@ -272,6 +275,11 @@ export default function Board({ ctl, code, presence = null }) {
           </ThemeLinks.Provider>
           <PeerSelections presence={presence} byId={byId} />
           <Cursors presence={presence} />
+          {g.strokeDraft && (
+            <svg className="bd-stroke-draft" aria-hidden="true" focusable="false">
+              <path d={`M${g.strokeDraft.map((p) => `${p.x} ${p.y}`).join('L')}`} fill="none" stroke={noteColor(style.mark)} strokeWidth={STROKE_WIDTH} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
           {g.draft && <div className={`bd-draft bd-draft-${tool}`} style={{ left: g.draft.x, top: g.draft.y, width: g.draft.w, height: g.draft.h }} />}
           {g.marquee && <div className="bd-marquee" style={{ left: g.marquee.x, top: g.marquee.y, width: g.marquee.w, height: g.marquee.h }} />}
         </div>

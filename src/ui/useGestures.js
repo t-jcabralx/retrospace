@@ -24,6 +24,7 @@ export function useGestures(env) {
   const [overlay, setOverlay] = useState(null)
   const [marquee, setMarquee] = useState(null)
   const [draft, setDraft] = useState(null)
+  const [strokeDraft, setStrokeDraft] = useState(null) // the highlighter pen's points so far (world coordinates)
   const [panning, setPanning] = useState(false)
   const [linkFrom, setLink] = useState(null)
   const linkRef = useRef(null) // read by handlers, which are created once
@@ -37,7 +38,7 @@ export function useGestures(env) {
     }
     const world = (e) => screenToWorld(local(e), E.current.viewRef.current)
     const boxes = () => E.current.ctl.items.filter((i) => i.kind !== 'connector')
-    const clear = () => { setOverlay(null); setMarquee(null); setDraft(null); setPanning(false) }
+    const clear = () => { setOverlay(null); setMarquee(null); setDraft(null); setStrokeDraft(null); setPanning(false) }
 
     const stream = (gs, patches) => {
       const now = performance.now()
@@ -101,6 +102,7 @@ export function useGestures(env) {
       }
       if (gs.type === 'pan' && gs.tap && !gs.moved) setSelection(new Set())
       if (gs.type === 'place' && !cancelled) E.current.actions.createAt(gs.kind, gs.start)
+      if (gs.type === 'stroke' && !cancelled) E.current.actions.createStroke(gs.pts)
       if (gs.type === 'draw' && !cancelled) {
         const r = gs.rect
         if (r && r.w >= MIN_DRAW && r.h >= MIN_DRAW) E.current.actions.createRect(gs.kind, r)
@@ -135,6 +137,10 @@ export function useGestures(env) {
         } else if (tool === 'shape' || tool === 'frame') {
           hold(e, E.current.rootRef.current)
           g.current = { type: 'draw', pointerId: e.pointerId, kind: tool, start: w, rect: null }
+        } else if (tool === 'highlighter') {
+          hold(e, E.current.rootRef.current)
+          g.current = { type: 'stroke', pointerId: e.pointerId, pts: [w] }
+          setStrokeDraft([w])
         } else if (tool === 'connector') {
           setLinkFrom(null)
         }
@@ -220,6 +226,14 @@ export function useGestures(env) {
             E.current.setSelection(hit)
             break
           }
+          case 'stroke': {
+            const w = world(e)
+            const last = gs.pts[gs.pts.length - 1]
+            if (Math.hypot(w.x - last.x, w.y - last.y) < 2) return
+            gs.pts.push(w)
+            setStrokeDraft([...gs.pts])
+            break
+          }
           case 'draw': {
             gs.rect = normalize(gs.start, world(e))
             setDraft(gs.rect)
@@ -266,7 +280,7 @@ export function useGestures(env) {
 
   return {
     handlers: api.current,
-    overlay, marquee, draft, panning, linkFrom, setLinkFrom,
+    overlay, marquee, draft, strokeDraft, panning, linkFrom, setLinkFrom,
     cancel: () => api.current.reset(),
   }
 }

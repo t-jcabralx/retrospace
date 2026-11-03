@@ -2,8 +2,9 @@ import { stripControl } from './ids.js'
 import { getTemplate } from './templates.js'
 import { validateColumns, validateHeader } from './columns.js'
 import { ANON_KINDS } from './anon.js'
+import { checkStrokeData } from './stroke.js'
 
-export const KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'card', 'shoutout', 'theme', 'action']
+export const KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'card', 'shoutout', 'theme', 'action', 'stroke']
 export const REACTIONS = ['🎉', '❤️', '👏', '😂', '🙌', '🔥']
 export const BADGES = ['Teamwork', 'Above & Beyond', 'Innovation', 'Customer Hero', 'Thank You']
 export const SHAPES = ['rect', 'ellipse', 'diamond']
@@ -124,6 +125,7 @@ const KIND_CHECKS = {
   theme: checkTheme,
   action: (d) => checkAction(d),
   shoutout: checkShoutout,
+  stroke: (d) => checkStrokeData(d, NOTE_COLORS),
 }
 
 // --- retro action items: what the team will do, who owns it, by when ---

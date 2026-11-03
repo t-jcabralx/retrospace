@@ -2,7 +2,7 @@
 // Window-level keyboard, paste and drag-drop for the canvas. Ignored while the user is typing in a field.
 import { useEffect, useRef } from 'react'
 
-const TOOL_KEYS = { v: 'select', n: 'note', t: 'text', s: 'shape', c: 'connector', f: 'frame', i: 'image' }
+const TOOL_KEYS = { v: 'select', n: 'note', t: 'text', s: 'shape', c: 'connector', f: 'frame', i: 'image', m: 'highlighter' }
 const onControl = (el) => Boolean(el?.closest?.('button, a, [role="button"]')) // Space/Enter belong to a focused control
 const typing = (el) => Boolean(el?.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]'))
 

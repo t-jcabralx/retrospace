@@ -16,6 +16,7 @@ const minimal = {
   shoutout: { toName: 'Ana', message: 'Thanks', badge: 'Teamwork' },
   theme: { title: 'Pace', noteIds: [] },
   action: { action: 'Fix the flaky build' },
+  stroke: { pts: [0, 0, 500, 500, 1000, 1000], color: 'yellow' },
 }
 
 test('constants', () => {

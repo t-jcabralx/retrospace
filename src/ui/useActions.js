@@ -5,6 +5,7 @@ import { boundsOf, screenToWorld } from './geometry.js'
 import { addOp, deleteOps, duplicateOps, reorderOps, movableIds, nextZ, topZ, patchOps, DEFAULTS } from './ops.js'
 import { addsAnonymously } from '../lib/anon.js'
 import { isHighlightable, isHighlighted } from '../lib/highlight.js'
+import { buildStroke } from '../lib/stroke.js'
 import { fileToImage, ImageTooLarge } from './images.js'
 
 const TEXT_KINDS = ['note', 'text', 'shape', 'frame', 'card'] // Enter edits these (a card's message); new ones of the creatable kinds open their editor straight away
@@ -64,6 +65,15 @@ export function useActions(env) {
         const op = addOp(kind, rect, data, nextZ(items(), kind))
         if (addsAnonymously(E.current.ctl.board?.anonymousNotes, style.anon, kind)) op.item.anon = true // the server decides what the board's mode allows
         return add(op, { edit: TEXT_KINDS.includes(kind) })
+      },
+      // A pen stroke from the points the pointer went through. The tool stays on and nothing is selected, so the next stroke can follow at once.
+      createStroke(points) {
+        const { ctl, style } = E.current
+        if (ctl.readOnly) return null
+        const s = buildStroke(points, { color: style.mark })
+        if (!s) return null
+        const op = addOp('stroke', s.rect, s.data, topZ(items()) + 1)
+        return ctl.local([op]) ? op.id : null
       },
       createConnector(fromId, toId) {
         const a = byId(fromId), b = byId(toId)
@@ -125,6 +135,7 @@ export function useActions(env) {
         const ops = []
         for (const i of sel) {
           if (change.color && (i.kind === 'shape' || (i.kind === 'note' && change.color !== 'none'))) ops.push({ op: 'update', id: i.id, patch: { data: { color: change.color } } })
+          if (change.color && i.kind === 'stroke') ops.push({ op: 'update', id: i.id, patch: { data: { color: change.color } } })
           if (change.shapeKind && i.kind === 'shape') ops.push({ op: 'update', id: i.id, patch: { data: { shape: change.shapeKind } } })
         }
         if (ops.length) ctl.local(ops)
@@ -133,6 +144,7 @@ export function useActions(env) {
         const next = {}
         if (change.color && kinds.has('note') && change.color !== 'none') next.note = change.color
         if (change.color && kinds.has('shape')) next.shape = change.color
+        if (change.color && (kinds.has('stroke') || tool === 'highlighter')) next.mark = change.color
         if (change.shapeKind) next.shapeKind = change.shapeKind
         setStyle(next)
       },

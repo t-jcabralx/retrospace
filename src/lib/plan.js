@@ -10,7 +10,7 @@ export const MAX_MEDIA = 3 * 1024 * 1024 // bytes of data: URLs one board may ho
 
 // Which item kinds each board type may hold. A kind with no renderer for the board would break it for everyone, so the
 // server refuses the rest, whatever the validator accepts. Unknown types fall back to the workshop set.
-const CANVAS_KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image']
+const CANVAS_KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'stroke']
 export const ALLOWED_KINDS = {
   workshop: CANVAS_KINDS,
   retro: [...CANVAS_KINDS, 'action', 'theme', 'topic'],

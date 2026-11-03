@@ -30,7 +30,7 @@ export const MAX_TOPICS = 60
 const TOPIC_ID = /^[A-Za-z0-9_-]{1,40}$/
 const FORBIDDEN_IDS = new Set(['__proto__', 'constructor', 'prototype'])
 // Item kinds a non-owner may only touch while the Collect stage is open and unlocked.
-export const CONTENT_KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image']
+export const CONTENT_KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'stroke']
 
 // Extra fields each PATCH retro action may carry (the PATCH rule rejects anything else).
 export const RETRO_ACTION_KEYS = {

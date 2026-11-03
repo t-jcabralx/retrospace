@@ -2,7 +2,7 @@
 // server rules (plan.js) and the board UI.
 import { isVotable } from './vote.js'
 
-export const NOT_HIGHLIGHTABLE = ['connector'] // a line is not something to point at
+export const NOT_HIGHLIGHTABLE = ['connector', 'stroke'] // a line, or a stroke that already is a highlight, is not something to point at
 export const isHighlightable = (item) => Boolean(item) && !item.deleted && !NOT_HIGHLIGHTABLE.includes(item.kind)
 export const isHighlighted = (item) => Boolean(item) && !item.deleted && item.hl === true
 

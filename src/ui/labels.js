@@ -20,6 +20,7 @@ function itemBaseLabel(item) {
     case 'shape': return text(`Shape (${d.shape ?? 'rect'})`)
     case 'frame': return clip(d.title, 60) ? `Frame: ${clip(d.title, 60)}` : 'Frame (untitled)'
     case 'image': return 'Image'
+    case 'stroke': return 'Highlighter stroke'
     case 'card': return `Card from ${clip(d.signer, 24) || 'someone'}: ${clip(d.message, 60) || '(empty)'}`
     case 'action': return `Action: ${clip(d.action, 60) || '(empty)'}${d.owner ? `, owner ${clip(d.owner, 24)}` : ', needs an owner'}${d.due ? `, due ${d.due}` : ', needs a due date'}`
     case 'theme': return clip(d.title, 60) ? `Theme: ${clip(d.title, 60)}` : 'Theme'

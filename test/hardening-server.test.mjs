@@ -55,7 +55,7 @@ test('a card is refused on workshop and retro boards but allowed on a celebratio
 })
 
 test('allowedKinds: per type table; retro keeps action/theme/topic open for other features; unknown types fall back to the canvas set', () => {
-  const canvas = ['note', 'text', 'shape', 'connector', 'frame', 'image']
+  const canvas = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'stroke']
   assert.deepEqual(allowedKinds('workshop'), canvas)
   assert.deepEqual(allowedKinds('celebration'), [...canvas, 'card'])
   for (const k of ['action', 'theme', 'topic']) assert.ok(allowedKinds('retro').includes(k), k)

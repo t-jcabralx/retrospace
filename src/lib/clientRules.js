@@ -4,7 +4,7 @@ import { allowedKinds } from './plan.js'
 import { retroAllows } from './retro.js'
 
 export const NOTES_CLOSED = 'Notes are closed in this stage'
-const TOOL_KIND = { note: 'note', text: 'text', shape: 'shape', connector: 'connector', frame: 'frame', image: 'image' } // toolbar tool -> item kind
+const TOOL_KIND = { note: 'note', text: 'text', shape: 'shape', connector: 'connector', frame: 'frame', image: 'image', highlighter: 'stroke' } // toolbar tool -> item kind
 
 // Is this toolbar tool meaningful on this board type? (Select always is.)
 export const toolAllowed = (type, toolId) => toolId === 'select' || allowedKinds(type).includes(TOOL_KIND[toolId])
