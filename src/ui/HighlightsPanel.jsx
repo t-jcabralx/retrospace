@@ -7,7 +7,9 @@ import { useModal } from './boards/useModal.js'
 import { copyText } from './boards/CopyButton.jsx'
 import { CloseIcon } from './icons.jsx'
 import { buildPrintModel } from '../lib/printModel.js'
-import { highlightsText } from '../lib/highlight.js'
+import { highlightsText, isHighlighted } from '../lib/highlight.js'
+import { suggestHighlightsRequest } from './highlightsApi.js'
+import { noteExcerpt } from './themesApi.js'
 import './site/site.css'
 import './settings.css'
 import './summary.css'
@@ -34,7 +36,59 @@ function Group({ title, note, list, mark }) {
   )
 }
 
-export default function HighlightsPanel({ ctl, onClose, openerRef, printHref }) {
+// The AI part: the owner asks, sees the notes the AI thinks are worth highlighting with its reason, and accepts them one by one or all
+// at once. Accepting is the ordinary highlight action; the suggestions are only held here and are gone when the panel closes.
+function AiSuggestions({ ctl, code, onOpenSettings }) {
+  const [state, setState] = useState({ phase: 'idle', suggestions: [], error: '' })
+  const aiOn = Boolean(ctl.board.ai?.enabled && ctl.board.ai?.ackAt)
+  const configured = ctl.state.viewer?.ai?.configured !== false
+  const byId = useMemo(() => new Map(ctl.items.map((i) => [i.id, i])), [ctl.items])
+
+  async function ask() {
+    setState({ phase: 'busy', suggestions: [], error: '' })
+    const r = await suggestHighlightsRequest(code)
+    setState(r.ok ? { phase: 'done', suggestions: r.suggestions, error: '' } : { phase: 'idle', suggestions: [], error: r.error })
+  }
+  const open = state.suggestions.filter((s) => byId.has(s.id) && !isHighlighted(byId.get(s.id)))
+  const accept = (ids) => ctl.local(ids.map((id) => ({ op: 'highlight', id, on: true })))
+
+  return (
+    <section className="bd-hl-group bd-hl-ai" aria-label="AI suggestions">
+      <h3>Suggest with AI</h3>
+      {!aiOn ? (
+        <>
+          <p className="bd-hl-note">AI is off for this board. When it is on, the notes&rsquo; text (never names) is sent to the AI provider to pick what stands out.</p>
+          {onOpenSettings && <button type="button" className="bd-sbtn" onClick={onOpenSettings}>Open AI settings</button>}
+        </>
+      ) : !configured ? (
+        <p className="bd-hl-note">AI isn&rsquo;t set up on this server.</p>
+      ) : (
+        <>
+          <p className="bd-hl-note">Sends the notes&rsquo; text (never names) to the AI provider, which suggests the ones worth highlighting. You choose what to accept.</p>
+          <button type="button" className="bd-sbtn" disabled={state.phase === 'busy'} onClick={ask}>{state.phase === 'busy' ? 'Looking through the notes…' : state.phase === 'done' ? 'Suggest again' : 'Suggest highlights'}</button>
+          {state.error && <p className="bd-hl-error" role="alert">{state.error}</p>}
+          {state.phase === 'done' && !open.length && <p className="bd-hl-note" role="status">{state.suggestions.length ? 'You have highlighted everything it suggested.' : 'The AI found nothing that stands out yet.'}</p>}
+          {open.length > 0 && (
+            <>
+              <ul className="bd-hl-list">
+                {open.map((s) => (
+                  <li key={s.id} className="bd-hl-ai-row">
+                    <span className="bd-hl-mark" aria-hidden="true">✦</span>
+                    <span className="bd-hl-text">{noteExcerpt(byId.get(s.id), 140)}{s.reason && <em className="bd-hl-reason">{s.reason}</em>}</span>
+                    <button type="button" className="bd-sbtn" aria-label={`Highlight: ${noteExcerpt(byId.get(s.id), 40)}`} onClick={() => accept([s.id])}>Highlight</button>
+                  </li>
+                ))}
+              </ul>
+              {open.length > 1 && <button type="button" className="bd-sbtn" onClick={() => accept(open.map((s) => s.id))}>Highlight all {open.length}</button>}
+            </>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
+export default function HighlightsPanel({ ctl, code, onClose, openerRef, printHref, onOpenSettings }) {
   const root = useRef(null)
   const titleId = useId()
   const [copied, setCopied] = useState(null)
@@ -69,6 +123,7 @@ export default function HighlightsPanel({ ctl, onClose, openerRef, printHref }) 
           ) : (
             <p className="bd-sum-empty" role="status">Nothing is highlighted yet. Select a note and press the star (or H) to highlight it. Notes with votes and action items show up here too.</p>
           )}
+          <AiSuggestions ctl={ctl} code={code} onOpenSettings={onOpenSettings} />
         </div>
       </aside>
     </>

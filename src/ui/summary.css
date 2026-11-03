@@ -60,3 +60,9 @@
 .bd-hl-mark { color: #f5b301; text-align: center; }
 .bd-hl-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .bd-hl-votes { color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+
+.bd-hl-ai { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); }
+.bd-hl-ai .bd-hl-list { margin: 12px 0; }
+.bd-hl-ai-row { grid-template-columns: 20px 1fr auto; }
+.bd-hl-reason { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; font-style: normal; }
+.bd-hl-error { margin: 8px 0 0; color: var(--bd-bad, #d64545); font-size: 14px; }

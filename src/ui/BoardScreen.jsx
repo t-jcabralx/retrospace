@@ -213,7 +213,7 @@ function BoardView({ code, viewOnly }) {
       )}
       {shareOpen && ctl.isOwner && <ShareDialog code={code} title={board?.title} openerRef={shareBtn} onClose={() => setShareOpen(false)} />}
       {settingsOpen && ctl.isOwner && <BoardSettings ctl={ctl} openerRef={settingsBtn} focusAi={focusAi} onClose={() => { setSettingsOpen(false); setFocusAi(false) }} />}
-      {highlightsOpen && ctl.isOwner && <HighlightsPanel ctl={ctl} openerRef={highlightsBtn} printHref={printHref(code)} onClose={() => setHighlightsOpen(false)} />}
+      {highlightsOpen && ctl.isOwner && <HighlightsPanel ctl={ctl} code={code} openerRef={highlightsBtn} printHref={printHref(code)} onClose={() => setHighlightsOpen(false)} onOpenSettings={() => { setHighlightsOpen(false); setFocusAi(true); setSettingsOpen(true) }} />}
       {summaryOpen && ( // stays open when the owner withdraws the summary under a guest who is reading it: the panel then says so
         <SummaryPanel ctl={ctl} openerRef={summaryBtn} onClose={() => setSummaryOpen(false)} onOpenSettings={() => { setSummaryOpen(false); setFocusAi(true); setSettingsOpen(true) }} />
       )}

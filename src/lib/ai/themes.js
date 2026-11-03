@@ -40,7 +40,7 @@ export function cleanTitle(raw) {
 }
 
 // The model's text -> JSON object or null. Tolerates a ```json fence or a sentence around the object; nothing else.
-function extractJson(text) {
+export function extractJson(text) {
   const t = cleanSummaryText(text)
   const a = t.indexOf('{')
   const b = t.lastIndexOf('}')

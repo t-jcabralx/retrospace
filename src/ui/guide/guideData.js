@@ -129,6 +129,7 @@ export const AI_STEPS = [
   'Read it on the Report tab. Fix anything on the Edit tab and press Save changes.',
   'When you are happy, press Share with everyone. Make private takes it back.',
   'On the report, Copy as table pastes into Docs or email, and Download PDF or Download image saves a clean copy.',
+  'To let the AI pick highlights: open Highlights and press Suggest highlights (AI must be on). It shows the notes it thinks stand out, with a reason for each. Nothing changes until you press Highlight on one, or Highlight all.',
 ]
 
 export const HELP = [

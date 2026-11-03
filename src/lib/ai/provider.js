@@ -2,6 +2,7 @@
 // means returning a different object here. Server only.
 import { anthropicProvider, modelName } from './anthropic.js'
 import { fakeThemes } from './themes.js'
+import { fakeHighlights } from './highlights.js'
 
 // A canned answer for development and browser checks (AI_FAKE=1). It is never available in production, and it never
 // makes a network call. The short wait lets the UI show its "writing" state.
@@ -24,6 +25,10 @@ const fakeProvider = {
   async suggestThemes(input) {
     await new Promise((r) => setTimeout(r, Number(process.env.AI_FAKE_DELAY_MS) || 1200))
     return { text: JSON.stringify(fakeThemes(typeof input === 'string' ? input : input?.text ?? '')), model: 'fake' }
+  },
+  async suggestHighlights(input) {
+    await new Promise((r) => setTimeout(r, Number(process.env.AI_FAKE_DELAY_MS) || 1200))
+    return { text: JSON.stringify(fakeHighlights(typeof input === 'string' ? input : input?.text ?? '')), model: 'fake' }
   },
 }
 
