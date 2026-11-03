@@ -12,6 +12,7 @@ export default function FooterNav() {
       <Link href="/privacy">Privacy</Link>
       <Link href="/terms">Terms</Link>
       <Link href="/support">Support us</Link>
+      <Link href="/issue">Report an issue</Link>
       {auth.status === 'in' ? <Link href="/boards">My boards</Link> : <Link href="/login">Sign in</Link>}
     </nav>
   )

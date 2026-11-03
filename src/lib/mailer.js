@@ -14,18 +14,18 @@ export function parseFrom(from) {
 const PROVIDERS = {
   resend: {
     key: 'RESEND_API_KEY',
-    request: ({ apiKey, from }, { to, subject, text, html }) => ({
+    request: ({ apiKey, from }, { to, subject, text, html, replyTo }) => ({
       url: 'https://api.resend.com/emails',
       headers: { authorization: `Bearer ${apiKey}` },
-      body: { from, to: [to], subject, text, html },
+      body: { from, to: [to], subject, text, html, ...(replyTo && { reply_to: replyTo }) },
     }),
   },
   brevo: { // free: 300 emails a day, and a single verified sender address is enough (no domain needed)
     key: 'BREVO_API_KEY',
-    request: ({ apiKey, from }, { to, subject, text, html }) => ({
+    request: ({ apiKey, from }, { to, subject, text, html, replyTo }) => ({
       url: 'https://api.brevo.com/v3/smtp/email',
       headers: { 'api-key': apiKey },
-      body: { sender: parseFrom(from), to: [{ email: to }], subject, textContent: text, htmlContent: html },
+      body: { sender: parseFrom(from), to: [{ email: to }], subject, textContent: text, htmlContent: html, ...(replyTo && { replyTo: { email: replyTo } }) },
     }),
   },
 }

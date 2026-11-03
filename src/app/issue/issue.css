@@ -1,0 +1,7 @@
+/* The report form: one centred card. Colours come from the site tokens. */
+.is-wrap { max-width: 560px; padding-block: clamp(28px, 6vw, 64px); }
+.is-issue h1 { margin: 0 0 8px; }
+.is-lede { margin: 0 0 20px; color: var(--rs-muted); line-height: 1.6; }
+.is-text { min-height: 140px; resize: vertical; font: inherit; }
+.is-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; } /* off screen, not display:none, so bots still fill it */
+.is-back a { color: var(--accent); }
