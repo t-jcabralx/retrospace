@@ -2,6 +2,7 @@
 // sessions, so a copy of the database cannot be used to take over an account.
 import { randomBytes } from 'node:crypto'
 import { hashKey } from './hash.js'
+import { renderEmail } from './emailLayout.js'
 
 export const RESET_TTL_MS = 30 * 60_000
 export const RESET_TOKEN_RE = /^[A-Za-z0-9_-]{43}$/ // 32 random bytes, base64url
@@ -35,11 +36,22 @@ export function resetOrigin(env = process.env, requestUrl = '') {
   try { return new URL(requestUrl).origin } catch { return null }
 }
 
-const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
-
+// The reset email: a button to the link (which works once, for RESET_TTL_MS), the link in full for clients that block buttons, and
+// a plain "this wasn't me" line. The logo and footer links use the link's own address, so they always match the site that sent it.
 export function resetEmail({ name, link }) {
   const minutes = RESET_TTL_MS / 60_000
-  const text = `Hi ${name},\n\nSomeone asked to reset the password for your Retrospace account. To choose a new one, open this link within ${minutes} minutes:\n\n${link}\n\nIf this wasn't you, ignore this email. Your password stays the same.\n`
-  const html = `<p>Hi ${escapeHtml(name)},</p><p>Someone asked to reset the password for your Retrospace account. To choose a new one, use the button below within ${minutes} minutes.</p><p><a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 18px;background:#4f46e5;color:#fff;border-radius:8px;text-decoration:none">Choose a new password</a></p><p>Or paste this link into your browser:<br>${escapeHtml(link)}</p><p>If this wasn't you, ignore this email. Your password stays the same.</p>`
+  let origin = null
+  try { origin = new URL(link).origin } catch { /* no logo, no footer links */ }
+  const { html, text } = renderEmail({
+    origin,
+    preheader: `Choose a new password. The link works once and expires in ${minutes} minutes.`,
+    title: 'Reset your password',
+    paragraphs: [`Hi ${name},`, 'Someone asked to reset the password for your Retrospace account. Use the button below to choose a new one.'],
+    button: { label: 'Choose a new password', url: link },
+    note: `The link works once and expires in ${minutes} minutes.`,
+    fallback: true,
+    after: ["If this wasn't you, you can ignore this email: your password stays the same, and nobody can change it without this link.", 'Retrospace will never ask you for your password by email.'],
+    footer: 'You are getting this because a password reset was requested for your Retrospace account.',
+  })
   return { subject: 'Reset your Retrospace password', text, html }
 }

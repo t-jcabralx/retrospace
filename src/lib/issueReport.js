@@ -3,6 +3,8 @@ import { checkEmail } from './validate.js'
 import { stripControl } from './ids.js'
 import { CONTACT } from '../ui/legal/legalData.js'
 import { MIN_REPORT, MAX_REPORT } from './issueLimits.js'
+import { renderEmail } from './emailLayout.js'
+import { resetOrigin } from './passwordReset.js'
 
 export { MIN_REPORT, MAX_REPORT } from './issueLimits.js'
 
@@ -21,14 +23,18 @@ export function validateReport(body) {
 // Where reports go: ISSUE_EMAIL_TO, else the contact address from the legal pages.
 export const issueRecipient = (env = process.env) => String(env.ISSUE_EMAIL_TO ?? '').trim() || CONTACT
 
-const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
-
-export function issueEmail({ message, email }) {
-  const from = email ? `Reply to: ${email}` : 'The visitor left no email address.'
-  return {
-    subject: 'Retrospace issue report',
-    text: `${message}\n\n--\n${from}\n`,
-    html: `<p style="white-space:pre-wrap">${escapeHtml(message)}</p><hr><p>${escapeHtml(from)}</p>`,
-    ...(email && { replyTo: email }),
-  }
+// The email the owner gets: the report in a quote box, who to reply to, and (when they left an address) a Reply button. The reply
+// goes to the visitor through the email's reply-to, so answering from the inbox works too.
+export function issueEmail({ message, email }, { origin = resetOrigin(), now = Date.now() } = {}) {
+  const when = new Date(now).toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+  const who = email ? `Reply to: ${email}` : 'The visitor left no email address.'
+  const { html, text } = renderEmail({
+    origin,
+    preheader: message.replace(/\s+/g, ' ').slice(0, 90),
+    title: 'New issue report',
+    paragraphs: [`Received ${when}.`, { quote: message }, who],
+    button: email ? { label: `Reply to ${email}`, url: `mailto:${email}` } : null,
+    footer: 'Sent by the Report an issue form on your Retrospace site.',
+  })
+  return { subject: 'Retrospace issue report', text, html, ...(email && { replyTo: email }) }
 }
