@@ -1,5 +1,5 @@
 /* The support page: a short note and a QR code in a card. Colours come from the site tokens. */
-.sp { max-width: 560px; padding-block: clamp(28px, 6vw, 64px); text-align: center; }
+.sp { max-width: 640px; padding-block: clamp(28px, 6vw, 64px); text-align: center; }
 .sp h1 { margin: 0 0 14px; font-size: clamp(1.9rem, 1.4rem + 2vw, 2.6rem); line-height: 1.1; letter-spacing: -0.025em; }
 .sp-intro { margin: 0 auto 24px; color: var(--rs-muted); font-size: 17px; line-height: 1.6; }
 .sp-card { margin: 0 auto 20px; padding: 18px; max-width: 360px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: #fff; }

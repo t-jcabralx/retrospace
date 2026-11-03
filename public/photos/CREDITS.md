@@ -14,3 +14,10 @@ Added 2026-10-29:
 - auth-signup.jpg: https://unsplash.com/photos/team-collaborating-with-sticky-notes-on-glass-wall-TSyD0nGc0Bs
 - notfound.jpg: https://unsplash.com/photos/a-signpost-with-several-arrows (Unsplash search "signpost directions")
 - team.jpg: https://unsplash.com/photos/diverse-team-celebrates-success-with-a-huddle-eXe186bFR5Q
+
+Added 2026-11-03 (downloaded at 1000 px wide):
+
+- issue.jpg: https://unsplash.com/photos/a-smiling-woman-wearing-a-headset-at-a-computer-wnpf3Q5pkXA (the report-an-issue page)
+- support.jpg: https://unsplash.com/photos/two-person-holding-papercut-heart-4le7k9XVYjE (the support page)
+
+The privacy, terms and support pages also reuse auth-signin.jpg, workshop.jpg and support.jpg as banners.

@@ -32,17 +32,17 @@ export default function IssueForm() {
 
   if (done) {
     return (
-      <div className="rs-card is-issue" role="status">
+      <div className="rs-card rs-auth is-issue" role="status">
         <h1>Thank you</h1>
-        <p className="is-lede">Your report was sent. {email.trim() ? 'If we need more detail we will reply to the address you gave.' : 'You left no email, so we cannot reply, but we will read it.'}</p>
-        <p className="is-back"><Link href="/">Back to home</Link></p>
+        <p className="rs-auth-lede">Your report was sent. {email.trim() ? 'If we need more detail we will reply to the address you gave.' : 'You left no email, so we cannot reply, but we will read it.'}</p>
+        <p className="rs-auth-back"><Link href="/">Back to home</Link></p>
       </div>
     )
   }
   return (
-    <div className="rs-card is-issue">
+    <div className="rs-card rs-auth is-issue">
       <h1>Report an issue</h1>
-      <p className="is-lede">Something broken or confusing? Tell us what happened and what you expected. Please do not include passwords or board access codes.</p>
+      <p className="rs-auth-lede">Something broken or confusing? Tell us what happened and what you expected. Please do not include passwords or board access codes.</p>
       <form onSubmit={submit} noValidate>
         <div aria-live="assertive" aria-atomic="true" className="rs-live">{error && <div className="rs-alert">{error}</div>}</div>
         <div className="rs-field">

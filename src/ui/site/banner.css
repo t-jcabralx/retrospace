@@ -1,0 +1,4 @@
+/* The photo banner above a plain page's title. */
+.pb { position: relative; aspect-ratio: 16 / 6; margin: 0 0 clamp(20px, 4vw, 32px); overflow: hidden; border-radius: var(--rs-r-lg); background: var(--rs-accent-soft); }
+.pb img { object-fit: cover; }
+@media (max-width: 520px) { .pb { aspect-ratio: 16 / 8; } }

@@ -11,7 +11,7 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <PageShell>
-      <LegalPage title="Terms of use" intro="The short version: use it kindly, you own your content, and the people who run an event are responsible for it." sections={TERMS} other={{ href: '/privacy', label: 'Privacy' }} />
+      <LegalPage title="Terms of use" intro="The short version: use it kindly, you own your content, and the people who run an event are responsible for it." sections={TERMS} photo="/photos/workshop.jpg" other={{ href: '/privacy', label: 'Privacy' }} />
     </PageShell>
   )
 }

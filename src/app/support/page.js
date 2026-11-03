@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import PageShell from '../../ui/site/PageShell.jsx'
+import PageBanner from '../../ui/site/PageBanner.jsx'
 import './support.css'
 
 export const metadata = {
@@ -13,6 +14,7 @@ export default function SupportPage() {
   return (
     <PageShell>
       <article className="rs-wrap sp">
+        <PageBanner src="/photos/support.jpg" />
         <h1>Support Retrospace</h1>
         <p className="sp-intro">Retrospace is free to use. If it helps your team and you would like to chip in toward keeping it running, you can send any amount by scanning this QR code. It is entirely optional, and nothing on the site depends on it.</p>
         <figure className="sp-card">

@@ -11,7 +11,7 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <PageShell>
-      <LegalPage title="Privacy" intro="In plain words: what we keep when you use Retrospace, who helps us run it, and what you can do about it." sections={PRIVACY} other={{ href: '/terms', label: 'Terms' }} />
+      <LegalPage title="Privacy" intro="In plain words: what we keep when you use Retrospace, who helps us run it, and what you can do about it." sections={PRIVACY} photo="/photos/auth-signin.jpg" other={{ href: '/terms', label: 'Terms' }} />
     </PageShell>
   )
 }

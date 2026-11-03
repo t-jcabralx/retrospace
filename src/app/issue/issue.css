@@ -1,10 +1,3 @@
-/* The report form: one centred card. Colours and spacing follow the sign-in card. */
-.is-wrap { max-width: 560px; padding-block: clamp(28px, 6vw, 64px); }
-.is-issue { padding: clamp(24px, 5vw, 40px); }
-.is-issue h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 1.2rem + 1vw, 1.875rem); line-height: 1.2; letter-spacing: -0.02em; }
-.is-lede { margin: 0 0 24px; color: var(--rs-muted); line-height: 1.6; }
-.is-issue .rs-hint { margin: 6px 0 0; }
+/* The report form's own bits; the card, heading and spacing come from the sign-in card (rs-auth). */
 .is-text { min-height: 140px; resize: vertical; font: inherit; }
 .is-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; } /* off screen, not display:none, so bots still fill it */
-.is-back { display: flex; justify-content: center; margin: 8px 0 0; }
-.is-back a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--accent); }

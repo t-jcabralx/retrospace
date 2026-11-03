@@ -27,3 +27,15 @@ test('the landing page has an optional support note with the same QR, above the 
   assert.match(band, /href="\/support"/)
   assert.match(band, /entirely optional/)
 })
+
+test('the support, terms and privacy pages have a photo banner, the report page has a photo beside the form, and every photo is credited', async () => {
+  for (const [file, photo] of [['src/app/support/page.js', '/photos/support.jpg'], ['src/app/terms/page.js', '/photos/workshop.jpg'], ['src/app/privacy/page.js', '/photos/auth-signin.jpg']]) {
+    const page = await read(file)
+    assert.ok(page.includes(photo), file)
+    assert.ok((await stat(new URL(`../public${photo}`, import.meta.url))).size > 5000, photo)
+  }
+  assert.match(await read('src/ui/auth/AuthSplit.jsx'), /issue: \{\s+photo: '\/photos\/issue\.jpg'/)
+  assert.match(await read('src/app/issue/page.js'), /<AuthSplit mode="issue">/)
+  const credits = await read('public/photos/CREDITS.md')
+  for (const name of ['issue.jpg', 'support.jpg']) assert.ok(credits.includes(name), name)
+})

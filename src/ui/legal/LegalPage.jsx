@@ -1,13 +1,15 @@
 import Link from 'next/link'
+import PageBanner from '../site/PageBanner.jsx'
 import { UPDATED, CONTACT } from './legalData.js'
 import './legal.css'
 
 // A plain document page: a title, the date, numbered sections and the contact line. Text between backticks is shown as code.
 const renderText = (t) => t.split(/(`[^`]+`)/g).map((part, i) => (part.startsWith('`') ? <code key={i}>{part.slice(1, -1)}</code> : part))
 
-export default function LegalPage({ title, intro, sections, other }) {
+export default function LegalPage({ title, intro, sections, other, photo }) {
   return (
     <article className="rs-wrap lg">
+      {photo && <PageBanner src={photo} />}
       <p className="lg-eyebrow">Last updated {UPDATED}</p>
       <h1>{title}</h1>
       <p className="lg-intro">{intro}</p>

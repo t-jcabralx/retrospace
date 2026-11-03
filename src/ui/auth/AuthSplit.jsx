@@ -4,6 +4,11 @@ import './auth.css'
 
 // Sign in and sign up: a photo and a few plain lines beside the form (above it on a phone).
 const COPY = {
+  issue: {
+    photo: '/photos/issue.jpg',
+    title: 'We read every report',
+    points: ['Tell us what broke and what you expected', 'No account needed', 'Leave your email only if you want a reply'],
+  },
   login: {
     photo: '/photos/auth-signin.jpg',
     title: 'Pick up where your team left off',
