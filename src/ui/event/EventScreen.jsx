@@ -10,6 +10,7 @@ import Setup from './Setup.jsx'
 import { Draw, History } from './Panels.jsx'
 import { copyText } from '../boards/CopyButton.jsx'
 import { Effect, GifPop, useCelebration } from './Celebration.jsx'
+import WheelWho from './WheelWho.jsx'
 import JoinQr from '../JoinQr.jsx'
 import './event.css'
 
@@ -72,6 +73,7 @@ export default function EventScreen({ api }) {
         {cel.effect && <Effect effect={cel.effect} seed={cel.seed} />}
         <GifPop cel={cel} />
         <p className="ev-legend" aria-hidden="true"><span><i className="ev-dot ev-dot--people" />Outer ring: people</span><span><i className="ev-dot ev-dot--prizes" />Inner ring: prizes</span></p>
+        {!present && <WheelWho people={people} prizes={prizes} />}
       </div>
       <aside className="ev-side">
         <div className="ev-bar">

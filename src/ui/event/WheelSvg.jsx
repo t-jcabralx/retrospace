@@ -4,15 +4,16 @@
 // moves two groups. Decorative for assistive technology: the lists beside it carry the same information.
 import { memo, useEffect, useRef, useState } from 'react'
 import { sliceAtPointer } from './timeline.js'
+import { fitLabel, LINE } from './labelFit.js'
 
 const C = 230 // centre of the 460 box
 const OUT = [146, 206] // outer ring: inner and outer radius
 const IN = [66, 138] // inner ring
-const SOFT = ['#cecbf6', '#9fe1cb', '#f5c4b3', '#f4c0d1', '#b5d4f4', '#c0dd97', '#fac775', '#d3d1c7']
+export const SOFT = ['#cecbf6', '#9fe1cb', '#f5c4b3', '#f4c0d1', '#b5d4f4', '#c0dd97', '#fac775', '#d3d1c7']
 const INK = ['#26215c', '#04342c', '#4a1b0c', '#4b1528', '#042c53', '#173404', '#412402', '#2c2c2a']
 
 // Neighbouring slices never share a colour, including the last one meeting the first.
-const shade = (i, n, len) => (i === n - 1 && n % len === 1 ? (i + 3) % len : i % len)
+export const shade = (i, n, len) => (i === n - 1 && n % len === 1 ? (i + 3) % len : i % len)
 const BULBS = Array.from({ length: 32 }, (_, i) => i)
 const pt = (r, deg) => [C + r * Math.sin((deg * Math.PI) / 180), C - r * Math.cos((deg * Math.PI) / 180)]
 function slice([r1, r2], a0, a1) {
@@ -24,7 +25,15 @@ function slice([r1, r2], a0, a1) {
   const [x4, y4] = pt(r1, a0)
   return `M${x1} ${y1} A${r2} ${r2} 0 ${big} 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 ${big} 0 ${x4} ${y4} Z`
 }
-const initials = (name) => Array.from(name.trim().split(/\s+/).slice(0, 2).map((w) => Array.from(w)[0] ?? '').join('').toUpperCase()).join('')
+// How a label would sit on the curve: the size shrinks to the arc that is available, then the text is cut with an ellipsis.
+function arcFit(r, a0, a1, str, base) {
+  const chars = Array.from(str)
+  const arc = r * (((a1 - a0) * Math.PI) / 180) * 0.84 - 6
+  const size = Math.max(9, Math.min(base, arc / (0.58 * Math.max(1, chars.length))))
+  const room = Math.max(3, Math.floor(arc / (0.58 * size)))
+  const cut = chars.length > room
+  return { size, cut, text: cut ? `${chars.slice(0, room - 1).join('')}…` : str }
+}
 // Text that follows the curve of a slice, so it reads left to right: along the top it sits above its baseline, along the bottom
 // the baseline runs the other way. `turned` = how far the ring has turned while resting, so what is at the bottom OF THE SCREEN
 // is the half that gets flipped. The size shrinks to the arc that is available, then the text is cut with an ellipsis.
@@ -32,11 +41,7 @@ function arcLabel(id, r, a0, a1, str, { base, fill, weight = 600, turned = 0 }) 
   const mid = (a0 + a1) / 2
   const eff = (mid + turned) % 360
   const bottom = eff > 90 && eff < 270
-  const chars = Array.from(str)
-  const arc = r * (((a1 - a0) * Math.PI) / 180) * 0.84 - 6
-  const size = Math.max(9, Math.min(base, arc / (0.58 * Math.max(1, chars.length))))
-  const room = Math.max(3, Math.floor(arc / (0.58 * size)))
-  const text = chars.length > room ? `${chars.slice(0, room - 1).join('')}…` : str
+  const { size, text } = arcFit(r, a0, a1, str, base)
   const rr = bottom ? r + size * 0.34 : r - size * 0.34
   const [x0, y0] = pt(rr, bottom ? a1 : a0)
   const [x1, y1] = pt(rr, bottom ? a0 : a1)
@@ -46,6 +51,29 @@ function arcLabel(id, r, a0, a1, str, { base, fill, weight = 600, turned = 0 }) 
       <path id={id} d={d} fill="none" />
       <text fontSize={Math.round(size * 10) / 10} fontWeight={weight} fill={fill}><textPath href={`#${id}`} startOffset="50%" textAnchor="middle">{text}</textPath></text>
     </>
+  )
+}
+
+// A label for a slice of `ring` ([inner radius, outer radius]). With few entries the text follows the curve, as it always did. When
+// that would make it small or cut it, it is written along the slice instead (from the middle outwards), which gives it the whole
+// thickness of the ring and lets it be larger and wrap onto a second line. On the left half of the screen it reads the other way,
+// so it is never upside down.
+function sliceLabel(id, ring, a0, a1, str, { base, fill, weight = 600, turned = 0, shift = 0 }) {
+  const r = (ring[0] + ring[1]) / 2 + shift
+  const arc = arcFit(r, a0, a1, str, base)
+  const width = r * (((a1 - a0) * Math.PI) / 180) * 0.86
+  const fit = fitLabel(str, { length: ring[1] - ring[0] - 12, width, max: Math.min(15, base + 2) })
+  // Whichever way gives the larger text wins, as long as it is not cut; the curve keeps a tie, as it always looked.
+  if (!arc.cut && (arc.size >= fit.size || fit.cut)) return arcLabel(id, r, a0, a1, str, { base, fill, weight, turned })
+  if (!fit.lines.length) return null
+  const mid = (a0 + a1) / 2
+  const eff = (mid + turned) % 360
+  const flip = eff > 180 && eff < 360
+  const [x, y] = pt(r, mid)
+  return (
+    <text transform={`rotate(${mid - 90 + (flip ? 180 : 0)} ${x} ${y})`} x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={Math.round(fit.size * 10) / 10} fontWeight={weight} fill={fill}>
+      {fit.lines.map((l, i) => <tspan key={i} x={x} dy={i === 0 ? `${(-(fit.lines.length - 1) * LINE) / 2}em` : `${LINE}em`}>{l}</tspan>)}
+    </text>
   )
 }
 
@@ -60,7 +88,7 @@ const People = memo(function People({ list, winnerId, turned }) {
     return (
       <g key={p.id} opacity={dim ? 0.35 : 1}>
         <path className={won ? 'ev-winslice' : undefined} d={slice(OUT, i * a, (i + 1) * a)} fill={SOFT[shade(i, n, SOFT.length)]} stroke={won ? 'var(--accent)' : 'var(--panel)'} strokeWidth={won ? 4 : 1.5} />
-        {arcLabel(`ev-p${i}`, (OUT[0] + OUT[1]) / 2, i * a, (i + 1) * a, n > 24 ? initials(p.name) : p.name, { base, fill, turned })}
+        {sliceLabel(`ev-p${i}`, OUT, i * a, (i + 1) * a, p.name, { base, fill, turned })}
       </g>
     )
   })
@@ -76,7 +104,7 @@ const Prizes = memo(function Prizes({ list, prizeId, turned }) {
     return (
       <g key={z.id} opacity={dim ? 0.4 : 1}>
         <path className={picked ? 'ev-winslice' : undefined} d={slice(IN, i * a, (i + 1) * a)} fill={z.color} stroke={picked ? '#ffffff' : 'var(--panel)'} strokeWidth={picked ? 4 : 1.5} />
-        {arcLabel(`ev-z${i}`, (IN[0] + IN[1]) / 2 + 2, i * a, (i + 1) * a, `${z.emoji ? `${z.emoji} ` : ''}${z.name}${z.qty > 1 ? ` ×${z.qty}` : ''}`, { base, fill: '#ffffff', turned })}
+        {sliceLabel(`ev-z${i}`, IN, i * a, (i + 1) * a, `${z.emoji ? `${z.emoji} ` : ''}${z.name}${z.qty > 1 ? ` ×${z.qty}` : ''}`, { base, fill: '#ffffff', turned, shift: 2 })}
       </g>
     )
   })

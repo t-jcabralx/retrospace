@@ -19,7 +19,7 @@ export const SPIN = { leadMs: 700, prizeMs: 5000, winnerMs: 6000, turns: 5 }
 export const EFFECTS = ['confetti', 'fireworks', 'balloons', 'stars', 'sparkles', 'none']
 const GIF_URL = /^https:\/\/[^\s"'<>]{4,1990}$/i
 export const isGifUrl = (v) => typeof v === 'string' && GIF_URL.test(v)
-export const PRIZE_COLORS = ['#7f77dd', '#1d9e75', '#d85a30', '#d4537e', '#378add', '#639922', '#ba7517', '#888780']
+export const PRIZE_COLORS = ['#7f77dd', '#1d9e75', '#d85a30', '#d4537e', '#378add', '#639922', '#ba7517', '#888780', '#0e8f9a', '#9b4dca', '#c0392b', '#b02a8f'] // twelve, so up to twelve prizes each get their own
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 const ID = /^[a-z0-9_-]{1,24}$/i
