@@ -17,3 +17,13 @@ test('the page asks nobody for anything: it is optional and says so', async () =
   const page = await read('src/app/support/page.js')
   assert.match(page, /entirely optional/)
 })
+
+test('the landing page has an optional support note with the same QR, above the closing call to action', async () => {
+  const page = await read('src/app/page.js')
+  assert.match(page, /<SupportBand \/>/)
+  assert.ok(page.indexOf('<SupportBand />') < page.indexOf('<ClosingCta />') && page.indexOf('<HowItWorks />') < page.indexOf('<SupportBand />'))
+  const band = await read('src/ui/landing/SupportBand.jsx')
+  assert.match(band, /src="\/support\/payment-qr\.jpg"/)
+  assert.match(band, /href="\/support"/)
+  assert.match(band, /entirely optional/)
+})

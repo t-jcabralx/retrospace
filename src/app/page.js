@@ -4,6 +4,7 @@ import BoardTypes from '../ui/landing/BoardTypes.jsx'
 import WheelShowcase from '../ui/landing/WheelShowcase.jsx'
 import Features from '../ui/landing/Features.jsx'
 import HowItWorks from '../ui/landing/HowItWorks.jsx'
+import SupportBand from '../ui/landing/SupportBand.jsx'
 import ClosingCta from '../ui/landing/ClosingCta.jsx'
 import '../ui/landing/landing.css'
 import { siteUrl } from '../lib/meta.js'
@@ -22,6 +23,7 @@ export default function Home() {
       <WheelShowcase />
       <Features />
       <HowItWorks />
+      <SupportBand />
       <ClosingCta />
     </PageShell>
   )

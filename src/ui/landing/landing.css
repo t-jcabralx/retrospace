@@ -158,6 +158,15 @@
 .ls-cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 @media (max-width: 520px) { .ls-cta-actions .rs-btn { width: 100%; } }
 
+/* the optional support note above the closing band */
+.ls-support { padding-block: clamp(32px, 5vw, 56px); }
+.ls-support-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px 40px; padding: clamp(22px, 4vw, 36px); border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
+.ls-support-copy { flex: 1 1 320px; min-width: 0; }
+.ls-support-copy h2 { margin: 0 0 10px; font-size: clamp(1.4rem, 1.1rem + 1vw, 1.8rem); line-height: 1.2; letter-spacing: -0.02em; }
+.ls-support-copy p { margin: 0 0 18px; max-width: 56ch; color: var(--rs-muted); line-height: 1.6; }
+.ls-support-qr { flex: 0 0 auto; width: min(220px, 100%); height: auto; padding: 10px; border: 1px solid var(--rs-line); border-radius: 12px; background: #fff; } /* white on purpose, in dark mode too: a QR needs a light margin to scan */
+@media (max-width: 640px) { .ls-support-qr { margin-inline: auto; } }
+
 /* the user guide download under How it works */
 .ls-guide { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin-top: 48px; padding: 22px 24px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: var(--panel); }
 .ls-guide h3 { margin: 0 0 4px; font-size: 18px; }
