@@ -5,11 +5,13 @@ import { envValue } from './db.js'
 const ENDPOINT = 'https://api.resend.com/emails'
 const TIMEOUT_MS = 8000
 
-// { apiKey, from } when both settings are present, else null (then nothing is sent).
+// Resend's own test sender: it needs no domain, but delivers only to the email the Resend account was opened with.
+export const DEFAULT_FROM = 'Retrospace <onboarding@resend.dev>'
+
+// { apiKey, from } when there is a key (MAIL_FROM is optional and falls back to the test sender), else null (then nothing is sent).
 export function mailConfig(env = process.env) {
   const apiKey = envValue('RESEND_API_KEY', env)
-  const from = envValue('MAIL_FROM', env)
-  return apiKey && from ? { apiKey, from } : null
+  return apiKey ? { apiKey, from: envValue('MAIL_FROM', env) || DEFAULT_FROM } : null
 }
 
 export const mailConfigured = (env = process.env) => mailConfig(env) !== null

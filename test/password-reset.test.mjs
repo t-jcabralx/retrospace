@@ -74,7 +74,10 @@ test('mailer: sends through Resend with the key and the from address, and never 
   assert.ok(!down.error.includes('a@example.com'), 'the address is not in the error')
   assert.deepEqual(await sendMail({ to: 'a@example.com', subject: 's', text: 't' }, { config: null }), { ok: false, error: 'mail is not configured' })
   assert.equal(mailConfig({}), null)
-  assert.equal(mailConfig({ RESEND_API_KEY: 'k' }), null, 'both settings are needed')
+  assert.equal(mailConfig({ MAIL_FROM: 'a@b.co' }), null, 'a sender alone is not enough: the key is needed')
+  assert.deepEqual(mailConfig({ RESEND_API_KEY: 'k' }), { apiKey: 'k', from: 'Retrospace <onboarding@resend.dev>' }, 'no MAIL_FROM: Resend\'s test sender')
+  assert.deepEqual(mailConfig({ RESEND_API_KEY: 'k', MAIL_FROM: 'Me <me@mine.example>' }), { apiKey: 'k', from: 'Me <me@mine.example>' }, 'MAIL_FROM wins when set')
+  assert.deepEqual(mailConfig({ RESEND_API_KEY: 'k', MAIL_FROM: '   ' }).from, 'Retrospace <onboarding@resend.dev>', 'blank counts as not set')
 })
 
 test('a reset link works once, and a newer link replaces the older one', async () => {
