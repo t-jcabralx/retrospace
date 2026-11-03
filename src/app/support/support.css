@@ -1,9 +1,18 @@
-/* The support page: a short note and a QR code in a card. Colours come from the site tokens. */
-.sp { max-width: 640px; padding-block: clamp(28px, 6vw, 64px); text-align: center; }
-.sp h1 { margin: 0 0 14px; font-size: clamp(1.9rem, 1.4rem + 2vw, 2.6rem); line-height: 1.1; letter-spacing: -0.025em; }
-.sp-intro { margin: 0 auto 24px; color: var(--rs-muted); font-size: 17px; line-height: 1.6; }
-.sp-card { margin: 0 auto 20px; padding: 18px; max-width: 360px; border: 1px solid var(--rs-line); border-radius: var(--rs-r); background: #fff; }
+/* The support page: a short banner, then the note and steps beside the QR code (stacked on a phone). Colours come from the site tokens. */
+.sp { max-width: 960px; padding-block: clamp(20px, 5vw, 56px); }
+.sp .pb { aspect-ratio: 21 / 5; margin-bottom: clamp(20px, 3vw, 32px); }
+@media (max-width: 520px) { .sp .pb { aspect-ratio: 16 / 7; } }
+.sp-grid { display: grid; gap: clamp(24px, 4vw, 48px); align-items: center; }
+@media (min-width: 820px) { .sp-grid { grid-template-columns: minmax(0, 1fr) 320px; } }
+.sp h1 { margin: 0 0 12px; font-size: clamp(1.9rem, 1.4rem + 2vw, 2.6rem); line-height: 1.1; letter-spacing: -0.025em; }
+.sp-intro { margin: 0 0 22px; max-width: 52ch; color: var(--rs-muted); font-size: 17px; line-height: 1.6; }
+.sp-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.sp-steps li { display: flex; align-items: center; gap: 12px; line-height: 1.4; }
+.sp-num { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--rs-accent-soft); color: var(--rs-accent-ink); font-size: 14px; font-weight: 700; }
+.sp-thanks { margin: 32px 0 4px; text-align: center; line-height: 1.6; }
+.sp-back { display: flex; justify-content: center; margin: 0; }
+.sp-back a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--accent); }
+/* white on purpose, in dark mode too: a QR needs a light margin to scan */
+.sp-card { justify-self: center; margin: 0; padding: 16px 16px 12px; width: min(320px, 100%); border: 1px solid var(--rs-line); border-radius: var(--rs-r-lg); background: #fff; box-shadow: var(--rs-shadow); text-align: center; }
 .sp-qr { display: block; width: 100%; height: auto; }
-.sp-card figcaption { margin-top: 12px; color: #555; font-size: 14px; line-height: 1.5; }
-.sp-thanks { margin: 0 0 18px; line-height: 1.6; }
-.sp-back a { color: var(--accent); }
+.sp-card figcaption { margin-top: 8px; color: #4a4a55; font-size: 14px; font-weight: 600; }

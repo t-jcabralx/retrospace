@@ -16,6 +16,7 @@ test('the support page shows the payment QR with a description, and the footer l
 test('the page asks nobody for anything: it is optional and says so', async () => {
   const page = await read('src/app/support/page.js')
   assert.match(page, /entirely optional/)
+  assert.match(page, /Choose Scan QR/)
 })
 
 test('the landing page has an optional support note with the same QR, above the closing call to action', async () => {
