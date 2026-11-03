@@ -9,11 +9,11 @@ const cfg = sealConfig({ DATA_ENCRYPTION_KEY: randomBytes(32).toString('base64')
 async function seed() {
   const client = fakeClient()
   const db = client.db()
-  await db.collection('boards').insertOne({ code: 'ABC234', type: 'event', title: 'Plain title', recipient: null, wheel: { participants: [{ name: 'Maria' }] }, rev: 2, updatedAt: 10, ownerId: 'u1' })
+  await db.collection('boards').insertOne({ code: 'ABC234', type: 'event', title: 'Plain title', recipient: null, wheel: { participants: [{ name: 'Maria Lopez' }] }, rev: 2, updatedAt: 10, ownerId: 'u1' })
   for (let i = 0; i < 5; i++) await db.collection('items').insertOne({ boardCode: 'ABC234', id: `n${i}`, kind: 'note', data: { text: `note ${i}` }, authorName: 'Ann', authorAvatar: { bg: 1 }, deleted: false, updatedAt: 10 + i })
   await db.collection('participants').insertOne({ boardCode: 'ABC234', uid: 'KM-A', kind: 'custom', name: 'Maria Santos', nameLower: 'maria santos', avatar: { bg: 1 }, joinedAt: 1 })
   await db.collection('users').insertOne({ id: 'u1', email: 'ann@example.com', name: 'Ann', passwordHash: 'h', createdAt: 1 })
-  await db.collection('people').insertOne({ boardCode: 'ABC234', id: 'p1', name: 'Pat', birthday: '1990-01-02', createdAt: 1 })
+  await db.collection('people').insertOne({ boardCode: 'ABC234', id: 'p1', name: 'Pat Quill', birthday: '1990-01-02', createdAt: 1 })
   await db.collection('templates').insertOne({ id: 't1', ownerId: 'u1', name: 'My Columns', nameLower: 'my columns', columns: [], createdAt: 1 })
   return { client, db }
 }
@@ -36,7 +36,8 @@ test('apply seals every legacy record, each one opens back to what it was, and a
   const r = await backfill(db, cfg, { apply: true, batch: 2 })
   assert.equal(Object.values(r).reduce((n, x) => n + x.failed + x.skipped, 0), 0)
   const text = raw(client).toLowerCase()
-  for (const s of ['plain title', 'note 3', 'maria', 'ann@example.com', 'my columns', 'pat', '1990-01-02']) assert.ok(!text.includes(s), `${s} is still readable`)
+  // Every probe holds a character that never appears in base64 (a space, @, . or -): a bare 'pat' can show up in random ciphertext by chance.
+  for (const s of ['plain title', 'note 3', 'maria lopez', 'maria santos', 'ann@example.com', 'my columns', 'pat quill', '1990-01-02']) assert.ok(!text.includes(s), `${s} is still readable`)
   for (const [k, docs] of before) assert.deepEqual(client.cols.get(k).docs.map((d) => openDoc(cfg, k, d)), docs, k)
   assert.ok(client.cols.get('items').docs.every((d) => d.enc?.v === 1))
   const again = await backfill(db, cfg, { apply: true })
