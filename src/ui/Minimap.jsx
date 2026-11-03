@@ -1,6 +1,6 @@
 'use client'
 import { useRef } from 'react'
-import { boundsOf, screenToWorld } from './geometry.js'
+import { boundsOf, screenToWorld, minimapFits } from './geometry.js'
 import { noteColor } from './ops.js'
 
 const W = 168
@@ -19,7 +19,7 @@ function frameOf(items, vp) {
 
 export default function Minimap({ items, view, size, onMove }) {
   const boxRef = useRef(null)
-  if (!size.w) return null
+  if (!minimapFits(size)) return null // on a short canvas it would cover the last tools (the image tool) of the rail
   const boxes = items.filter((i) => i.kind !== 'connector')
   const tl = screenToWorld({ x: 0, y: 0 }, view)
   const vp = { x: tl.x, y: tl.y, w: size.w / view.scale, h: size.h / view.scale }

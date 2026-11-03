@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   screenToWorld, worldToScreen, zoomAt, rectsIntersect, itemsInRect, itemsFullyInside, connectorPath,
-  boundsOf, fitView, resizeRect, centerOn,
+  boundsOf, fitView, resizeRect, centerOn, minimapFits, MINIMAP_MIN_H,
 } from '../src/ui/geometry.js'
 
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`)
@@ -106,4 +106,15 @@ test('resizeRect: edges, corners, minimum size and aspect lock', () => {
   assert.deepEqual(locked, { x: 100, y: 100, w: 300, h: 150 })
   const lockedNw = resizeRect(r, 'nw', -100, 0, { keepAspect: true })
   assert.deepEqual(lockedNw, { x: 0, y: 50, w: 300, h: 150 })
+})
+
+test('the minimap only shows on a canvas tall enough that it cannot cover the tool rail', () => {
+  assert.equal(minimapFits({ w: 0, h: 900 }), false) // not measured yet
+  assert.equal(minimapFits({ w: 1000, h: 430 }), false) // a short canvas: the minimap used to hide the image tool
+  assert.equal(minimapFits({ w: 1000, h: MINIMAP_MIN_H - 1 }), false)
+  assert.equal(minimapFits({ w: 1000, h: MINIMAP_MIN_H }), true)
+  assert.equal(minimapFits(undefined), false)
+  // the arithmetic behind the number: the rail (about 334px, centred) ends above the minimap (112px + 12 + 8 gap from the bottom)
+  const rail = 334
+  assert.ok(MINIMAP_MIN_H / 2 + rail / 2 <= MINIMAP_MIN_H - 112 - 12 - 8 + 1)
 })

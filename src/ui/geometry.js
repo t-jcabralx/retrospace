@@ -2,6 +2,12 @@
 export const MIN_SCALE = 0.1
 export const MAX_SCALE = 4
 
+// The minimap sits bottom-left (168 x 112, 12px in) and the tool rail is centred on the left edge (up to 7 touch-size tools,
+// about 334px tall). They stay clear of each other only when the canvas is at least this tall: h - 132 >= h / 2 + 167.
+// The canvas is shorter than the window (the title bar and stage panels sit above it), so this is measured on the canvas.
+export const MINIMAP_MIN_H = 600
+export const minimapFits = (size) => Boolean(size?.w) && size.h >= MINIMAP_MIN_H
+
 export const clampScale = (s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
 
 export const screenToWorld = (pt, view) => ({ x: (pt.x - view.x) / view.scale, y: (pt.y - view.y) / view.scale })
