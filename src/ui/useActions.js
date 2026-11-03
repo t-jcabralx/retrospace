@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { boundsOf, screenToWorld } from './geometry.js'
 import { addOp, deleteOps, duplicateOps, reorderOps, movableIds, nextZ, topZ, patchOps, DEFAULTS } from './ops.js'
 import { addsAnonymously } from '../lib/anon.js'
+import { isHighlightable, isHighlighted } from '../lib/highlight.js'
 import { fileToImage, ImageTooLarge } from './images.js'
 
 const TEXT_KINDS = ['note', 'text', 'shape', 'frame', 'card'] // Enter edits these (a card's message); new ones of the creatable kinds open their editor straight away
@@ -82,6 +83,16 @@ export function useActions(env) {
         } catch (err) {
           E.current.ctl.notify(err instanceof ImageTooLarge ? 'Image too large' : "Couldn't read that image")
         }
+      },
+      // Highlights the selection (or takes the highlight off when all of it already has one). Only what the viewer may edit.
+      // -> whether it did anything.
+      toggleHighlight() {
+        const { ctl } = E.current
+        if (ctl.readOnly) return false
+        const list = editable(selected()).filter(isHighlightable)
+        if (!list.length) return false
+        const on = !list.every(isHighlighted)
+        return ctl.local(list.map((i) => ({ op: 'highlight', id: i.id, on })))
       },
       deleteSelected() {
         const { ctl, setSelection } = E.current

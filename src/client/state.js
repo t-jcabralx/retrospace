@@ -90,6 +90,11 @@ function applyOp(items, op) {
       items.set(id, next)
       return { op: 'update', id, patch }
     }
+    case 'highlight': { // set, not toggled; the inverse restores what it was
+      if (!cur || typeof op.on !== 'boolean') return null
+      items.set(id, { ...cur, hl: op.on })
+      return { op: 'highlight', id, on: cur.hl === true }
+    }
     case 'delete': {
       if (!cur) return null
       items.delete(id)

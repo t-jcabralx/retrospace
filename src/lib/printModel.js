@@ -3,6 +3,7 @@
 // dates, a SHARED summary, live items and, when asked for by the owner, the names people chose. A theme's source notes are
 // looked up among the live notes, so a deleted note simply drops out of the list.
 import { categorizeRaw, actionLine } from './ai/input.js'
+import { highlightGroups } from './highlight.js'
 
 export const TYPE_LABELS = { retro: 'Retrospective', workshop: 'Workshop', celebration: 'Celebration', wall: 'Team wall' }
 // Control characters (except line feed), line/paragraph separators, zero-width and bidi marks.
@@ -66,6 +67,18 @@ export function buildPrintModel(board, items, participants = [], { authors = fal
     .sort((a, b) => b.votes - a.votes || a.n - b.n)
     .map(({ n, ...t }) => t) // eslint-disable-line no-unused-vars
 
+  // The Highlights list: a theme is named by its title, and a picture (no words) by its kind, so nothing listed is blank.
+  const KIND_WORDS = { image: 'Picture', card: 'Card', shoutout: 'Shout-out', shape: 'Shape' }
+  const row = (it) => {
+    const author = authorOf(it)
+    const text = it.kind === 'theme' ? printable(it.data?.title) : textOf(it)
+    return { id: it.id, kind: it.kind, text: text || KIND_WORDS[it.kind] || '', votes: votesOf(it), ...(author && { author }) }
+  }
+  const groups = highlightGroups(live)
+  const listed = (list) => list.map(row).filter((r) => r.text)
+  const highlights = { highlighted: listed(groups.highlighted), top: listed(groups.top), actions: listed(groups.actions) }
+  const hasHighlights = highlights.highlighted.length + highlights.top.length + highlights.actions.length > 0
+
   const shared = board?.summary?.status === 'shared' && typeof board.summary.text === 'string' ? printable(board.summary.text) : ''
   const showVotes = live.some((i) => votesOf(i) > 0)
   return {
@@ -79,9 +92,10 @@ export function buildPrintModel(board, items, participants = [], { authors = fal
     showVotes,
     authors: showAuthors,
     summary: shared ? { text: shared, ai: board.summary.source === 'ai' } : null,
+    highlights: hasHighlights ? highlights : null,
     themes,
     sections,
-    empty: !sections.length && !themes.length && !shared,
+    empty: !sections.length && !themes.length && !shared && !hasHighlights,
   }
 }
 

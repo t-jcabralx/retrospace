@@ -221,7 +221,7 @@ export function retroAllows(board, op, item, actor, liveActions = 0) {
   if (!board || board.type !== 'retro' || !isObj(board.retro) || actor?.isOwner) return ok
   const retro = board.retro
   const stage = stageKey(retro)
-  if (op.op === 'react') return ok
+  if (op.op === 'react' || op.op === 'highlight') return ok // not content: the author or owner may point at a note in any stage
   if (op.op === 'vote') return stage === 'vote' ? ok : bad('Voting is not open')
   if (!item) return ok
   const kind = item.kind

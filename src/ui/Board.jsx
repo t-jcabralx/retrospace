@@ -10,6 +10,7 @@ import AnonToggle from './AnonToggle.jsx'
 import Cursors from './Cursors.jsx'
 import PeerSelections from './PeerSelections.jsx'
 import { selectionForPresence } from '../lib/anon.js'
+import { isHighlightable, isHighlighted } from '../lib/highlight.js'
 import VotePanel from './VotePanel.jsx'
 import ThrowLayer from './ThrowLayer.jsx'
 import ThrowTray from './ThrowTray.jsx'
@@ -134,6 +135,8 @@ export default function Board({ ctl, code, presence = null }) {
   const hasKind = (k) => sel.some((i) => i.kind === k)
   // The Delete key has no equivalent on a phone: whatever is selected and may be deleted gets a button.
   const deletable = ctl.readOnly ? [] : [...selection].map((id) => byId.get(id)).filter((i) => i && ctl.canEdit(i))
+  const highlightable = ctl.readOnly ? [] : sel.filter((i) => ctl.canEdit(i) && isHighlightable(i))
+  const allHighlighted = highlightable.length > 0 && highlightable.every(isHighlighted)
   const showColors = !ctl.readOnly && (tool === 'note' || tool === 'shape' || hasKind('note') || hasKind('shape'))
   const showShapes = !ctl.readOnly && (tool === 'shape' || hasKind('shape'))
   const ctxColor = single && (single.kind === 'note' || single.kind === 'shape') ? single.data.color : tool === 'shape' || (!hasKind('note') && hasKind('shape')) ? style.shape : style.note
@@ -282,6 +285,8 @@ export default function Board({ ctl, code, presence = null }) {
         <VotePanel ctl={ctl} onJump={jump} />
         <AnonToggle mode={ctl.board?.anonymousNotes} on={style.anon} onChange={(anon) => setStyleState((s) => ({ ...s, anon }))} />
         <ContextBar
+          onHighlight={highlightable.length ? () => actions.toggleHighlight() : undefined}
+          highlighted={allHighlighted}
           onDelete={deletable.length ? () => actions.deleteSelected() : undefined}
           deleteCount={deletable.length}
           colors={showColors}

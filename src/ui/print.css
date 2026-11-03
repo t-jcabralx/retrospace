@@ -20,6 +20,7 @@
 .pv-list, .pv-cards, .pv-sub { margin: 0; padding: 0; list-style: none; }
 .pv-item { margin: 0 0 8px; padding: 8px 12px; border-left: 4px solid #c7ccd8; break-inside: avoid; }
 .pv-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pv-subhead { margin: 14px 0 6px; font-size: 15px; break-after: avoid; }
 .pv-votes { display: inline-block; margin-top: 2px; padding: 0 8px; border: 1px solid #111; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .pv-author { margin: 2px 0 0; color: #4a5060; font-size: 13px; font-style: italic; }
 .pv-theme .pv-sub { margin-top: 6px; padding-left: 14px; list-style: disc; font-size: 14px; color: #333; }

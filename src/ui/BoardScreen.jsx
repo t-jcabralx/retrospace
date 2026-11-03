@@ -13,11 +13,12 @@ import Celebrate, { CelebrationListener } from './Celebrate.jsx'
 import Timer from './Timer.jsx'
 import BoardSettings from './BoardSettings.jsx'
 import SummaryPanel from './SummaryPanel.jsx'
+import HighlightsPanel from './HighlightsPanel.jsx'
 import { showSummaryButton } from './summaryApi.js'
 import { EffectsProvider } from './Effects.jsx'
 import { usePresence } from './usePresence.js'
 import { useBoard } from './useBoard.js'
-import { UndoIcon, RedoIcon, LockIcon, HomeIcon, GearIcon, SummaryIcon, ShareIcon } from './icons.jsx'
+import { UndoIcon, RedoIcon, LockIcon, HomeIcon, GearIcon, SummaryIcon, ShareIcon, StarIcon } from './icons.jsx'
 import ShareDialog from './ShareDialog.jsx'
 import PageShell from './site/PageShell.jsx'
 import NotFoundCard from './site/NotFoundCard.jsx'
@@ -62,6 +63,7 @@ function BoardView({ code, viewOnly }) {
   const [changing, setChanging] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
+  const [highlightsOpen, setHighlightsOpen] = useState(false)
   const [focusAi, setFocusAi] = useState(false) // the Summary panel's "turn on AI" link opens the settings at that switch
   const [themesOpen, setThemesOpen] = useState(false)
   const themesBtn = useRef(null)
@@ -69,6 +71,7 @@ function BoardView({ code, viewOnly }) {
   const shareBtn = useRef(null)
   const [shareOpen, setShareOpen] = useState(false)
   const summaryBtn = useRef(null)
+  const highlightsBtn = useRef(null)
 
   useEffect(() => {
     if (board?.title) document.title = `${board.title} · Retrospace`
@@ -176,6 +179,11 @@ function BoardView({ code, viewOnly }) {
                 {ctl.isOwner && board.summaryState === 'generating' && <><i className="bd-sumbtn-dot" aria-hidden="true" /><span className="bd-vh"> (being written)</span></>}
               </button>
             )}
+            {ctl.isOwner && board?.type !== 'event' && (
+              <button ref={highlightsBtn} type="button" className="bd-sumbtn" aria-haspopup="dialog" title="Highlights: the starred and most-voted notes, and the actions" onClick={() => setHighlightsOpen(true)}>
+                <StarIcon /><span className="bd-sumbtn-label">Highlights</span>
+              </button>
+            )}
             {ctl.isOwner && board?.type === 'retro' && (
               <button ref={themesBtn} type="button" className="bd-themesbtn" aria-haspopup="dialog" title="Group notes into themes" onClick={() => setThemesOpen(true)}>
                 <span aria-hidden="true">▦</span><span className="bd-themesbtn-label">Themes</span>
@@ -205,6 +213,7 @@ function BoardView({ code, viewOnly }) {
       )}
       {shareOpen && ctl.isOwner && <ShareDialog code={code} title={board?.title} openerRef={shareBtn} onClose={() => setShareOpen(false)} />}
       {settingsOpen && ctl.isOwner && <BoardSettings ctl={ctl} openerRef={settingsBtn} focusAi={focusAi} onClose={() => { setSettingsOpen(false); setFocusAi(false) }} />}
+      {highlightsOpen && ctl.isOwner && <HighlightsPanel ctl={ctl} openerRef={highlightsBtn} printHref={printHref(code)} onClose={() => setHighlightsOpen(false)} />}
       {summaryOpen && ( // stays open when the owner withdraws the summary under a guest who is reading it: the panel then says so
         <SummaryPanel ctl={ctl} openerRef={summaryBtn} onClose={() => setSummaryOpen(false)} onOpenSettings={() => { setSummaryOpen(false); setFocusAi(true); setSettingsOpen(true) }} />
       )}

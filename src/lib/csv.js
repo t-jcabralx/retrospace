@@ -22,7 +22,7 @@ export const csvRow = (cells) => cells.map(csvCell).join(',')
 // rows: arrays of cells -> text with CRLF line ends, BOM first.
 export const toCsv = (rows) => BOM + rows.map(csvRow).join('\r\n') + '\r\n'
 
-const HEADER = ['Board', 'Type', 'Category', 'Item', 'Kind', 'Votes', 'Color', 'Created', 'Author']
+const HEADER = ['Board', 'Type', 'Category', 'Item', 'Kind', 'Votes', 'Color', 'Created', 'Highlighted', 'Author']
 const iso = (t) => (Number.isFinite(Number(t)) && Number(t) > 0 ? new Date(Number(t)).toISOString() : '')
 
 // 'Item' cell text of a stored item.
@@ -57,10 +57,10 @@ export function boardCsv(board, items, participants = [], { authors = false } = 
   const out = [head]
   const line = (cells, author) => out.push(authors ? [...cells, author] : cells)
   for (const { it, category } of rows) {
-    line([board.title, board.type, category, itemText(it), it.kind, it.votes?.length ?? 0, it.data?.color ?? '', iso(it.createdAt ?? it.updatedAt)], it.anon === true ? ANON_NAME : (names.get(it.authorUid) ?? it.authorName ?? ''))
+    line([board.title, board.type, category, itemText(it), it.kind, it.votes?.length ?? 0, it.data?.color ?? '', iso(it.createdAt ?? it.updatedAt), it.hl === true ? 'Yes' : ''], it.anon === true ? ANON_NAME : (names.get(it.authorUid) ?? it.authorName ?? ''))
   }
   // Only a shared summary is part of the export (a draft is the owner's working copy).
   const summary = board.summary
-  if (summary?.status === 'shared' && typeof summary.text === 'string' && summary.text) line([board.title, board.type, 'Summary', summary.text, 'Summary', 0, '', iso(summary.editedAt ?? summary.generatedAt)], '')
+  if (summary?.status === 'shared' && typeof summary.text === 'string' && summary.text) line([board.title, board.type, 'Summary', summary.text, 'Summary', 0, '', iso(summary.editedAt ?? summary.generatedAt), ''], '')
   return toCsv(out)
 }

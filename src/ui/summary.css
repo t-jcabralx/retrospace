@@ -50,3 +50,13 @@
 .bd-sum-tab { min-height: 44px; padding: 0 16px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
 .bd-sum-tab.is-on { color: var(--ink); border-bottom-color: var(--accent); }
 .bd-sum-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* The Highlights panel */
+.bd-hl-group { margin: 0 0 22px; }
+.bd-hl-group h3 { margin: 0 0 6px; font-size: 15px; }
+.bd-hl-note { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+.bd-hl-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.bd-hl-list li { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); line-height: 1.45; }
+.bd-hl-mark { color: #f5b301; text-align: center; }
+.bd-hl-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.bd-hl-votes { color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }

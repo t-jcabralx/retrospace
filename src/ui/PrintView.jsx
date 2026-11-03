@@ -50,7 +50,7 @@ function Item({ item, showVotes }) {
 }
 
 export function PrintDocument({ model }) {
-  const { cover, sections, themes, summary, showVotes } = model
+  const { cover, sections, themes, summary, showVotes, highlights } = model
   const meta = [cover.type, cover.created && fmt(cover.created), plural(cover.participants, 'participant')].filter(Boolean).join(' · ')
   return (
     <article className="pv-doc">
@@ -64,6 +64,17 @@ export function PrintDocument({ model }) {
           <h2 id="pv-summary">Summary</h2>
           {summary.ai && <p className="pv-meta">AI-generated, reviewed by the owner</p>}
           <p className="pv-summary">{summary.text}</p>
+        </section>
+      )}
+      {highlights && (
+        <section className="pv-section" aria-labelledby="pv-highlights">
+          <h2 id="pv-highlights">Highlights</h2>
+          {[['Highlighted', highlights.highlighted], ['Most voted', highlights.top], ['Action items', highlights.actions]].filter(([, list]) => list.length).map(([label, list]) => (
+            <div key={label}>
+              <h3 className="pv-subhead">{label}</h3>
+              <ul className="pv-list">{list.map((r) => <Item key={r.id} item={{ ...r, kind: 'note' }} showVotes={showVotes} />)}</ul>
+            </div>
+          ))}
         </section>
       )}
       {themes.length > 0 && (

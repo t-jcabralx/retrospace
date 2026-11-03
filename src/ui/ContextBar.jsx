@@ -2,6 +2,7 @@
 import { NOTE_COLORS, SHAPE_KINDS } from './ops.js'
 import { useDragPanel } from './useDragPanel.js'
 import DragGrip from './DragGrip.jsx'
+import { StarIcon } from './icons.jsx'
 
 const SHAPE_ICONS = {
   rect: <rect x="4" y="6" width="16" height="12" rx="2" />,
@@ -10,9 +11,9 @@ const SHAPE_ICONS = {
 }
 
 // Colour and shape pickers. They change the selection and also set what the next note/shape is created with.
-export default function ContextBar({ colors, shapes, color, shape, onColor, onShape, onDelete, deleteCount = 0 }) {
+export default function ContextBar({ colors, shapes, color, shape, onColor, onShape, onDelete, deleteCount = 0, onHighlight, highlighted = false }) {
   const drag = useDragPanel('retrospace-context-bar')
-  if (!colors && !shapes && !onDelete) return null
+  if (!colors && !shapes && !onDelete && !onHighlight) return null
   return (
     <div ref={drag.panel} style={drag.style} {...drag.card} className={`bd-context${drag.dragging ? ' is-dragging' : ''}`} role="toolbar" aria-label="Item style">
       <DragGrip grip={drag.grip} dragging={drag.dragging} label="Move the colour bar" />
@@ -35,9 +36,17 @@ export default function ContextBar({ colors, shapes, color, shape, onColor, onSh
           <span className="bd-swatch-dot" style={{ background: c === 'none' ? 'var(--panel)' : `var(--note-${c})` }} />
         </button>
       ))}
-      {onDelete && (
+      {onHighlight && (
         <>
           {(colors || shapes) && <span className="bd-context-sep" />}
+          <button type="button" className={`bd-chip bd-chip--star${highlighted ? ' is-active' : ''}`} aria-label={highlighted ? 'Remove the highlight' : 'Highlight'} aria-pressed={highlighted} title="Highlight (H)" onClick={onHighlight}>
+            <StarIcon width={20} height={20} />
+          </button>
+        </>
+      )}
+      {onDelete && (
+        <>
+          {(colors || shapes || onHighlight) && <span className="bd-context-sep" />}
           <button type="button" className="bd-chip bd-chip--danger" aria-label={deleteCount > 1 ? `Delete ${deleteCount} items` : 'Delete'} title="Delete" onClick={onDelete}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3" /></svg>
             <span className="bd-chip-text">Delete</span>

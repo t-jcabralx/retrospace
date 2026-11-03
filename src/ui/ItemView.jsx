@@ -61,7 +61,7 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onDr
     if (now - lastTap.current < DOUBLE_TAP_MS) { lastTap.current = 0; setEditing(true) } else lastTap.current = now
   }
 
-  const cls = ['bd-item', `bd-k-${item.kind}`, selected && 'is-selected', linking && 'is-linking', !editable && 'is-locked', peerMoving && 'is-peer-moving'].filter(Boolean).join(' ')
+  const cls = ['bd-item', `bd-k-${item.kind}`, selected && 'is-selected', item.hl && 'is-highlighted', linking && 'is-linking', !editable && 'is-locked', peerMoving && 'is-peer-moving'].filter(Boolean).join(' ')
   const style = {
     width: item.w,
     height: item.h,
@@ -87,6 +87,7 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onDr
       onDoubleClick={() => canEdit && setEditing(true)}
     >
       <Body item={item} editing={editing} readOnly={!editable} />
+      {item.hl && <span className="bd-hl-badge" role="img" aria-label="Highlighted">★</span>}
       {item.anon && <span className="bd-anon-badge" title="The author is hidden from everyone">Anonymous</span>}
       {voting ? (
         <button

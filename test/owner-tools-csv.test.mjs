@@ -84,9 +84,9 @@ describe('boardCsv', () => {
       note('n5', 5000, 'floating'),
     ]
     const rows = parse(boardCsv(board, items, people).slice(1))
-    assert.deepEqual(rows[0], ['Board', 'Type', 'Category', 'Item', 'Kind', 'Votes', 'Color', 'Created', 'Author'].slice(0, 8))
+    assert.deepEqual(rows[0], ['Board', 'Type', 'Category', 'Item', 'Kind', 'Votes', 'Color', 'Created', 'Highlighted', 'Author'].slice(0, 9))
     assert.deepEqual(rows.slice(1).map((r) => [r[2], r[3], r[5]]), [['Went well', 'high', '2'], ['Went well', 'low', '0'], ['Went poorly', 'bad thing', '0'], ['Uncategorised', 'floating', '0']])
-    assert.ok(rows.every((r) => r.length === 8), 'no Author cell at all')
+    assert.ok(rows.every((r) => r.length === 9), 'no Author cell at all')
     assert.equal(rows[1][0], 'Sprint 12')
     assert.equal(rows[1][6], 'yellow')
     assert.match(rows[1][7], /^1970-01-01T00:00:01\.000Z$/)
@@ -96,8 +96,8 @@ describe('boardCsv', () => {
     const items = [note('n1', 10, 'mine'), note('n2', 20, 'theirs', { authorUid: 'KM-GONE-GONE-GONE', authorName: 'Left Lee' })]
     const text = boardCsv(board, items, people, { authors: true })
     const rows = parse(text.slice(1))
-    assert.equal(rows[0][8], 'Author')
-    assert.deepEqual(rows.slice(1).map((r) => r[8]).sort(), ['Ann', 'Left Lee'])
+    assert.equal(rows[0][9], 'Author')
+    assert.deepEqual(rows.slice(1).map((r) => r[9]).sort(), ['Ann', 'Left Lee'])
     assert.equal(text.includes('KM-'), false, 'no public ids')
   })
 
@@ -196,7 +196,7 @@ describe('GET /export', () => {
     assert.match(ok.headers.get('content-disposition'), /^attachment; filename="Plan-A-v2-\d{4}-\d\d-\d\d\.csv"$/)
     assert.equal(ok.text[0], BOM)
     const rows = parse(ok.text.slice(1))
-    assert.equal(rows[0].length, 8)
+    assert.equal(rows[0].length, 9)
     const texts = rows.slice(1).map((r) => r[3]).sort()
     assert.deepEqual(texts, ["'=cmd|calc", 'fine, with comma'])
     assert.equal(rows[1][0], 'Plan "A", v2')
@@ -204,8 +204,8 @@ describe('GET /export', () => {
 
     const withAuthors = await call(exportRoute, 'GET', `/api/boards/${code}/export?format=csv&authors=1`, { code, cookie: owner })
     const arows = parse(withAuthors.text.slice(1))
-    assert.equal(arows[0][8], 'Author')
-    assert.ok(arows.slice(1).every((r) => r[8] === 'Gus'))
+    assert.equal(arows[0][9], 'Author')
+    assert.ok(arows.slice(1).every((r) => r[9] === 'Gus'))
     assert.equal(/KM-[A-Z0-9]{4}-/.test(withAuthors.text), false, 'no public ids')
 
     assert.equal((await call(exportRoute, 'GET', `/api/boards/${code}/export`, { code, cookie: owner })).status, 400)
@@ -222,4 +222,18 @@ describe('GET /export', () => {
     assert.deepEqual(statuses.slice(0, 10), Array(10).fill(200))
     assert.deepEqual(statuses.slice(10), [429, 429])
   })
+})
+
+test('a highlighted item is marked Yes in the Highlighted column, the others are blank, and the summary row is blank too', () => {
+  const board = { title: 'B', type: 'retro', summary: { status: 'shared', text: 'We did well', editedAt: 2 } }
+  const note = (id, extra = {}) => ({ id, kind: 'note', x: 0, y: 0, w: 1, h: 1, z: 0, data: { text: id }, votes: [], updatedAt: 1, deleted: false, ...extra })
+  const csv = boardCsv(board, [note('lit', { hl: true }), note('plain'), note('off', { hl: false })], [])
+  const rows = csv.replace('\uFEFF', '').trim().split('\r\n').map((l) => l.split(','))
+  assert.equal(rows[0][8], 'Highlighted')
+  const by = new Map(rows.slice(1).map((r) => [r[3], r[8]]))
+  assert.equal(by.get('lit'), 'Yes')
+  assert.equal(by.get('plain'), '')
+  assert.equal(by.get('off'), '')
+  assert.equal(rows.at(-1)[2], 'Summary')
+  assert.equal(rows.at(-1)[8], '')
 })

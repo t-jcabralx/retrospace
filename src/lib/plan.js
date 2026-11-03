@@ -1,5 +1,6 @@
 import { validateItem } from './validate.js'
 import { DEFAULT_PER_PERSON, isVotable } from './vote.js'
+import { isHighlightable } from './highlight.js'
 import { retroAllows } from './retro.js'
 import { resolveAnon } from './anon.js'
 
@@ -128,6 +129,12 @@ export function planOps(board, items, ops, actor, now, liveCount, votesUsed, med
         else if (budget() >= (board.vote.perPerson ?? DEFAULT_PER_PERSON)) { fail('No votes left'); break }
         else used = budget() + 1
         commit({ ...stored, votes: toggle(stored.votes, actor.uid), updatedAt: tick() })
+        break
+      }
+      case 'highlight': {
+        if (!mayEdit) { fail('Not allowed'); break }
+        if (!isHighlightable(stored)) { fail('Can\'t highlight this'); break }
+        commit({ ...stored, hl: o.on, updatedAt: tick() })
         break
       }
       case 'react': {

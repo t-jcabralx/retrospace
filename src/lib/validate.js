@@ -222,6 +222,9 @@ export function validateOp(input) {
     case 'delete':
     case 'vote':
       return isId(input.id) ? { ok: true, op: { op: input.op, id: input.id } } : err(`${input.op} needs id`)
+    case 'highlight': // set, not toggled, so undo and a retried request cannot flip it the wrong way
+      if (!isId(input.id)) return err('highlight needs id')
+      return typeof input.on === 'boolean' ? { ok: true, op: { op: 'highlight', id: input.id, on: input.on } } : err('highlight needs on (true or false)')
     case 'react':
       if (!isId(input.id)) return err('react needs id')
       return REACTIONS.includes(input.emoji) ? { ok: true, op: { op: 'react', id: input.id, emoji: input.emoji } } : err('unsupported reaction')

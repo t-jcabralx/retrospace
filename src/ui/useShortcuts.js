@@ -42,6 +42,7 @@ export function useShortcuts(env) {
       if (own && (key === 'Delete' || key === 'Backspace' || key.startsWith('Arrow'))) return
       if (key === 'Delete' || key === 'Backspace') { e.preventDefault(); actions.deleteSelected(); return }
       if (key === 'Enter' || key === 'F2') { if (actions.startEdit()) e.preventDefault(); return } // else the keypress would land in the new editor as a newline
+      if (key === 'h' && !e.shiftKey) { if (actions.toggleHighlight()) e.preventDefault(); return } // H highlights what is selected
       if (key === '[') { actions.reorder(-1); return }
       if (key === ']') { actions.reorder(1); return }
       if (key.startsWith('Arrow')) {
