@@ -46,12 +46,10 @@ test('the report email escapes the message and sets a reply-to only when there i
   assert.match(issueRecipient({}), /@/, 'falls back to the contact address')
 })
 
-test('the mailer passes reply-to to Resend and to Brevo', async () => {
-  await sendMail({ to: 'o@example.com', subject: 's', text: 't', replyTo: 'r@example.com' }, { config: { provider: 'resend', apiKey: 'k', from: 'a@b.co' } })
+test('the mailer passes reply-to to Resend, and leaves it out when there is none', async () => {
+  await sendMail({ to: 'o@example.com', subject: 's', text: 't', replyTo: 'r@example.com' }, { config: { apiKey: 'k', from: 'a@b.co' } })
   assert.equal(sent.at(-1).body.reply_to, 'r@example.com')
-  await sendMail({ to: 'o@example.com', subject: 's', text: 't', replyTo: 'r@example.com' }, { config: { provider: 'brevo', apiKey: 'k', from: 'a@b.co' } })
-  assert.deepEqual(sent.at(-1).body.replyTo, { email: 'r@example.com' })
-  await sendMail({ to: 'o@example.com', subject: 's', text: 't' }, { config: { provider: 'resend', apiKey: 'k', from: 'a@b.co' } })
+  await sendMail({ to: 'o@example.com', subject: 's', text: 't' }, { config: { apiKey: 'k', from: 'a@b.co' } })
   assert.equal('reply_to' in sent.at(-1).body, false)
 })
 
