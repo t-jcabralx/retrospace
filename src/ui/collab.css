@@ -23,7 +23,11 @@
   display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; box-sizing: border-box; border-radius: 999px;
   background: var(--line); color: var(--ink); font-size: 12px; font-weight: 700; box-shadow: 0 0 0 2px var(--panel);
 }
-.bd-presence-count { display: none; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bd-presence-count { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bd-presence-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #1fb36b; box-shadow: 0 0 0 2px color-mix(in srgb, #1fb36b 25%, transparent); }
+.bd-presence-word { display: none; font-weight: 600; color: var(--muted); }
+.bd-presence-solo { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 8px; color: var(--ink); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+@media (min-width: 900px) { .bd-presence-word { display: inline; } }
 .bd-presence-pop, .bd-celebrate-menu {
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 35; box-sizing: border-box; padding: 6px; border-radius: 12px;
   background: var(--panel); border: 1px solid var(--line); box-shadow: var(--bd-shadow);
@@ -80,7 +84,6 @@
 @media (max-width: 640px) {
   .bd-presence-av:nth-child(n + 2), .bd-presence-more { display: none; }
   .bd-presence-av + .bd-presence-av { margin-left: 0; }
-  .bd-presence-count { display: inline; }
   .bd-presence-btn { padding: 0 4px; gap: 4px; }
   /* The top bar has no room for Celebrate on a phone: it floats bottom left, level with the zoom control, and opens upward. */
   .bd-celebrate {
@@ -103,8 +106,8 @@
 /* A 375px phone: give the board title room (it was down to about 45px). The avatar buttons keep their accessible names. */
 @media (max-width: 420px) {
   .bd-screen .bd-top { gap: 2px; padding: 0 2px; }
-  .bd-presence-count { display: none; }
   .bd-presence-btn { min-width: 40px; padding: 0 2px; }
+  .bd-presence-solo { padding: 0 4px; }
   .bd-screen .bd-status { padding: 4px; border-color: transparent; }
 }
 /* Narrower than 380px the floating Celebrate pill would touch the zoom control: it keeps only its icon (the name stays for assistive tech). */

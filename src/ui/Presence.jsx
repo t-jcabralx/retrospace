@@ -2,7 +2,8 @@
 // Top-bar "who is here": a compact stack of avatars (up to 5, then +N) that opens a list of everybody online, you
 // first. A disclosure, not a menu: the button toggles the list, Esc or a click elsewhere closes it, and Tab moves
 // on normally. Join / leave is announced politely, at most once every 3 seconds. Rendered only while the realtime
-// stream is live and somebody else is here; with polling there is no presence and nothing appears.
+// stream is live; with polling there is no presence and nothing appears. Alone, a small "1 online" chip says so; with others,
+// the avatar button carries the count of everybody here now (you included).
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import Avatar from './Avatar.jsx'
 import { NO_PRESENCE } from './noPresence.js'
@@ -45,10 +46,8 @@ function useRosterAnnouncement(peers) {
   return text
 }
 
-export default function Presence({ presence, me }) {
-  const store = presence ?? NO_PRESENCE
-  const peers = useSyncExternalStore(store.subscribe, store.getPeers, () => EMPTY)
-  const said = useRosterAnnouncement(peers)
+// The roster itself: `peers` are the others here now. Split from the store subscription so it can be rendered with a given roster.
+export function PresenceView({ peers, me, said = '' }) {
   const [open, setOpen] = useState(false)
   const root = useRef(null)
   const button = useRef(null)
@@ -91,7 +90,7 @@ export default function Presence({ presence, me }) {
               ))}
               {peers.length > SHOWN && <span className="bd-presence-more">+{peers.length - SHOWN}</span>}
             </span>
-            <span className="bd-presence-count" aria-hidden="true">{n}</span>
+            <span className="bd-presence-count" aria-hidden="true"><i className="bd-presence-dot" />{n}<span className="bd-presence-word"> online</span></span>
           </button>
           {open && (
             <div id={listId} className="bd-presence-pop" role="group" aria-label="People here">
@@ -113,7 +112,21 @@ export default function Presence({ presence, me }) {
           )}
         </>
       )}
+      {peers.length === 0 && (
+        <span className="bd-presence-solo" title="Only you are here right now">
+          <i className="bd-presence-dot" aria-hidden="true" />
+          <span aria-hidden="true">1<span className="bd-presence-word"> online</span></span>
+          <span className="bd-vh">Only you are here</span>
+        </span>
+      )}
       <div className="bd-vh" role="status" aria-live="polite">{said}</div>
     </div>
   )
+}
+
+export default function Presence({ presence, me }) {
+  const store = presence ?? NO_PRESENCE
+  const peers = useSyncExternalStore(store.subscribe, store.getPeers, () => EMPTY)
+  const said = useRosterAnnouncement(peers)
+  return <PresenceView peers={peers} me={me} said={said} />
 }
