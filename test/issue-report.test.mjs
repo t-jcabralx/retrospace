@@ -71,7 +71,11 @@ test('POST /api/issue: bad input is a 400, a bot field is quietly dropped, and n
 
 test('POST /api/issue: without mail settings it says so (503), and when the provider fails it says so (502)', async () => {
   globalThis.fetch = async () => new Response('no', { status: 500 })
-  assert.equal((await post(GOOD)).status, 502)
+  assert.deepEqual(await post(GOOD), { status: 502, data: { error: 'Your report could not be sent. Please try again later' } })
+  globalThis.fetch = async () => new Response(JSON.stringify({ name: 'invalid_api_key', message: 'API key is invalid for owner@example.com' }), { status: 403 })
+  const named = await post(GOOD)
+  assert.deepEqual(named, { status: 502, data: { error: 'Your report could not be sent. Please try again later', reason: 'invalid_api_key' } }, 'only the error class is passed on')
+  assert.ok(!JSON.stringify(named).includes('owner@example.com'), 'never the provider\'s message or an address')
   const key = process.env.RESEND_API_KEY
   delete process.env.RESEND_API_KEY
   try { assert.equal((await post(GOOD)).status, 503) } finally { process.env.RESEND_API_KEY = key }

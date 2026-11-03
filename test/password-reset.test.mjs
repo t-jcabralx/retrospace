@@ -60,11 +60,11 @@ test('mailer: sends through Resend with the key and the from address, and never 
   assert.equal(sent[0].body.from, 'Retrospace <no-reply@example.com>')
 
   globalThis.fetch = async () => new Response('no', { status: 403 })
-  assert.deepEqual(await sendMail({ to: 'a@example.com', subject: 's', text: 't' }), { ok: false, error: 'the mail provider answered 403' })
+  assert.deepEqual(await sendMail({ to: 'a@example.com', subject: 's', text: 't' }), { ok: false, error: 'the mail provider answered 403', status: 403 })
   const refuse = (body) => async () => new Response(JSON.stringify(body), { status: 403 })
   globalThis.fetch = refuse({ statusCode: 403, name: 'validation_error', message: 'You can only send testing emails to your own email address (owner@example.com)' })
   const named = await sendMail({ to: 'a@example.com', subject: 's', text: 't' })
-  assert.deepEqual(named, { ok: false, error: 'the mail provider answered 403 (validation_error)' }, 'the class is kept so the log says what went wrong')
+  assert.deepEqual(named, { ok: false, error: 'the mail provider answered 403 (validation_error)', status: 403, reason: 'validation_error' }, 'the class is kept so the log says what went wrong')
   assert.ok(!named.error.includes('owner@example.com') && !named.error.includes('testing emails'), 'the message and the address it names are never kept')
   globalThis.fetch = refuse({ name: 'DROP TABLE; <script>' })
   assert.equal((await sendMail({ to: 'a@example.com', subject: 's', text: 't' })).error, 'the mail provider answered 403', 'anything that is not a plain error class is ignored')

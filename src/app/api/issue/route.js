@@ -26,7 +26,8 @@ async function handle(req) {
   const sent = await sendMail({ to: issueRecipient(), ...issueEmail(v.value) }, { config })
   if (!sent.ok) {
     console.error('retrospace: issue report not sent:', sent.error)
-    return fail(502, 'Your report could not be sent. Please try again later')
+    // `reason` is only the provider's short error class (invalid_api_key, validation_error...): enough for the owner to see what to fix.
+    return noStore(Response.json({ error: 'Your report could not be sent. Please try again later', ...(sent.reason && { reason: sent.reason }) }, { status: 502 }))
   }
   return json({ ok: true })
 }

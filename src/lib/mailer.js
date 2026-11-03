@@ -34,7 +34,7 @@ export async function sendMail({ to, subject, text, html, replyTo }, { config = 
     })
     if (res.ok) return { ok: true }
     const name = await errorName(res)
-    return { ok: false, error: `the mail provider answered ${res.status}${name ? ` (${name})` : ''}` }
+    return { ok: false, error: `the mail provider answered ${res.status}${name ? ` (${name})` : ''}`, status: res.status, ...(name && { reason: name }) }
   } catch (e) {
     return { ok: false, error: e?.name === 'TimeoutError' ? 'the mail provider timed out' : 'the mail provider could not be reached' }
   }
