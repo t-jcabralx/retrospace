@@ -3,14 +3,18 @@
 // viewerItem(s) below, which swaps the author fields for a fixed marker. Only the author's own response carries
 // `mine: true`, so their UI knows it may edit or delete. Anything that serializes items (snapshot, /since, reveal, the
 // ops response and the stream envelopes, exports) must go through here.
-export const ANON_KINDS = ['note', 'text', 'shape', 'image', 'card']
+export const ANON_KINDS = ['note', 'text', 'shape', 'image', 'card', 'shoutout']
+// What the "post anonymously" choice sends: notes, celebration cards and wall shout-outs (a text box, shape or picture on the canvas stays named).
+export const ANON_POST_KINDS = ['note', 'card', 'shoutout']
+// The boards where people post: retro, workshop, celebration and the team wall. The prize wheel has nothing to post.
+export const ANON_BOARD_TYPES = ['retro', 'workshop', 'celebration', 'wall']
 export const ANON_MODES = ['optional', 'always', 'never']
 export const ANON_UID = 'anon'
 export const ANON_NAME = 'Anonymous'
 
-// 'optional' on retro boards unless the owner chose otherwise; every other board type is always 'never'.
+// 'optional' unless the owner chose otherwise, on every board where people post; the prize wheel is always 'never'.
 export function anonModeOf(board) {
-  if (board?.type !== 'retro') return 'never'
+  if (!ANON_BOARD_TYPES.includes(board?.type)) return 'never'
   return ANON_MODES.includes(board.anonymousNotes) ? board.anonymousNotes : 'optional'
 }
 
@@ -53,10 +57,10 @@ export function selectionForPresence(selection, itemsById) {
   return [...selection].filter((id) => itemsById.get(id)?.anon !== true)
 }
 
-// Whether a note the viewer is about to add is sent as anonymous: `always` posts anonymously for everyone (the owner
-// included, as the locked notice says), `optional` follows the toggle, `never` and any non-note kind never. The server
-// still decides what the board's mode allows.
+// Whether a post the viewer is about to add is sent as anonymous: `always` posts anonymously for everyone (the owner
+// included, as the locked notice says), `optional` follows the toggle, `never` and any kind that is not a note, card or
+// shout-out never. The server still decides what the board's mode allows.
 export function addsAnonymously(mode, toggleOn, kind) {
-  if (kind !== 'note') return false
+  if (!ANON_POST_KINDS.includes(kind)) return false
   return mode === 'always' || (mode === 'optional' && Boolean(toggleOn))
 }

@@ -55,24 +55,31 @@ test('opsEnvelopes: anon items go out without from, cid or mine; the rest keep t
   assert.equal(opsEnvelopes({ ...env, ops: [stored({ anon: true })] }).length, 1)
 })
 
-test('anonModeOf: optional on retro by default, never elsewhere (whatever is stored)', () => {
+test('anonModeOf: optional by default on every board where people post, never on the prize wheel (whatever is stored)', () => {
   assert.equal(anonModeOf(retro()), 'optional')
   assert.equal(anonModeOf(retro({ anonymousNotes: 'always' })), 'always')
   assert.equal(anonModeOf(retro({ anonymousNotes: 'bogus' })), 'optional')
-  assert.equal(anonModeOf({ type: 'workshop' }), 'never')
-  assert.equal(anonModeOf({ type: 'celebration', anonymousNotes: 'always' }), 'never')
+  for (const type of ['workshop', 'celebration', 'wall']) {
+    assert.equal(anonModeOf({ type }), 'optional', type)
+    assert.equal(anonModeOf({ type, anonymousNotes: 'always' }), 'always', type)
+    assert.equal(anonModeOf({ type, anonymousNotes: 'never' }), 'never', type)
+    assert.equal(anonModeOf({ type, anonymousNotes: 'bogus' }), 'optional', type)
+  }
+  assert.equal(anonModeOf({ type: 'event' }), 'never')
+  assert.equal(anonModeOf({ type: 'event', anonymousNotes: 'always' }), 'never')
+  assert.equal(anonModeOf(null), 'never')
 })
 
-test('validateItem: anon only true|absent and only on note|text|shape|image|card; false is normalised away', () => {
+test('validateItem: anon only true|absent and only on note|text|shape|image|card|shoutout; false is normalised away', () => {
   const base = { x: 0, y: 0, w: 200, h: 200 }
-  const ok = { note: { text: 'a' }, text: { text: 'a' }, shape: { shape: 'rect' }, image: { src: 'https://x.test/a.png' }, card: { message: 'hi', signer: 'me', color: 'blue' } }
+  const ok = { note: { text: 'a' }, text: { text: 'a' }, shape: { shape: 'rect' }, image: { src: 'https://x.test/a.png' }, card: { message: 'hi', signer: 'me', color: 'blue' }, shoutout: { toName: 'x', message: 'm', badge: 'Teamwork' } }
   for (const kind of ANON_KINDS) {
     const r = validateItem({ id: 'a', kind, ...base, data: ok[kind], anon: true })
     assert.ok(r.ok && r.item.anon === true, `${kind}: ${r.error}`)
     assert.ok(!('anon' in validateItem({ id: 'a', kind, ...base, data: ok[kind], anon: false }).item))
     assert.ok(!('anon' in validateItem({ id: 'a', kind, ...base, data: ok[kind] }).item))
   }
-  const bad = { frame: { title: 't' }, connector: { from: 'a', to: 'b' }, shoutout: { toName: 'x', message: 'm', badge: 'Teamwork' } }
+  const bad = { frame: { title: 't' }, connector: { from: 'a', to: 'b' } }
   for (const [kind, data] of Object.entries(bad)) {
     assert.equal(validateItem({ id: 'a', kind, ...base, data, anon: true }).error, 'this item cannot be anonymous', kind)
     assert.ok(validateItem({ id: 'a', kind, ...base, data, anon: false }).ok, `${kind} with anon:false is just a normal item`)
@@ -95,7 +102,8 @@ test('planOps add: optional keeps the choice; never refuses; always forces non-o
   // never
   assert.deepEqual(run(retro({ anonymousNotes: 'never' }), note('a', { anon: true }), g).rejected, [{ id: 'a', error: 'Anonymous notes are off on this board' }])
   assert.ok(run(retro({ anonymousNotes: 'never' }), note('a'), g).applied.length === 1)
-  assert.equal(run({ code: 'X', type: 'workshop' }, note('a', { anon: true }), g).rejected.length, 1, 'other board types are never anonymous')
+  assert.equal(run({ code: 'X', type: 'workshop' }, note('a', { anon: true }), g).applied[0].anon, true, 'a workshop board is optional by default too')
+  assert.deepEqual(resolveAnon({ type: 'event' }, { kind: 'note', anon: true }, false), { error: 'Anonymous notes are off on this board' }, 'the prize wheel never is')
   // always
   const always = retro({ anonymousNotes: 'always' })
   assert.equal(run(always, note('a'), g).applied[0].anon, true, 'forced for a participant')
@@ -124,13 +132,17 @@ test('planOps update/delete: the author keeps edit rights, stays anonymous, cann
   assert.equal(after.applied[0].anon, true)
 })
 
-test('PATCH anonymousNotes: strict values, retro only for optional/always', async () => {
+test('PATCH anonymousNotes: strict values, any board where people post may use optional/always, the prize wheel only never', async () => {
   for (const v of ['optional', 'always', 'never']) assert.deepEqual(await checkPatch({ anonymousNotes: v }), { value: { anonymousNotes: v } })
   for (const v of ['Always', 'yes', true, null, 1, {}, '', undefined]) assert.ok((await checkPatch({ anonymousNotes: v })).error, String(v))
   assert.deepEqual(resolvePatch(retro(), { anonymousNotes: 'always' }), { value: { anonymousNotes: 'always' } })
-  assert.match(resolvePatch({ type: 'workshop' }, { anonymousNotes: 'optional' }).error, /only available on retro/)
-  assert.match(resolvePatch({ type: 'celebration' }, { anonymousNotes: 'always' }).error, /only available on retro/)
-  assert.deepEqual(resolvePatch({ type: 'workshop' }, { anonymousNotes: 'never' }), { value: { anonymousNotes: 'never' } })
+  for (const type of ['workshop', 'celebration', 'wall']) {
+    assert.deepEqual(resolvePatch({ type }, { anonymousNotes: 'always' }), { value: { anonymousNotes: 'always' } }, type)
+    assert.deepEqual(resolvePatch({ type }, { anonymousNotes: 'optional' }), { value: { anonymousNotes: 'optional' } }, type)
+  }
+  assert.match(resolvePatch({ type: 'event' }, { anonymousNotes: 'optional' }).error, /not available on this kind of board/)
+  assert.match(resolvePatch({ type: 'event' }, { anonymousNotes: 'always' }).error, /not available on this kind of board/)
+  assert.deepEqual(resolvePatch({ type: 'event' }, { anonymousNotes: 'never' }), { value: { anonymousNotes: 'never' } })
 })
 
 test('AI summary input never carries an author, anonymous or not', () => {

@@ -25,7 +25,7 @@ test('actions are not votable, themes and notes are', () => {
 })
 
 test('planOps: a refused anonymous add does not move the counters of the batch', () => {
-  const board = { code: 'ABC234', type: 'workshop', status: 'open', locked: false, lastTs: 0 } // mode never
+  const board = { code: 'ABC234', type: 'workshop', status: 'open', locked: false, lastTs: 0, anonymousNotes: 'never' } // anonymous refused
   const val = (o) => { const r = validateOp(o); assert.ok(r.ok, r.error); return r.op }
   const add = (id, extra = {}) => val({ op: 'add', id, item: { id, kind: 'note', data: { text: id }, ...extra } })
   const actor = { uid: 'u1', name: 'N', avatar: null, isOwner: false }
@@ -46,4 +46,7 @@ test('addsAnonymously: always -> notes anonymous for everyone, optional -> the t
   assert.equal(addsAnonymously('never', true, 'note'), false)
   assert.equal(addsAnonymously(undefined, true, 'note'), false)
   for (const k of ['text', 'shape', 'frame']) assert.equal(addsAnonymously('always', true, k), false, k)
+  for (const k of ['card', 'shoutout']) assert.equal(addsAnonymously('optional', true, k), true, `${k} follows the choice too`)
+  assert.equal(addsAnonymously('always', false, 'shoutout'), true)
+  assert.equal(addsAnonymously('never', true, 'card'), false)
 })

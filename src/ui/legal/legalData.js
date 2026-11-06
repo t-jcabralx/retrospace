@@ -10,7 +10,7 @@ export const PRIVACY = [
     'Boards: the title, the settings, everything people add, the history of raffle draws, and any summary the owner writes or generates.',
     'Your internet address is used for a short time (about a minute) to stop abuse, such as too many guesses at a passcode. It is not stored with your content.',
   ]],
-  ['Anonymous notes', ['When a board allows anonymous notes and you post one that way, your name is hidden from everyone on the board, including the owner, in the screen, in downloads and in AI summaries. We still keep which browser wrote it, so that you can edit or delete your own note.']],
+  ['Anonymous posts', ['When a board allows anonymous posts (notes, celebration cards and wall shout-outs) and you post one that way, your name is hidden from everyone on the board, including the owner, in the screen, in downloads and in AI summaries. An anonymous card is signed "Anonymous". We still keep which browser wrote it, so that you can edit or delete your own post.']],
   ['Cookies and similar storage', [
     '`rs_session` keeps an owner signed in. `rs_g` is your guest identity on a board. `rs_a_` followed by a board code remembers that you entered that board’s passcode.',
     'Your browser also keeps a few small preferences on your device (for example whether the wheel sound is on). Nothing is sent to us for that.',

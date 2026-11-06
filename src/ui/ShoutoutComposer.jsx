@@ -9,6 +9,8 @@ import { CloseIcon } from './icons.jsx'
 import GifPicker from './GifPicker.jsx'
 import Shoutout, { BADGE_EMOJI } from './items/Shoutout.jsx'
 import { buildShoutoutOp } from './shoutoutOps.js'
+import AnonCheck from './AnonCheck.jsx'
+import { ANON_NAME } from '../lib/anon.js'
 import { BADGES } from '../lib/validate.js'
 import { checkShoutout, matchPeople, MAX_SHOUT_MESSAGE, MAX_TO_NAME } from '../lib/wall.js'
 import './cards.css'
@@ -23,6 +25,9 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
   const [to, setTo] = useState(null) // the person id when picked from the list
   const [message, setMessage] = useState('')
   const [badge, setBadge] = useState(BADGES[0])
+  const [anon, setAnon] = useState(false)
+  const mode = ctl.board?.anonymousNotes
+  const anonNow = mode === 'always' || (mode === 'optional' && anon)
   const [gif, setGif] = useState(null)
   const [view, setView] = useState('form') // form | gif
   const [tried, setTried] = useState(false)
@@ -69,6 +74,7 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
     }
     submitting.current = true
     const op = buildShoutoutOp(items, { toName, to, message, badge, gif: gif?.src }, undefined)
+    if (anonNow) op.item.anon = true // the server decides what the board's mode allows
     if (!ctl.local([op])) {
       submitting.current = false
       setFormError('Could not post your shout-out. The board may have just been locked or closed.')
@@ -166,10 +172,11 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
               </div>
               <div className="bd-cc-previewcol" aria-hidden="true">
                 <p className="bd-set-label">Preview</p>
-                <div className="wl-preview"><Shoutout item={{ data: preview, authorName: ctl.persona?.name }} /></div>
+                <div className="wl-preview"><Shoutout item={{ data: preview, authorName: anonNow ? ANON_NAME : ctl.persona?.name }} /></div>
               </div>
             </div>
             <p className="bd-set-error" role="alert">{formError}</p>
+            <AnonCheck mode={mode} on={anon} onChange={setAnon} />
             <div className="bd-set-actions bd-cc-actions">
               <button type="button" className="bd-sbtn" onClick={onClose}>Cancel</button>
               <button type="submit" className="bd-sbtn is-primary">Post shout-out</button>

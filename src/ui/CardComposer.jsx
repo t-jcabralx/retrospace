@@ -10,6 +10,8 @@ import { CloseIcon } from './icons.jsx'
 import GifPicker from './GifPicker.jsx'
 import Card from './items/Card.jsx'
 import { buildCardOp } from './cardOps.js'
+import AnonCheck from './AnonCheck.jsx'
+import { ANON_NAME } from '../lib/anon.js'
 import { fileToImage, ImageTooLarge } from './images.js'
 import { NOTE_COLORS, noteColor } from './ops.js'
 import { estimateCardHeight, CARD_W } from '../lib/layout.js'
@@ -31,6 +33,10 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
   const [message, setMessage] = useState(draft?.message ?? '')
   const [signer, setSigner] = useState(draft?.signer ?? clipName(ctl.persona?.name))
   const [color, setColor] = useState(draft?.color ?? 'yellow')
+  const [anon, setAnon] = useState(false)
+  const mode = ctl.board?.anonymousNotes
+  const anonNow = mode === 'always' || (mode === 'optional' && anon) // an anonymous card is signed "Anonymous": a typed name could be the author's own
+  const signed = anonNow ? ANON_NAME : signer
   const [media, setMedia] = useState(draft?.media ?? null)
   const [view, setView] = useState('card') // card | gif
   const [tried, setTried] = useState(false) // errors show after the first attempt to post
@@ -53,7 +59,7 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
     else gifBtn.current?.focus()
   }, [view])
 
-  const errors = tried ? checkCardText(message, signer) : {}
+  const errors = tried ? checkCardText(message, signed) : {}
   const left = MAX_CARD_MESSAGE - message.length
 
   async function onPhoto(e) {
@@ -77,13 +83,14 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
     if (submitting.current) return // a double click or Enter+click posts once
     setTried(true)
     setFormError('')
-    const bad = checkCardText(message, signer)
+    const bad = checkCardText(message, signed)
     if (bad.message || bad.signer) {
       root.current?.querySelector(bad.message ? `#${CSS.escape(id)}-m` : `#${CSS.escape(id)}-s`)?.focus()
       return
     }
     submitting.current = true
-    const op = buildCardOp(items, { message, signer, color, media })
+    const op = buildCardOp(items, { message, signer: signed, color, media })
+    if (anonNow) op.item.anon = true // the server decides what the board's mode allows
     if (!ctl.local([op])) {
       submitting.current = false
       setFormError('Could not add your card. The board may have just been locked or closed.')
@@ -95,7 +102,7 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
   }
 
   const stageH = estimateCardHeight({ message: message.trim(), hasMedia: Boolean(media), mediaRatio: media?.w / media?.h, width: CARD_W })
-  const preview = { message: message.trim() || 'Your message appears here', signer: signer.trim() || 'You', color, ...(media && { [media.type === 'photo' ? 'image' : 'gif']: media.src, mediaW: media.w, mediaH: media.h }) }
+  const preview = { message: message.trim() || 'Your message appears here', signer: signed.trim() || 'You', color, ...(media && { [media.type === 'photo' ? 'image' : 'gif']: media.src, mediaW: media.w, mediaH: media.h }) }
 
   return createPortal(
     <>
@@ -131,6 +138,7 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
                   </div>
                   <span className="bd-vh" role="status" aria-live="polite">{message.length >= COUNT_NOTE_FROM ? `${left} characters left` : ''}</span>
                 </div>
+                <AnonCheck mode={mode} on={anon} onChange={setAnon} />
                 <div className="bd-set-item">
                   <label className="bd-set-label" htmlFor={`${id}-s`}>Signed as</label>
                   <input
@@ -140,12 +148,13 @@ export default function CardComposer({ ctl, items, draft, onDraft, onClose, open
                     maxLength={MAX_SIGNER}
                     autoComplete="off"
                     placeholder="Your name, shown on the card"
-                    value={signer}
+                    value={signed}
+                    disabled={anonNow}
                     aria-invalid={errors.signer ? 'true' : undefined}
                     aria-describedby={`${id}-sh ${id}-se`}
                     onChange={(e) => setSigner(e.target.value)}
                   />
-                  <p id={`${id}-sh`} className="bd-set-desc">Shown on your card</p>
+                  <p id={`${id}-sh`} className="bd-set-desc">{anonNow ? 'An anonymous card is signed "Anonymous"' : 'Shown on your card'}</p>
                   <p id={`${id}-se`} className="bd-set-error" aria-live="polite">{errors.signer ?? ''}</p>
                 </div>
                 <div className="bd-set-item" role="group" aria-label="Card colour">

@@ -8,7 +8,7 @@ const text = (rows) => rows.map(([h, ps]) => `${h}\n${ps.join('\n')}`).join('\n'
 
 test('the privacy page names every cookie, every other company that handles data, and how to delete', () => {
   const t = text(PRIVACY)
-  for (const word of ['rs_session', 'rs_g', 'rs_a_', 'Vercel', 'MongoDB', 'Upstash', 'Google Fonts', 'Giphy', 'Anthropic', 'delete', 'Anonymous notes', 'Encryption']) assert.ok(t.includes(word), word)
+  for (const word of ['rs_session', 'rs_g', 'rs_a_', 'Vercel', 'MongoDB', 'Upstash', 'Google Fonts', 'Giphy', 'Anthropic', 'delete', 'Anonymous posts', 'Encryption']) assert.ok(t.includes(word), word)
 })
 
 test('the privacy page matches the code: the cookies it lists are the ones the app sets', async () => {

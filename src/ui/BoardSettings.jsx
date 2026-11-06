@@ -18,6 +18,7 @@ import ColumnsSection from './settings/ColumnsSection.jsx'
 import PeopleSection from './settings/PeopleSection.jsx'
 import StagesSection from './settings/StagesSection.jsx'
 import AnonymitySection from './settings/AnonymitySection.jsx'
+import { ANON_BOARD_TYPES } from '../lib/anon.js'
 import PeopleEditor from './PeopleEditor.jsx'
 import './site/site.css'
 import './settings.css'
@@ -68,7 +69,7 @@ export default function BoardSettings({ ctl, onClose, openerRef, focusAi = false
           {board.type !== 'event' && !(board.type === 'retro' && board.retro) && <VotingSection board={board} patchBoard={patchBoard} resetVotes={resetVotes} />}
           {board.type !== 'event' && !(board.type === 'retro' && board.retro) && <TimerSection ctl={ctl} patchBoard={patchBoard} />}
           {board.type !== 'event' && <ThrowablesSection board={board} patchBoard={patchBoard} />}
-          {board.type === 'retro' && <AnonymitySection board={board} patchBoard={patchBoard} />}
+          {ANON_BOARD_TYPES.includes(board.type) && <AnonymitySection board={board} patchBoard={patchBoard} />}
           {board.type !== 'event' && <AiSection board={board} patchBoard={patchBoard} info={ctl.state.viewer?.ai} focusOnMount={focusAi} />}
         </div>
       </aside>

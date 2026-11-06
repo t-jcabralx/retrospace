@@ -3,7 +3,7 @@ import { BOARD_TEMPLATES } from './templates.js'
 import { validateTitle, validateRecipient } from './validate.js'
 import { hashPassword } from './password.js'
 import { isSingleEmoji } from './emoji.js'
-import { ANON_MODES } from './anon.js'
+import { ANON_MODES, ANON_BOARD_TYPES } from './anon.js'
 import { aiOf, cleanSummaryText, MAX_SUMMARY } from './aiBoard.js'
 import { cleanSetup } from './wheel.js'
 import { applyRetroAction, retroEffects, RetroError, RETRO_ACTION_KEYS } from './retro.js'
@@ -132,7 +132,7 @@ export async function checkPatch(patch) {
 // the summary the edit applies to, and the moment a board was closed. -> { value } or { error }.
 export function resolvePatch(board, value, now = Date.now()) {
   const out = { ...value }
-  if (value.anonymousNotes && value.anonymousNotes !== 'never' && board.type !== 'retro') return { error: 'Anonymous notes are only available on retro boards' }
+  if (value.anonymousNotes && value.anonymousNotes !== 'never' && !ANON_BOARD_TYPES.includes(board.type)) return { error: 'Anonymous posts are not available on this kind of board' }
   if (value.ai) {
     const { ack, ...set } = value.ai
     const cur = aiOf(board)

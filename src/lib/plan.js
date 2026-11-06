@@ -2,7 +2,7 @@ import { validateItem } from './validate.js'
 import { DEFAULT_PER_PERSON, isVotable } from './vote.js'
 import { isHighlightable } from './highlight.js'
 import { retroAllows } from './retro.js'
-import { resolveAnon } from './anon.js'
+import { resolveAnon, ANON_NAME } from './anon.js'
 
 export const MAX_ITEMS = 2000
 export const MAX_DOCS = 4000 // live + deleted documents of one board (a tombstone is small, but not free)
@@ -80,8 +80,11 @@ export function planOps(board, items, ops, actor, now, liveCount, votesUsed, med
       live++
       if (o.item.kind === 'action') actions++
       const { anon: _anon, ...base } = o.item // eslint-disable-line no-unused-vars
+      // An anonymous card is signed "Anonymous": the name typed in the signer box could be the author's own.
+      const data = anon.anon && base.kind === 'card' ? { ...base.data, signer: ANON_NAME } : base.data
       commit({
         ...base,
+        data,
         ...(anon.anon && { anon: true }),
         boardCode: board.code,
         authorUid: actor.uid,
@@ -103,6 +106,7 @@ export function planOps(board, items, ops, actor, now, liveCount, votesUsed, med
         if (!mayEdit) { fail('Not allowed'); break }
         // Patches carry no kind, so the kind-specific shape/size rules run on the merged item.
         const merged = { ...stored, data: { ...stored.data, ...o.patch.data } }
+        if (stored.anon === true && stored.kind === 'card') merged.data.signer = ANON_NAME // an edit cannot sign an anonymous card with a name
         for (const k of PATCH_KEYS) if (o.patch[k] !== undefined) merged[k] = o.patch[k]
         const r = validateItem(merged)
         if (!r.ok) { fail(r.error); break }

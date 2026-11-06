@@ -178,25 +178,26 @@ describe('anonymous notes: modes and immutability', () => {
     assert.ok(!JSON.stringify(items.find((i) => i.id === 'forced')).includes(a.uid))
   })
 
-  test('never refuses anon: true; other board types behave as never', async () => {
+  test('never refuses anon: true; a workshop board is optional by default; the prize wheel is never', async () => {
     const { code, a } = await setup('never')
     const r = await ops(code, a.cookie, anonNote('an'))
     assert.equal(r.data.applied.length, 0)
     assert.match(r.data.rejected[0].error, /Anonymous notes are off/)
     const w = await makeBoard(ann, { type: 'workshop', template: 'blank', title: 'W' })
     const g = await person(w, 'Wanda Workshop')
-    assert.match((await ops(w, g.cookie, anonNote('x'))).data.rejected[0].error, /Anonymous notes are off/)
-    assert.equal((await snapshot(w, g.cookie)).data.board.anonymousNotes, 'never')
+    assert.equal((await ops(w, g.cookie, anonNote('x'))).data.applied.length, 1, 'anonymous is allowed on a workshop board')
+    assert.equal((await snapshot(w, g.cookie)).data.board.anonymousNotes, 'optional')
+    const e = await makeBoard(ann, { type: 'event', template: 'raffle', title: 'E' })
+    assert.equal((await snapshot(e, ann.cookie)).data.board.anonymousNotes, 'never')
   })
 
-  test('kinds: action, theme, frame, connector and shoutout reject anon', async () => {
+  test('kinds: action, theme, frame and connector reject anon', async () => {
     const { code, a } = await setup('optional')
     const bad = [
       { kind: 'action', data: { action: 'Fix CI' } },
       { kind: 'theme', data: { title: 'T', noteIds: [] } },
       { kind: 'frame', data: { title: 'F' } },
       { kind: 'connector', data: { from: 'a', to: 'b' } },
-      { kind: 'shoutout', data: { toName: 'x', message: 'm', badge: 'Teamwork' } },
     ]
     for (const [n, b] of bad.entries()) {
       const r = await ops(code, a.cookie, { op: 'add', item: { id: `k${n}`, x: 0, y: 0, w: 200, h: 200, anon: true, ...b } })
@@ -219,7 +220,10 @@ describe('anonymousNotes board setting', () => {
     assert.ok([200, 400].includes(bad.status))
     assert.equal({}.anonymousNotes, undefined)
     const c = await makeBoard(ann, { type: 'workshop', template: 'blank', title: 'W' })
-    assert.equal((await patch(c, { anonymousNotes: 'always' }, ann.cookie)).status, 400)
+    assert.equal((await patch(c, { anonymousNotes: 'always' }, ann.cookie)).status, 200)
     assert.equal((await patch(c, { anonymousNotes: 'never' }, ann.cookie)).status, 200)
+    const e = await makeBoard(ann, { type: 'event', template: 'raffle', title: 'E' })
+    assert.equal((await patch(e, { anonymousNotes: 'always' }, ann.cookie)).status, 400, 'the prize wheel has nothing to post')
+    assert.equal((await patch(e, { anonymousNotes: 'never' }, ann.cookie)).status, 200)
   })
 })
