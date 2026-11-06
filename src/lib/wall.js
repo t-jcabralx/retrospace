@@ -1,5 +1,6 @@
 // Pure rules of the team wall, shared by the routes and the UI (browser-safe, no imports beyond milestones.js).
 import { todaysMilestones } from './milestones.js'
+import { CUSTOM_BADGE, MAX_BADGE_TEXT } from './validate.js'
 
 export const SHOUTOUT_PER_MINUTE = 10
 export const SHOUTOUT_WINDOW_MS = 60_000
@@ -69,13 +70,18 @@ export function matchPeople(people, query, max = MAX_MENTIONS) {
 }
 
 // The shout-out the composer posts. Placed on the canvas in a three-column grid, newest after the last.
-export function buildShoutoutData({ toName, to, message, badge, gif }, now = Date.now()) {
-  return { toName: toName.trim(), message: message.trim(), badge, at: now, ...(to && { to }), ...(gif && { gif }) }
+export function buildShoutoutData({ toName, to, message, badge, badgeText, badgeEmoji, gif }, now = Date.now()) {
+  const custom = badge === CUSTOM_BADGE
+  return { toName: toName.trim(), message: message.trim(), badge, ...(custom && { badgeText: String(badgeText ?? '').trim(), ...(String(badgeEmoji ?? '').trim() && { badgeEmoji: String(badgeEmoji).trim() }) }), at: now, ...(to && { to }), ...(gif && { gif }) }
 }
 
-// -> { toName?, message? } with friendly texts; empty when fine.
-export function checkShoutout({ toName, message }) {
+// -> { toName?, message?, badgeText? } with friendly texts; empty when fine.
+export function checkShoutout({ toName, message, badge, badgeText }) {
   const errors = {}
+  if (badge === CUSTOM_BADGE) {
+    if (!String(badgeText ?? '').trim()) errors.badgeText = 'Name your badge'
+    else if (String(badgeText).trim().length > MAX_BADGE_TEXT) errors.badgeText = `Badge names can be up to ${MAX_BADGE_TEXT} characters`
+  }
   if (!String(toName ?? '').trim()) errors.toName = 'Who is this shout-out for?'
   else if (String(toName).trim().length > MAX_TO_NAME) errors.toName = `Names can be up to ${MAX_TO_NAME} characters`
   if (!String(message ?? '').trim()) errors.message = 'Write your shout-out'

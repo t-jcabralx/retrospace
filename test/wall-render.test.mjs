@@ -50,3 +50,12 @@ test('people editor and the milestone banner render without a browser', () => {
   assert.match(html, /value="2020-05-06"/)
   assert.match(renderToStaticMarkup(createElement(MilestoneBanner, { code: 'ABC', ready: false })), /aria-live="polite"/)
 })
+
+test('a custom badge draws its own words and emoji, escaped; without an emoji it gets a star', () => {
+  const draw = (over) => renderToStaticMarkup(createElement(ItemView, { item: shout('c', 1, over), selected: false, editable: false, onChange: noop, onSelect: noop, label: 'x' }))
+  const html = draw({ badge: 'Custom', badgeText: 'Team <b>Player</b>', badgeEmoji: '🏆' })
+  assert.match(html, /🏆/)
+  assert.match(html, /Team &lt;b&gt;Player&lt;\/b&gt;/)
+  assert.doesNotMatch(html, /<b>Player/)
+  assert.match(draw({ badge: 'Custom', badgeText: 'Legend' }), /🌟[^<]*<\/span>Legend/)
+})

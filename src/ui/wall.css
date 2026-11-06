@@ -38,6 +38,9 @@
 .wl-mentions li.is-on, .wl-mentions li:hover { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
 .wl-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .wl-badge-btn { min-height: 40px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+.wl-custom { display: flex; gap: 8px; margin-top: 8px; }
+.wl-custom-emoji { flex: 0 0 64px; width: 64px; text-align: center; font-size: 18px; }
+.wl-custom-text { flex: 1 1 auto; min-width: 0; }
 .wl-badge-btn.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel)); font-weight: 700; }
 
 .wl-banner-slot { flex: 1 1 280px; min-width: 0; }

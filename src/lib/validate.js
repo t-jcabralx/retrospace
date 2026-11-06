@@ -8,6 +8,12 @@ import { normalizeMarks } from './marks.js'
 export const KINDS = ['note', 'text', 'shape', 'connector', 'frame', 'image', 'card', 'shoutout', 'theme', 'action', 'stroke']
 export const REACTIONS = ['🎉', '❤️', '👏', '😂', '🙌', '🔥']
 export const BADGES = ['Teamwork', 'Above & Beyond', 'Innovation', 'Customer Hero', 'Thank You']
+// A custom badge is badge 'Custom' plus the sender's own words (badgeText, 1-24 characters) and an optional emoji (badgeEmoji).
+export const CUSTOM_BADGE = 'Custom'
+export const MAX_BADGE_TEXT = 24
+export const MAX_BADGE_EMOJI = 8
+// What a shout-out's badge reads as: the sender's own words for a custom badge, else the preset name.
+export const badgeLabel = (d) => (d?.badge === CUSTOM_BADGE && typeof d.badgeText === 'string' && d.badgeText.trim() ? d.badgeText.trim() : d?.badge)
 export const SHAPES = ['rect', 'ellipse', 'diamond']
 export const NOTE_COLORS = ['yellow', 'pink', 'green', 'blue', 'purple', 'orange']
 export const MAX_CARD_MESSAGE = 500
@@ -106,7 +112,10 @@ function checkCard(d) {
 
 // Wall shout-out limits: a name of 1-60 characters, a message of 1-500, a short person id, a numeric post time.
 function checkShoutout(d) {
-  if (!isStr(d.toName) || !isStr(d.message) || !BADGES.includes(d.badge) || !optStr(d, 'to') || !optStr(d, 'gif')) return 'shoutout needs toName, message, valid badge'
+  if (!isStr(d.toName) || !isStr(d.message) || !(BADGES.includes(d.badge) || d.badge === CUSTOM_BADGE) || !optStr(d, 'to') || !optStr(d, 'gif') || !optStr(d, 'badgeText') || !optStr(d, 'badgeEmoji')) return 'shoutout needs toName, message, valid badge'
+  if (d.badge === CUSTOM_BADGE && (!isStr(d.badgeText) || !d.badgeText.trim() || d.badgeText.length > MAX_BADGE_TEXT || CONTROL.test(d.badgeText))) return `a custom badge needs a name of 1-${MAX_BADGE_TEXT} characters`
+  if (d.badge !== CUSTOM_BADGE && (d.badgeText !== undefined || d.badgeEmoji !== undefined)) return 'only a custom badge carries its own text'
+  if (d.badgeEmoji !== undefined && (d.badgeEmoji.length > MAX_BADGE_EMOJI || CONTROL.test(d.badgeEmoji))) return `a badge emoji can be up to ${MAX_BADGE_EMOJI} characters`
   if (!d.toName.trim() || d.toName.length > 60 || CONTROL.test(d.toName)) return 'shoutout toName must be 1-60 characters'
   if (!d.message.trim() || d.message.length > MAX_CARD_MESSAGE) return 'shoutout message must be 1-500 characters'
   if (d.to !== undefined && !isId(d.to)) return 'shoutout to must be a person id'

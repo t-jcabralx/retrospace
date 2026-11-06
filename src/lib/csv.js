@@ -1,6 +1,7 @@
 // CSV export of a board (Task 17). Pure. RFC 4180 quoting, a formula-injection defence and control/bidi stripping.
 import { categorizeRaw, actionLine } from './ai/input.js'
 import { ANON_NAME } from './anon.js'
+import { badgeLabel } from './validate.js'
 
 export const BOM = '\uFEFF'
 // C0/C1 controls (except tab, LF, CR which are handled below), line/paragraph separators, zero-width and bidi marks.
@@ -46,7 +47,7 @@ export function boardCsv(board, items, participants = [], { authors = false } = 
   const rows = []
   for (const [id, c] of cat) {
     const it = byId.get(id)
-    const category = it.kind === 'card' && celebration ? 'Cards' : it.kind === 'shoutout' ? String(it.data?.badge ?? 'Shoutout') : c.category
+    const category = it.kind === 'card' && celebration ? 'Cards' : it.kind === 'shoutout' ? String(badgeLabel(it.data) ?? 'Shoutout') : c.category
     rows.push({ it, category, order: c.order })
   }
   rows.sort((a, b) => a.order - b.order) // categorizeRaw order is column left-to-right, then top to bottom

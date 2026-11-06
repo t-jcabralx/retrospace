@@ -4,6 +4,7 @@
 // looked up among the live notes, so a deleted note simply drops out of the list.
 import { categorizeRaw, actionLine } from './ai/input.js'
 import { highlightGroups } from './highlight.js'
+import { badgeLabel } from './validate.js'
 
 export const TYPE_LABELS = { retro: 'Retrospective', workshop: 'Workshop', celebration: 'Celebration', wall: 'Team wall' }
 // Control characters (except line feed), line/paragraph separators, zero-width and bidi marks.
@@ -35,7 +36,7 @@ export function buildPrintModel(board, items, participants = [], { authors = fal
     const author = authorOf(it)
     if (author) base.author = author
     if (it.kind === 'card') return { ...base, signer: printable(it.data?.signer), color: it.data?.color ?? null, media: mediaOf(it) }
-    if (it.kind === 'shoutout') return { ...base, to: printable(it.data?.toName), badge: printable(it.data?.badge) }
+    if (it.kind === 'shoutout') return { ...base, to: printable(it.data?.toName), badge: printable(badgeLabel(it.data)) }
     return base
   }
 
@@ -48,7 +49,7 @@ export function buildPrintModel(board, items, participants = [], { authors = fal
   for (const r of rows) {
     const it = byId.get(r.id)
     if (it.kind === 'card' && type === 'celebration') section('Cards').items.push(make(it))
-    else if (it.kind === 'shoutout') section(printable(it.data?.badge) || 'Shoutouts').items.push(make(it))
+    else if (it.kind === 'shoutout') section(printable(badgeLabel(it.data)) || 'Shoutouts').items.push(make(it))
     else section(r.category).items.push(make(it))
   }
   // Most voted first inside a column (the stable sort keeps the reading order among equals); cards stay in reading order.

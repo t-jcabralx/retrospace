@@ -11,7 +11,7 @@ import Shoutout, { BADGE_EMOJI } from './items/Shoutout.jsx'
 import { buildShoutoutOp } from './shoutoutOps.js'
 import AnonCheck from './AnonCheck.jsx'
 import { ANON_NAME } from '../lib/anon.js'
-import { BADGES } from '../lib/validate.js'
+import { BADGES, CUSTOM_BADGE, MAX_BADGE_TEXT, MAX_BADGE_EMOJI } from '../lib/validate.js'
 import { checkShoutout, matchPeople, MAX_SHOUT_MESSAGE, MAX_TO_NAME } from '../lib/wall.js'
 import './cards.css'
 import './wall.css'
@@ -25,6 +25,8 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
   const [to, setTo] = useState(null) // the person id when picked from the list
   const [message, setMessage] = useState('')
   const [badge, setBadge] = useState(BADGES[0])
+  const [badgeText, setBadgeText] = useState('')
+  const [badgeEmoji, setBadgeEmoji] = useState('')
   const [anon, setAnon] = useState(false)
   const mode = ctl.board?.anonymousNotes
   const anonNow = mode === 'always' || (mode === 'optional' && anon)
@@ -45,7 +47,7 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
   }, [view])
 
   const matches = open && !to && toName.trim() ? matchPeople(people, toName) : []
-  const errors = tried ? checkShoutout({ toName, message }) : {}
+  const errors = tried ? checkShoutout({ toName, message, badge, badgeText }) : {}
   const left = MAX_SHOUT_MESSAGE - message.length
 
   function pick(p) {
@@ -67,13 +69,13 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
     if (submitting.current) return // a double click or Enter+click posts once
     setTried(true)
     setFormError('')
-    const bad = checkShoutout({ toName, message })
-    if (bad.toName || bad.message) {
-      root.current?.querySelector(`#${CSS.escape(id)}-${bad.toName ? 't' : 'm'}`)?.focus()
+    const bad = checkShoutout({ toName, message, badge, badgeText })
+    if (bad.toName || bad.message || bad.badgeText) {
+      root.current?.querySelector(`#${CSS.escape(id)}-${bad.toName ? 't' : bad.message ? 'm' : 'bt'}`)?.focus()
       return
     }
     submitting.current = true
-    const op = buildShoutoutOp(items, { toName, to, message, badge, gif: gif?.src }, undefined)
+    const op = buildShoutoutOp(items, { toName, to, message, badge, badgeText, badgeEmoji, gif: gif?.src }, undefined)
     if (anonNow) op.item.anon = true // the server decides what the board's mode allows
     if (!ctl.local([op])) {
       submitting.current = false
@@ -84,7 +86,7 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
     onClose()
   }
 
-  const preview = { toName: toName.trim() || 'someone', message: message.trim() || 'Your message appears here', badge, ...(to && { to }), ...(gif && { gif: gif.src }) }
+  const preview = { toName: toName.trim() || 'someone', message: message.trim() || 'Your message appears here', badge, ...(badge === CUSTOM_BADGE && { badgeText: badgeText.trim() || 'Your badge', badgeEmoji: badgeEmoji.trim() }), ...(to && { to }), ...(gif && { gif: gif.src }) }
 
   return createPortal(
     <>
@@ -160,7 +162,39 @@ export default function ShoutoutComposer({ ctl, people, items, openerRef, onClos
                         <span aria-hidden="true">{BADGE_EMOJI[b]} </span>{b}
                       </button>
                     ))}
+                    <button type="button" className={`wl-badge-btn${badge === CUSTOM_BADGE ? ' is-on' : ''}`} aria-pressed={badge === CUSTOM_BADGE} onClick={() => { setBadge(CUSTOM_BADGE); root.current?.querySelector(`#${CSS.escape(id)}-bt`)?.focus() }}>
+                      <span aria-hidden="true">✏️ </span>Custom
+                    </button>
                   </div>
+                  {badge === CUSTOM_BADGE && (
+                    <div className="wl-custom">
+                      <input
+                        id={`${id}-be`}
+                        className="bd-sinput wl-custom-emoji"
+                        type="text"
+                        aria-label="Badge emoji (optional)"
+                        maxLength={MAX_BADGE_EMOJI}
+                        placeholder="🌟"
+                        autoComplete="off"
+                        value={badgeEmoji}
+                        onChange={(e) => setBadgeEmoji(e.target.value)}
+                      />
+                      <input
+                        id={`${id}-bt`}
+                        className="bd-sinput wl-custom-text"
+                        type="text"
+                        aria-label="Badge name"
+                        aria-invalid={errors.badgeText ? 'true' : undefined}
+                        aria-describedby={`${id}-bte`}
+                        maxLength={MAX_BADGE_TEXT}
+                        placeholder="Name your badge, e.g. Team Player"
+                        autoComplete="off"
+                        value={badgeText}
+                        onChange={(e) => setBadgeText(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <p id={`${id}-bte`} className="bd-set-error" aria-live="polite">{errors.badgeText ?? ''}</p>
                 </div>
                 <div className="bd-set-item">
                   <p className="bd-set-label" id={`${id}-gl`}>Picture</p>
