@@ -61,7 +61,7 @@ export function freshId() {
 }
 
 // Applies one client op to `items` (a Map the caller owns) and returns the op that reverses it,
-// or null when it had no effect. vote/react are server-only toggles: they are not applied optimistically.
+// or null when it had no effect. vote/react are server-only toggles: they are shown at once by their own actions (vote-local, react-local), not here.
 function applyOp(items, op) {
   const id = op.id ?? op.item?.id
   const cur = items.get(id)
@@ -264,6 +264,18 @@ export function reducer(state, action) {
       const items = new Map(state.items)
       // One millisecond newer, so a stale copy of the item that is still on its way cannot undo it; the server's own answer is newer still.
       items.set(action.id, { ...cur, votes: votes.includes(action.uid) ? votes.filter((v) => v !== action.uid) : [...votes, action.uid], updatedAt: (cur.updatedAt || 0) + 1 })
+      return { ...state, items }
+    }
+    case 'react-local': { // this viewer's own reaction toggle, shown at once like a vote; the server's answer replaces it
+      const cur = state.items.get(action.id)
+      if (!cur || cur.deleted || typeof action.uid !== 'string' || typeof action.emoji !== 'string') return state
+      const reactions = { ...cur.reactions }
+      const uids = reactions[action.emoji] ?? []
+      const next = uids.includes(action.uid) ? uids.filter((u) => u !== action.uid) : [...uids, action.uid]
+      if (next.length) reactions[action.emoji] = next
+      else delete reactions[action.emoji]
+      const items = new Map(state.items)
+      items.set(action.id, { ...cur, reactions, updatedAt: (cur.updatedAt || 0) + 1 }) // one millisecond newer: a stale copy cannot undo it
       return { ...state, items }
     }
     case 'remote':

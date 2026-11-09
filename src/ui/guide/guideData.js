@@ -49,6 +49,7 @@ export const TOOLS = [
 
 export const TIPS = [
   'Edit text by double-clicking an item (double-tap on a phone). Finish with Cmd or Ctrl + Enter, or click an empty spot. Esc cancels.',
+  'While you are typing in a text box or note, dragging inside it selects words. To move it, drag the round move handle on its top-left corner: your text is saved and the item moves.',
   'Delete: select the item and press Delete, or tap the red trash button at the top. That button is how you delete on a phone.',
   'Undo and redo are the arrows in the top bar. Zoom is at the bottom right.',
   'You can only change your own notes. The board owner can change or delete anyone’s.',

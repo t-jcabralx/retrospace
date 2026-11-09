@@ -315,6 +315,14 @@ export function useBoard(code, { viewOnly = false } = {}) {
     return local([{ op: 'vote', id }])
   }, [local, notify, dispatch])
 
+  // Toggles the viewer's reaction on an item, shown at once; the server's answer settles it (a refusal reloads the board).
+  const react = useCallback((id, emoji) => {
+    const cur = ref.current.state
+    if (!cur || readOnly || !cur.items.has(id)) return false
+    dispatch({ type: 'react-local', id, emoji, uid: cur.viewer.uid })
+    return local([{ op: 'react', id, emoji }])
+  }, [local, readOnly, dispatch])
+
   // Streams drag steps to peers without touching history or state (the canvas draws the motion itself).
   const live = useCallback((ops) => {
     if (readOnly) return
@@ -417,7 +425,7 @@ export function useBoard(code, { viewOnly = false } = {}) {
     phase, status, toast, notify, retry: () => setAttempt((n) => n + 1), submitPasscode,
     state, board, items, isOwner, readOnly, readOnlyReason, uid, canEdit, persona, savePersona, personaLocked,
     local, live, commit, revert, undo, redo, sendEphemeral, subscribeEphemeral,
-    code, vote, clock: ref.current.clock, syncCid, applyBoard, votesCleared, participantRemoved,
+    code, vote, react, clock: ref.current.clock, syncCid, applyBoard, votesCleared, participantRemoved,
     canUndo: Boolean(state?.undo.length), canRedo: Boolean(state?.redo.length),
   }
 }

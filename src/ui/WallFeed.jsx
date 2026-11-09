@@ -70,7 +70,7 @@ export default function WallFeed({ ctl }) {
             <li key={item.id} className="wl-entry">
               <Shoutout item={item} />
               <div className="wl-foot">
-                <ReactionBar item={item} uid={ctl.uid} disabled={ctl.readOnly} onReact={(emoji) => ctl.local([{ op: 'react', id: item.id, emoji }])} />
+                <ReactionBar item={item} uid={ctl.uid} disabled={ctl.readOnly} onReact={(emoji) => (ctl.react ? ctl.react(item.id, emoji) : ctl.local([{ op: 'react', id: item.id, emoji }]))} />
                 {ctl.canEdit(item) && (
                   <button type="button" className="wl-del" aria-label={`Delete the shout-out to ${item.data.toName}`} onClick={() => { ctl.local([{ op: 'delete', id: item.id }]); ctl.notify('Shout-out deleted. Undo is in the top bar.') }}>Delete</button>
                 )}

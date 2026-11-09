@@ -110,6 +110,13 @@ function ItemView({ item, selected, editable, peerMoving = false, onChange, onDr
         <span className="bd-vote-badge" aria-hidden="true"><VoteIcon width={14} height={14} />{votes}</span>
       )}
       {editing && <Editor kind={item.kind} field={field} value={item.data[field] ?? ''} marks={item.kind === 'note' ? normalizeMarks(item.data.text, item.data.marks) : undefined} onCommit={commit} onCancel={() => done(true)} onDraft={saveDraft} />}
+      {editing && item.kind !== 'frame' && (
+        // While typing, a drag inside the box selects words, so this handle moves the item instead: pressing it saves the text and
+        // closes the editor, and the press carries on into the usual move (the root's onPointerDown).
+        <span className="bd-movegrip" aria-hidden="true" title="Drag to move">
+          <svg width="14" height="14" viewBox="0 0 14 14" focusable="false"><path d="M7 1v12M1 7h12M7 1 5 3M7 1l2 2M7 13l-2-2M7 13l2-2M1 7l2-2M1 7l2 2M13 7l-2-2M13 7l-2 2" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+        </span>
+      )}
       {handles && editable && list.map((h) => (
         <span key={h} aria-hidden="true" className={`bd-handle bd-h-${h}`} onPointerDown={(e) => onResizeStart?.(e, h)} />
       ))}

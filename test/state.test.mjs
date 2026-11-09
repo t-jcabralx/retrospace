@@ -423,3 +423,22 @@ test('my own vote shows at once, is not an undo step, and survives a stale copy 
   assert.equal(reducer(s, { type: 'vote-local', id: 'nope', uid: ME }), s)
   assert.equal(reducer(s, { type: 'vote-local', id: 'a' }), s)
 })
+
+test('my own reaction shows at once, toggles, is not an undo step, and the server\'s answer settles it', () => {
+  const ME = 'KM-MMMM-MMMM-MMMM'
+  let s = initialState(snapshot([doc('a', { updatedAt: 100, reactions: { '🎉': ['KM-OTHER'] } })]))
+  s = reducer(s, { type: 'react-local', id: 'a', emoji: '🎉', uid: ME })
+  assert.deepEqual(s.items.get('a').reactions, { '🎉': ['KM-OTHER', ME] })
+  assert.equal(s.items.get('a').updatedAt, 101)
+  assert.deepEqual([s.undo, s.redo], [[], []])
+  s = reducer(s, { type: 'react-local', id: 'a', emoji: '❤️', uid: ME })
+  assert.deepEqual(s.items.get('a').reactions, { '🎉': ['KM-OTHER', ME], '❤️': [ME] })
+  s = reducer(s, { type: 'react-local', id: 'a', emoji: '❤️', uid: ME }) // again: taken back, and the empty emoji disappears
+  assert.deepEqual(s.items.get('a').reactions, { '🎉': ['KM-OTHER', ME] })
+  s = reducer(s, { type: 'remote', items: [doc('a', { updatedAt: 100, reactions: { '🎉': ['KM-OTHER'] } })] }) // a stale copy cannot undo it
+  assert.deepEqual(s.items.get('a').reactions, { '🎉': ['KM-OTHER', ME] })
+  s = reducer(s, { type: 'ack', items: [doc('a', { updatedAt: 250, reactions: { '🎉': ['KM-OTHER', ME] } })] })
+  assert.equal(s.items.get('a').updatedAt, 250)
+  assert.equal(reducer(s, { type: 'react-local', id: 'nope', emoji: '🎉', uid: ME }), s)
+  assert.equal(reducer(s, { type: 'react-local', id: 'a', emoji: '🎉' }), s)
+})
